@@ -18,8 +18,20 @@ export class DoctorPatientService {
       throw new Error('Request already exists')
     }
 
+    // Get doctor and patient details for notifications
+    const [doctor, patient] = await Promise.all([
+      prisma.doctor.findUnique({
+        where: { id: parseInt(doctorId) },
+        include: { user: true }
+      }),
+      prisma.patient.findUnique({
+        where: { id: parseInt(patientId) },
+        include: { user: true }
+      })
+    ])
+
     // Create new request
-    return prisma.doctorPatientRequest.create({
+    const request = await prisma.doctorPatientRequest.create({
       data: {
         patientId: parseInt(patientId),
         doctorId: parseInt(doctorId),
@@ -31,6 +43,23 @@ export class DoctorPatientService {
         doctor: true
       }
     })
+
+    // Create notification for doctor
+    await prisma.notification.create({
+      data: {
+        userId: doctor.user.id,
+        type: 'DOCTOR_REQUEST',
+        title: 'New Patient Request',
+        message: `Patient ${patient.name} has requested to be added to your patient list`,
+        metadata: {
+          requestId: request.id,
+          patientId: patientId,
+          patientName: patient.name
+        }
+      }
+    })
+
+    return request
   }
 
   static async handleRequest(requestId, doctorId, status) {
@@ -38,6 +67,14 @@ export class DoctorPatientService {
       where: {
         id: parseInt(requestId),
         doctorId: parseInt(doctorId)
+      },
+      include: {
+        patient: {
+          include: { user: true }
+        },
+        doctor: {
+          include: { user: true }
+        }
       }
     })
 
@@ -45,7 +82,6 @@ export class DoctorPatientService {
       throw new Error('Request not found')
     }
 
-    // Update request status
     const updatedRequest = await prisma.doctorPatientRequest.update({
       where: { id: parseInt(requestId) },
       data: { status },
@@ -55,12 +91,29 @@ export class DoctorPatientService {
       }
     })
 
-    // If accepted, create doctor-patient relationship
+    // Create notification for patient about the request status
+    await prisma.notification.create({
+      data: {
+        userId: request.patient.user.id,
+        type: 'DOCTOR_REQUEST_UPDATE',
+        title: `Doctor Request ${status}`,
+        message: `Dr. ${request.doctor.name} has ${status.toLowerCase()} your request`,
+        metadata: {
+          requestId: request.id,
+          doctorId: doctorId,
+          doctorName: request.doctor.name,
+          status: status
+        }
+      }
+    })
+
+    // If accepted, create the doctor-patient relationship
     if (status === 'ACCEPTED') {
       await prisma.doctorPatient.create({
         data: {
           patientId: request.patientId,
           doctorId: request.doctorId,
+          startDate: new Date(),
           active: true
         }
       })

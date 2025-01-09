@@ -6,7 +6,9 @@ import { authRoutes } from './routes/auth.routes.js'
 import { adminRoutes } from './routes/admin.routes.js'
 import { doctorPatientRoutes } from './routes/doctor-patient.routes.js'
 import { nurseServiceRoutes } from './routes/nurse-service.routes.js'
+import { notificationRoutes } from './routes/notification.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
+import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 
 const fastify = Fastify({ 
   logger: true,
@@ -35,11 +37,15 @@ await fastify.register(jwt, {
 // Register authentication middleware
 fastify.decorate('authenticate', createAuthMiddleware(fastify))
 
+// Register notification middleware
+fastify.addHook('onRequest', createNotificationMiddleware(fastify))
+
 // Register routes
 await fastify.register(authRoutes, { prefix: '/auth' })
 await fastify.register(adminRoutes, { prefix: '/admin' })
 await fastify.register(doctorPatientRoutes, { prefix: '/doctor-patient' })
 await fastify.register(nurseServiceRoutes, { prefix: '/nurse-service' })
+await fastify.register(notificationRoutes, { prefix: '/api' })
 
 // Health check route
 fastify.get('/health', async (request, reply) => {
