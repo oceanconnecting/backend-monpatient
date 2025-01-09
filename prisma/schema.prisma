@@ -1,0 +1,212 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  NURSE
+  DOCTOR
+  PHARMACY
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ServiceStatus {
+  REQUESTED
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String
+  role            Role
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  patient         Patient?
+  nurse           Nurse?
+  doctor          Doctor?
+  pharmacy        Pharmacy?
+  admin           Admin?
+}
+
+model Patient {
+  id            Int             @id @default(autoincrement())
+  name          String
+  location      String
+  contactInfo   String
+  user          User            @relation(fields: [userId], references: [id])
+  userId        Int             @unique
+  medicalRecord MedicalRecord?
+  notifications Notification[]
+  prescriptions Prescription[]  @relation("PatientPrescriptions")
+  nurseVisits   NurseVisit[]
+  relatives     Relative[]
+  doctorRequests DoctorPatientRequest[] @relation("PatientRequests")
+  doctors       DoctorPatient[]         @relation("PatientDoctors")
+  nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
+}
+
+model Nurse {
+  id            Int         @id @default(autoincrement())
+  name          String
+  availability  Boolean     @default(true)
+  rating        Float       @default(0)
+  user          User        @relation(fields: [userId], references: [id])
+  userId        Int         @unique
+  nurseVisits   NurseVisit[]
+  medicalRecords MedicalRecord[] @relation("NurseUpdates")
+  serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
+}
+
+model NurseServiceRequest {
+  id          Int           @id @default(autoincrement())
+  patient     Patient       @relation("PatientNurseRequests", fields: [patientId], references: [id])
+  patientId   Int
+  nurse       Nurse?        @relation("NurseServiceRequests", fields: [nurseId], references: [id])
+  nurseId     Int?
+  status      ServiceStatus @default(REQUESTED)
+  serviceType String        // e.g., "Blood Pressure Check", "Wound Care", etc.
+  description String
+  preferredDate DateTime
+  urgency     String        // e.g., "Low", "Medium", "High"
+  location    String        // Patient's preferred location for service
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  completedAt DateTime?
+  notes       String?       // Nurse's notes after service
+  rating      Int?         // Patient's rating of the service (1-5)
+  feedback    String?      // Patient's feedback
+}
+
+model Doctor {
+  id              Int           @id @default(autoincrement())
+  name            String
+  specialization  String
+  user            User          @relation(fields: [userId], references: [id])
+  userId          Int           @unique
+  prescriptions   Prescription[] @relation("DoctorPrescriptions")
+  medicalRecords  MedicalRecord[] @relation("DoctorViews")
+  patientRequests DoctorPatientRequest[] @relation("DoctorRequests")
+  patients        DoctorPatient[]        @relation("DoctorPatients")
+}
+
+model DoctorPatientRequest {
+  id          Int           @id @default(autoincrement())
+  patient     Patient       @relation("PatientRequests", fields: [patientId], references: [id])
+  patientId   Int
+  doctor      Doctor        @relation("DoctorRequests", fields: [doctorId], references: [id])
+  doctorId    Int
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  message     String?
+
+  @@unique([patientId, doctorId])
+}
+
+model DoctorPatient {
+  id          Int           @id @default(autoincrement())
+  patient     Patient       @relation("PatientDoctors", fields: [patientId], references: [id])
+  patientId   Int
+  doctor      Doctor        @relation("DoctorPatients", fields: [doctorId], references: [id])
+  doctorId    Int
+  startDate   DateTime      @default(now())
+  endDate     DateTime?
+  active      Boolean       @default(true)
+
+  @@unique([patientId, doctorId])
+}
+
+model Pharmacy {
+  id              Int           @id @default(autoincrement())
+  name            String
+  location        String
+  user            User          @relation(fields: [userId], references: [id])
+  userId          Int           @unique
+  prescriptions   Prescription[] @relation("PharmacyPrescriptions")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  reports   Report[]
+}
+
+model Prescription {
+  id          Int       @id @default(autoincrement())
+  date        DateTime  @default(now())
+  details     String
+  approved    Boolean   @default(false)
+  patient     Patient   @relation("PatientPrescriptions", fields: [patientId], references: [id])
+  patientId   Int
+  doctor      Doctor    @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  doctorId    Int
+  pharmacy    Pharmacy? @relation("PharmacyPrescriptions", fields: [pharmacyId], references: [id])
+  pharmacyId  Int?
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  type        String
+  message     String
+  createdAt   DateTime @default(now())
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  patientId   Int
+}
+
+model MedicalRecord {
+  id          Int       @id @default(autoincrement())
+  history     String
+  updatedAt   DateTime  @updatedAt
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  patientId   Int       @unique
+  nurses      Nurse[]   @relation("NurseUpdates")
+  doctors     Doctor[]  @relation("DoctorViews")
+}
+
+model Report {
+  id            Int      @id @default(autoincrement())
+  details       String
+  dateGenerated DateTime @default(now())
+  admin         Admin    @relation(fields: [adminId], references: [id])
+  adminId       Int
+}
+
+model NurseVisit {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  notes       String?
+  nurse       Nurse    @relation(fields: [nurseId], references: [id])
+  nurseId     Int
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  patientId   Int
+}
+
+model Relative {
+  id          Int      @id @default(autoincrement())
+  name        String
+  relation    String
+  contactInfo String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  patientId   Int
+}
