@@ -2,11 +2,14 @@ import Fastify from 'fastify'
 import { PrismaClient } from '@prisma/client'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import { Server } from 'socket.io'
+import { createServer } from 'http'
 import { authRoutes } from './routes/auth.routes.js'
 import { adminRoutes } from './routes/admin.routes.js'
 import { doctorPatientRoutes } from './routes/doctor-patient.routes.js'
 import { nurseServiceRoutes } from './routes/nurse-service.routes.js'
 import { notificationRoutes } from './routes/notification.routes.js'
+import { chatRoutes } from './routes/chat.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 
@@ -24,6 +27,23 @@ const fastify = Fastify({
 })
 
 const prisma = new PrismaClient()
+
+// Create HTTP server
+const httpServer = createServer(fastify.server)
+
+// Create Socket.IO instance
+const io = new Server(httpServer, {
+  cors: {
+    origin: true,
+    methods: ['GET', 'POST']
+  }
+})
+
+// Make fastify instance available to Socket.IO
+io.fastify = fastify
+
+// Make io available to routes
+fastify.decorate('io', io)
 
 // Register plugins
 await fastify.register(cors, {
@@ -46,6 +66,7 @@ await fastify.register(adminRoutes, { prefix: '/admin' })
 await fastify.register(doctorPatientRoutes, { prefix: '/doctor-patient' })
 await fastify.register(nurseServiceRoutes, { prefix: '/nurse-service' })
 await fastify.register(notificationRoutes, { prefix: '/api' })
+await fastify.register(chatRoutes, { prefix: '/chat' })
 
 // Health check route
 fastify.get('/health', async (request, reply) => {
@@ -76,6 +97,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const start = async () => {
     try {
       await fastify.listen({ port: process.env.PORT || 3001, host: '0.0.0.0' })
+      httpServer.listen(process.env.WS_PORT || 3002)
     } catch (err) {
       fastify.log.error(err)
       process.exit(1)

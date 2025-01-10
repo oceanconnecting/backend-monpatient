@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client'
-import jwt from 'jsonwebtoken'
-
-const prisma = new PrismaClient()
 
 export class ChatService {
   constructor(io) {
     this.io = io
+    this.prisma = new PrismaClient()
     this.connectedUsers = new Map()
+    this.fastify = io.fastify // Get fastify instance from Socket.IO
     
     io.use(this.authenticateSocket.bind(this))
     io.on('connection', this.handleConnection.bind(this))
@@ -17,7 +16,7 @@ export class ChatService {
       const token = socket.handshake.auth.token
       if (!token) throw new Error('No token provided')
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const decoded = this.fastify.jwt.verify(token)
       socket.user = decoded
       next()
     } catch (error) {
@@ -86,7 +85,7 @@ export class ChatService {
   }
 
   async canUserJoinRoom(userId, roomId) {
-    const room = await prisma.chatRoom.findFirst({
+    const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: parseInt(roomId),
         OR: [
@@ -108,10 +107,10 @@ export class ChatService {
       )
     }
 
-    let room = await prisma.chatRoom.findFirst({ where })
+    let room = await this.prisma.chatRoom.findFirst({ where })
 
     if (!room) {
-      room = await prisma.chatRoom.create({
+      room = await this.prisma.chatRoom.create({
         data: where,
         include: {
           patient: true,
@@ -125,7 +124,7 @@ export class ChatService {
   }
 
   async sendMessage(roomId, senderId, senderRole, content) {
-    const room = await prisma.chatRoom.findFirst({
+    const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: parseInt(roomId),
         OR: [
@@ -140,7 +139,7 @@ export class ChatService {
       throw new Error('Chat room not found or user not authorized')
     }
 
-    const message = await prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         roomId: parseInt(roomId),
         senderId: parseInt(senderId),
@@ -159,7 +158,7 @@ export class ChatService {
     })
 
     // Update room's last message timestamp
-    await prisma.chatRoom.update({
+    await this.prisma.chatRoom.update({
       where: { id: parseInt(roomId) },
       data: { lastMessageAt: new Date() }
     })
@@ -168,7 +167,7 @@ export class ChatService {
   }
 
   async markMessagesAsRead(roomId, userId) {
-    await prisma.message.updateMany({
+    await this.prisma.message.updateMany({
       where: {
         roomId: parseInt(roomId),
         senderId: { not: parseInt(userId) },
@@ -182,7 +181,7 @@ export class ChatService {
   }
 
   async getRoomMessages(roomId, userId) {
-    const room = await prisma.chatRoom.findFirst({
+    const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: parseInt(roomId),
         OR: [
@@ -197,7 +196,7 @@ export class ChatService {
       throw new Error('Chat room not found or user not authorized')
     }
 
-    return prisma.message.findMany({
+    return this.prisma.message.findMany({
       where: { roomId: parseInt(roomId) },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -220,7 +219,7 @@ export class ChatService {
         ? { doctorId: parseInt(userId) }
         : { nurseId: parseInt(userId) }
 
-    return prisma.chatRoom.findMany({
+    return this.prisma.chatRoom.findMany({
       where,
       include: {
         patient: { select: { id: true, name: true } },
