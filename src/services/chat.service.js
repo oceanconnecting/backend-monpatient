@@ -5,10 +5,12 @@ export class ChatService {
     this.io = io
     this.prisma = new PrismaClient()
     this.connectedUsers = new Map()
-    this.fastify = io.fastify // Get fastify instance from Socket.IO
     
-    io.use(this.authenticateSocket.bind(this))
-    io.on('connection', this.handleConnection.bind(this))
+    if (io) {
+      this.fastify = io.fastify // Get fastify instance from Socket.IO
+      io.use(this.authenticateSocket.bind(this))
+      io.on('connection', this.handleConnection.bind(this))
+    }
   }
 
   async authenticateSocket(socket, next) {
@@ -55,7 +57,7 @@ export class ChatService {
         this.io.to(`room:${data.roomId}`).emit('new-message', message)
       } catch (error) {
         console.error('Error sending message:', error)
-        socket.emit('error', { message: error.message })
+        socket.emit('error', { message: 'Failed to send message' })
       }
     })
 
@@ -85,17 +87,21 @@ export class ChatService {
   }
 
   async canUserJoinRoom(userId, roomId) {
-    const room = await this.prisma.chatRoom.findFirst({
-      where: {
-        id: parseInt(roomId),
-        OR: [
-          { patientId: parseInt(userId) },
-          { doctorId: parseInt(userId) },
-          { nurseId: parseInt(userId) }
-        ]
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: parseInt(roomId) },
+      include: {
+        patient: {
+          include: { user: true }
+        },
+        doctor: {
+          include: { user: true }
+        }
       }
     })
-    return !!room
+
+    if (!room) return false
+
+    return room.patient.user.id === userId || room.doctor.user.id === userId
   }
 
   async createOrGetRoom(patientId, participantId, participantRole) {
@@ -124,7 +130,7 @@ export class ChatService {
   }
 
   async sendMessage(roomId, senderId, senderRole, content) {
-    const room = await this.prisma.chatRoom.findFirst({
+    const room = await this.prisma.chatRoom.findUnique({
       where: {
         id: parseInt(roomId),
         OR: [
@@ -181,59 +187,50 @@ export class ChatService {
   }
 
   async getRoomMessages(roomId, userId) {
-    const room = await this.prisma.chatRoom.findFirst({
-      where: {
-        id: parseInt(roomId),
-        OR: [
-          { patientId: parseInt(userId) },
-          { doctorId: parseInt(userId) },
-          { nurseId: parseInt(userId) }
-        ]
-      }
-    })
-
-    if (!room) {
-      throw new Error('Chat room not found or user not authorized')
+    const canJoin = await this.canUserJoinRoom(userId, roomId)
+    if (!canJoin) {
+      throw new Error('Unauthorized to access this chat room')
     }
 
     return this.prisma.message.findMany({
-      where: { roomId: parseInt(roomId) },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      include: {
-        room: {
-          include: {
-            patient: { select: { name: true } },
-            doctor: { select: { name: true } },
-            nurse: { select: { name: true } }
-          }
-        }
+      where: {
+        roomId: parseInt(roomId)
+      },
+      orderBy: {
+        createdAt: 'asc'
       }
     })
   }
 
   async getUserRooms(userId, userRole) {
-    const where = userRole === 'PATIENT'
-      ? { patientId: parseInt(userId) }
-      : userRole === 'DOCTOR'
-        ? { doctorId: parseInt(userId) }
-        : { nurseId: parseInt(userId) }
+    const query = {
+      where: {}
+    }
+
+    if (userRole === 'PATIENT') {
+      query.where.patient = {
+        user: {
+          id: parseInt(userId)
+        }
+      }
+    } else if (userRole === 'DOCTOR') {
+      query.where.doctor = {
+        user: {
+          id: parseInt(userId)
+        }
+      }
+    }
 
     return this.prisma.chatRoom.findMany({
-      where,
+      ...query,
       include: {
-        patient: { select: { id: true, name: true } },
-        doctor: { select: { id: true, name: true } },
-        nurse: { select: { id: true, name: true } },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          include: {
-            room: true
-          }
+        patient: {
+          include: { user: true }
+        },
+        doctor: {
+          include: { user: true }
         }
-      },
-      orderBy: { lastMessageAt: 'desc' }
+      }
     })
   }
 }

@@ -34,8 +34,8 @@ export async function doctorPatientRoutes(fastify) {
     }
   })
 
-  // Handle request (accept/reject)
-  fastify.put('/request/:requestId', {
+  // Accept request
+  fastify.post('/request/:requestId/accept', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
     schema: {
       params: {
@@ -44,13 +44,6 @@ export async function doctorPatientRoutes(fastify) {
         properties: {
           requestId: { type: 'string' }
         }
-      },
-      body: {
-        type: 'object',
-        required: ['status'],
-        properties: {
-          status: { type: 'string', enum: ['ACCEPTED', 'REJECTED'] }
-        }
       }
     },
     handler: async (request, reply) => {
@@ -60,12 +53,31 @@ export async function doctorPatientRoutes(fastify) {
           return
         }
 
-        const result = await DoctorPatientService.handleRequest(
+        const result = await DoctorPatientService.acceptRequest(
           request.params.requestId,
-          request.user.doctor.id,
-          request.body.status
+          request.user.doctor.id
         )
-        return result
+        reply.code(200).send(result)
+      } catch (error) {
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
+
+  // Get doctor's patients
+  fastify.get('/patients', {
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
+    handler: async (request, reply) => {
+      try {
+        if (!request.user.doctor) {
+          reply.code(400).send({ error: 'User is not a doctor' })
+          return
+        }
+
+        const patients = await DoctorPatientService.getDoctorPatients(
+          request.user.doctor.id
+        )
+        return patients
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
@@ -73,7 +85,7 @@ export async function doctorPatientRoutes(fastify) {
   })
 
   // Get patient's doctors
-  fastify.get('/patient/doctors', {
+  fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
     handler: async (request, reply) => {
       try {
@@ -82,74 +94,10 @@ export async function doctorPatientRoutes(fastify) {
           return
         }
 
-        const doctors = await DoctorPatientService.getPatientDoctors(request.user.patient.id)
-        return doctors
-      } catch (error) {
-        reply.code(400).send({ error: error.message })
-      }
-    }
-  })
-
-  // Get doctor's patients
-  fastify.get('/doctor/patients', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
-    handler: async (request, reply) => {
-      try {
-        if (!request.user.doctor) {
-          reply.code(400).send({ error: 'User is not a doctor' })
-          return
-        }
-
-        const patients = await DoctorPatientService.getDoctorPatients(request.user.doctor.id)
-        return patients
-      } catch (error) {
-        reply.code(400).send({ error: error.message })
-      }
-    }
-  })
-
-  // Get pending requests for doctor
-  fastify.get('/doctor/requests', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
-    handler: async (request, reply) => {
-      try {
-        if (!request.user.doctor) {
-          reply.code(400).send({ error: 'User is not a doctor' })
-          return
-        }
-
-        const requests = await DoctorPatientService.getPendingRequests(request.user.doctor.id)
-        return requests
-      } catch (error) {
-        reply.code(400).send({ error: error.message })
-      }
-    }
-  })
-
-  // End doctor-patient relationship
-  fastify.delete('/relationship/:patientId', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
-    schema: {
-      params: {
-        type: 'object',
-        required: ['patientId'],
-        properties: {
-          patientId: { type: 'string' }
-        }
-      }
-    },
-    handler: async (request, reply) => {
-      try {
-        if (!request.user.doctor) {
-          reply.code(400).send({ error: 'User is not a doctor' })
-          return
-        }
-
-        const result = await DoctorPatientService.endDoctorPatientRelationship(
-          request.params.patientId,
-          request.user.doctor.id
+        const doctors = await DoctorPatientService.getPatientDoctors(
+          request.user.patient.id
         )
-        return result
+        return doctors
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }

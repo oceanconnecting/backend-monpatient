@@ -73,7 +73,7 @@ export async function chatRoutes(fastify, options) {
     }
   })
 
-  // Send message to room
+  // Send message
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
     schema: {

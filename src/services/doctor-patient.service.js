@@ -122,6 +122,92 @@ export class DoctorPatientService {
     return updatedRequest
   }
 
+  static async acceptRequest(requestId, doctorId) {
+    try {
+      console.log('Accepting request:', { requestId, doctorId })
+      const request = await prisma.doctorPatientRequest.findUnique({
+        where: { id: parseInt(requestId) },
+        include: {
+          patient: {
+            include: { user: true }
+          },
+          doctor: {
+            include: { user: true }
+          }
+        }
+      })
+      console.log('Found request:', request)
+
+      if (!request) {
+        throw new Error('Request not found')
+      }
+
+      if (request.status !== 'PENDING') {
+        throw new Error('Request is not pending')
+      }
+
+      console.log('Comparing doctor IDs:', { 
+        requestDoctorId: request.doctorId, 
+        providedDoctorId: doctorId,
+        equal: request.doctorId === doctorId
+      })
+
+      if (request.doctorId !== doctorId) {
+        throw new Error('Unauthorized to accept this request')
+      }
+
+      console.log('Updating request status...')
+      // Update request status to ACCEPTED
+      const updatedRequest = await prisma.doctorPatientRequest.update({
+        where: { id: parseInt(requestId) },
+        data: { status: 'ACCEPTED' }
+      })
+      console.log('Updated request:', updatedRequest)
+
+      console.log('Creating doctor-patient relationship...')
+      // Create doctor-patient relationship
+      await prisma.doctorPatient.create({
+        data: {
+          doctorId: request.doctorId,
+          patientId: request.patientId,
+          startDate: new Date(),
+          active: true
+        }
+      })
+
+      console.log('Creating chat room...')
+      // Create chat room for doctor and patient
+      const chatRoom = await prisma.chatRoom.create({
+        data: {
+          patientId: request.patientId,
+          doctorId: request.doctorId,
+          status: 'ACTIVE'
+        }
+      })
+      console.log('Created chat room:', chatRoom)
+
+      console.log('Creating notification...')
+      // Create notification for patient
+      await prisma.notification.create({
+        data: {
+          userId: request.patient.user.id,
+          type: 'REQUEST_ACCEPTED',
+          title: 'Doctor Request Accepted',
+          message: `Dr. ${request.doctor.name} has accepted your request. You can now start chatting.`,
+          metadata: {
+            doctorId: request.doctorId,
+            chatRoomId: chatRoom.id
+          }
+        }
+      })
+
+      return { updatedRequest, chatRoom }
+    } catch (error) {
+      console.error('Error in acceptRequest:', error)
+      throw error
+    }
+  }
+
   static async getPatientDoctors(patientId) {
     return prisma.doctorPatient.findMany({
       where: {
