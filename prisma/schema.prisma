@@ -71,7 +71,7 @@ model Nurse {
   name          String
   availability  Boolean     @default(true)
   rating        Float       @default(0)
-  user          User        @relation(fields: [userId], references: [id],onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        Int         @unique
   nurseVisits   NurseVisit[]
   medicalRecords MedicalRecord[] @relation("NurseUpdates")

@@ -109,7 +109,7 @@ export async function createTestUser(role, email = null) {
       roleData = await prisma.nurse.create({
         data: {
           name: 'Test Nurse',
-          availability: true,
+          availability: Boolean(true),
           rating: 4.5,
           userId: user.id
         }
