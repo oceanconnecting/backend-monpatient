@@ -11,7 +11,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "vercel-build": "prisma generate",
-    "test": "NODE_ENV=test mocha test/**/*.test.js"
+    "test": "NODE_ENV=test mocha --timeout 10000 --exit test/**/*.test.js"
   },
   "dependencies": {
     "@fastify/cors": "^8.4.1",

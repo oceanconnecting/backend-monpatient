@@ -221,6 +221,10 @@ export class AdminService {
   }
 
   static async getUserById(id) {
+    if (!id || isNaN(parseInt(id))) {
+      throw new Error('Invalid user ID')
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       select: {
@@ -268,7 +272,9 @@ export class AdminService {
     })
 
     if (!user) {
-      throw new Error('User not found')
+      const error = new Error('User not found')
+      error.code = 'P2001'
+      throw error
     }
 
     // Get the role-specific data

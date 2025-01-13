@@ -33,7 +33,7 @@ export async function adminRoutes(fastify) {
   })
 
   // Get user by ID
-  fastify.get('/:id', {
+  fastify.get('/users/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
       params: {
@@ -46,10 +46,24 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const user = await AdminService.getUserById(request.params.id)
+        const id = parseInt(request.params.id)
+        if (isNaN(id)) {
+          reply.code(400).send({ error: 'Invalid user ID' })
+          return
+        }
+
+        const user = await AdminService.getUserById(id)
+        if (!user) {
+          reply.code(404).send({ error: 'User not found' })
+          return
+        }
         return user
       } catch (error) {
-        reply.code(404).send({ error: error.message })
+        if (error.code === 'P2001') {
+          reply.code(404).send({ error: 'User not found' })
+        } else {
+          reply.code(500).send({ error: error.message })
+        }
       }
     }
   })
