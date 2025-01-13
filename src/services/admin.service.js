@@ -14,7 +14,7 @@ export class AdminService {
         updatedAt: true,
         patient: {
           select: {
-            id: true,
+            
             name: true,
             location: true,
             contactInfo: true
@@ -22,7 +22,6 @@ export class AdminService {
         },
         nurse: {
           select: {
-            id: true,
             name: true,
             availability: true,
             rating: true
@@ -30,21 +29,19 @@ export class AdminService {
         },
         doctor: {
           select: {
-            id: true,
             name: true,
             specialization: true
           }
         },
         pharmacy: {
           select: {
-            id: true,
             name: true,
             location: true
           }
         },
         admin: {
           select: {
-            id: true,
+
             name: true
           }
         }
@@ -78,7 +75,6 @@ export class AdminService {
         updatedAt: true,
         patient: {
           select: {
-            id: true,
             name: true,
             location: true,
             contactInfo: true

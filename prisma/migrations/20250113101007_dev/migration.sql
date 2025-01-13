@@ -42,6 +42,18 @@ CREATE TABLE "Nurse" (
 );
 
 -- CreateTable
+CREATE TABLE "Doctor" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "specialization" TEXT NOT NULL,
+    "availability" BOOLEAN NOT NULL DEFAULT true,
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "userId" INTEGER NOT NULL,
+
+    CONSTRAINT "Doctor_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "NurseServiceRequest" (
     "id" SERIAL NOT NULL,
     "patientId" INTEGER NOT NULL,
@@ -60,16 +72,6 @@ CREATE TABLE "NurseServiceRequest" (
     "feedback" TEXT,
 
     CONSTRAINT "NurseServiceRequest_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Doctor" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "specialization" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
-
-    CONSTRAINT "Doctor_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -132,10 +134,14 @@ CREATE TABLE "Prescription" (
 -- CreateTable
 CREATE TABLE "Notification" (
     "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "type" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
     "message" TEXT NOT NULL,
+    "read" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "patientId" INTEGER NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
@@ -143,9 +149,12 @@ CREATE TABLE "Notification" (
 -- CreateTable
 CREATE TABLE "MedicalRecord" (
     "id" SERIAL NOT NULL,
-    "history" TEXT NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
     "patientId" INTEGER NOT NULL,
+    "diagnosis" TEXT NOT NULL,
+    "treatment" TEXT NOT NULL,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MedicalRecord_pkey" PRIMARY KEY ("id")
 );
@@ -180,6 +189,30 @@ CREATE TABLE "Relative" (
     "patientId" INTEGER NOT NULL,
 
     CONSTRAINT "Relative_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ChatRoom" (
+    "id" SERIAL NOT NULL,
+    "status" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "patientId" INTEGER NOT NULL,
+    "doctorId" INTEGER NOT NULL,
+
+    CONSTRAINT "ChatRoom_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Message" (
+    "id" SERIAL NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "chatRoomId" INTEGER NOT NULL,
+    "senderId" INTEGER NOT NULL,
+    "senderRole" "Role" NOT NULL,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -222,6 +255,9 @@ CREATE UNIQUE INDEX "Admin_userId_key" ON "Admin"("userId");
 CREATE UNIQUE INDEX "MedicalRecord_patientId_key" ON "MedicalRecord"("patientId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "ChatRoom_patientId_doctorId_key" ON "ChatRoom"("patientId", "doctorId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_DoctorViews_AB_unique" ON "_DoctorViews"("A", "B");
 
 -- CreateIndex
@@ -240,13 +276,13 @@ ALTER TABLE "Patient" ADD CONSTRAINT "Patient_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Nurse" ADD CONSTRAINT "Nurse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Doctor" ADD CONSTRAINT "Doctor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "NurseServiceRequest" ADD CONSTRAINT "NurseServiceRequest_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "NurseServiceRequest" ADD CONSTRAINT "NurseServiceRequest_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "Nurse"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Doctor" ADD CONSTRAINT "Doctor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "DoctorPatientRequest" ADD CONSTRAINT "DoctorPatientRequest_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -276,7 +312,7 @@ ALTER TABLE "Prescription" ADD CONSTRAINT "Prescription_doctorId_fkey" FOREIGN K
 ALTER TABLE "Prescription" ADD CONSTRAINT "Prescription_pharmacyId_fkey" FOREIGN KEY ("pharmacyId") REFERENCES "Pharmacy"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -292,6 +328,15 @@ ALTER TABLE "NurseVisit" ADD CONSTRAINT "NurseVisit_patientId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "Relative" ADD CONSTRAINT "Relative_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ChatRoom" ADD CONSTRAINT "ChatRoom_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ChatRoom" ADD CONSTRAINT "ChatRoom_doctorId_fkey" FOREIGN KEY ("doctorId") REFERENCES "Doctor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_chatRoomId_fkey" FOREIGN KEY ("chatRoomId") REFERENCES "ChatRoom"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_DoctorViews" ADD CONSTRAINT "_DoctorViews_A_fkey" FOREIGN KEY ("A") REFERENCES "Doctor"("id") ON DELETE CASCADE ON UPDATE CASCADE;
