@@ -103,4 +103,24 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
+
+  // Get pending requests for doctor
+  fastify.get('/requests/pending', {
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
+    handler: async (request, reply) => {
+      try {
+        if (!request.user.doctor) {
+          reply.code(400).send({ error: 'User is not a doctor' })
+          return
+        }
+
+        const pendingRequests = await DoctorPatientService.getPendingRequests(
+          request.user.doctor.id
+        )
+        return pendingRequests
+      } catch (error) {
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
 }

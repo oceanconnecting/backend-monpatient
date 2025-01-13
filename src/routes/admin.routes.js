@@ -54,6 +54,45 @@ export async function adminRoutes(fastify) {
     }
   })
 
+  // Get all doctors
+  fastify.get('/doctors', {
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    handler: async (request, reply) => {
+      try {
+        const doctors = await AdminService.getAllDoctors()
+        return doctors
+      } catch (error) {
+        reply.code(500).send({ error: error.message })
+      }
+    }
+  })
+
+  // Get all nurses
+  fastify.get('/nurses', {
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    handler: async (request, reply) => {
+      try {
+        const nurses = await AdminService.getAllNurses()
+        return nurses
+      } catch (error) {
+        reply.code(500).send({ error: error.message })
+      }
+    }
+  })
+
+  // Get all patients
+  fastify.get('/patients', {
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    handler: async (request, reply) => {
+      try {
+        const patients = await AdminService.getAllPatients()
+        return patients
+      } catch (error) {
+        reply.code(500).send({ error: error.message })
+      }
+    }
+  })
+
   // Update user
   fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],

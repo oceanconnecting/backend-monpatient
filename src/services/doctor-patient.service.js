@@ -259,12 +259,15 @@ export class DoctorPatientService {
           include: {
             user: {
               select: {
-                email: true,
-                createdAt: true
+                email: true
               }
-            }
+            },
+            medicalRecord: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
   }

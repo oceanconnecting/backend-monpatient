@@ -41,7 +41,7 @@ export class AdminService {
         },
         admin: {
           select: {
-
+           
             name: true
           }
         }
@@ -62,6 +62,162 @@ export class AdminService {
         ...roleData
       }
     })
+  }
+
+  static async getAllDoctors() {
+    const doctors = await prisma.doctor.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
+        patients: {
+          include: {
+            patient: {
+              select: {
+                name: true,
+                location: true
+              }
+            }
+          }
+        },
+        chatRooms: true,
+        prescriptions: true,
+        medicalRecords: true
+      }
+    })
+
+    return doctors.map(doctor => ({
+      id: doctor.id,
+      userId: doctor.userId,
+      name: doctor.name,
+      specialization: doctor.specialization,
+      availability: doctor.availability,
+      rating: doctor.rating,
+      email: doctor.user.email,
+      role: doctor.user.role,
+      createdAt: doctor.user.createdAt,
+      updatedAt: doctor.user.updatedAt,
+      patientsCount: doctor.patients.length,
+      prescriptionsCount: doctor.prescriptions.length,
+      activeChatRooms: doctor.chatRooms.filter(room => room.status === 'ACTIVE').length
+    }))
+  }
+
+  static async getAllNurses() {
+    const nurses = await prisma.nurse.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
+        serviceRequests: {
+          include: {
+            patient: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        nurseVisits: true,
+        medicalRecords: true
+      }
+    })
+
+    return nurses.map(nurse => ({
+      id: nurse.id,
+      userId: nurse.userId,
+      name: nurse.name,
+      availability: nurse.availability,
+      rating: nurse.rating,
+      email: nurse.user.email,
+      role: nurse.user.role,
+      createdAt: nurse.user.createdAt,
+      updatedAt: nurse.user.updatedAt,
+      activeRequests: nurse.serviceRequests.filter(service => 
+        service.status === 'REQUESTED'
+      ).length,
+      inProgressServices: nurse.serviceRequests.filter(service => 
+        service.status === 'IN_PROGRESS'
+      ).length,
+      completedServices: nurse.serviceRequests.filter(service => 
+        service.status === 'COMPLETED'
+      ).length,
+      totalVisits: nurse.nurseVisits.length,
+      medicalRecordsCount: nurse.medicalRecords.length
+    }))
+  }
+
+  static async getAllPatients() {
+    const patients = await prisma.patient.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
+        doctors: {
+          include: {
+            doctor: {
+              select: {
+                name: true,
+                specialization: true
+              }
+            }
+          }
+        },
+        prescriptions: true,
+        medicalRecord: true,
+        nurseServiceRequests: {
+          include: {
+            nurse: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        chatRooms: true
+      }
+    })
+
+    return patients.map(patient => ({
+      id: patient.id,
+      userId: patient.userId,
+      name: patient.name,
+      location: patient.location,
+      contactInfo: patient.contactInfo,
+      email: patient.user.email,
+      role: patient.user.role,
+      createdAt: patient.user.createdAt,
+      updatedAt: patient.user.updatedAt,
+      doctorsCount: patient.doctors.length,
+      activePrescriptions: patient.prescriptions.filter(p => !p.approved).length,
+      completedPrescriptions: patient.prescriptions.filter(p => p.approved).length,
+      hasActiveNurseService: patient.nurseServiceRequests.some(service => 
+        service.status === 'IN_PROGRESS' || service.status === 'REQUESTED'
+      ),
+      activeNurseRequests: patient.nurseServiceRequests.filter(req => 
+        req.status === 'REQUESTED'
+      ).length,
+      hasMedicalRecord: !!patient.medicalRecord,
+      activeChatRooms: patient.chatRooms.filter(room => room.status === 'ACTIVE').length
+    }))
   }
 
   static async getUserById(id) {
