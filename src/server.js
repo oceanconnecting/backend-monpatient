@@ -14,14 +14,23 @@ import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 
 const fastify = Fastify({ 
-  logger: true,
+  logger: {
+    level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        translateTime: 'HH:MM:ss Z',
+        ignore: 'pid,hostname'
+      }
+    }
+  },
   trustProxy: true,
   ajv: {
     customOptions: {
-      removeAdditional: false,
+      removeAdditional: 'all',
       useDefaults: true,
       coerceTypes: true,
-      allErrors: true,
+      allErrors: true
     }
   }
 })
@@ -35,7 +44,8 @@ const httpServer = createServer(fastify.server)
 const io = new Server(httpServer, {
   cors: {
     origin: true,
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 })
 
@@ -47,11 +57,17 @@ fastify.decorate('io', io)
 
 // Register plugins
 await fastify.register(cors, {
-  origin: true // Allow all origins in development
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 })
 
 await fastify.register(jwt, {
-  secret: process.env.JWT_SECRET
+  secret: process.env.JWT_SECRET,
+  sign: {
+    expiresIn: '1d'
+  }
 })
 
 // Register authentication middleware
@@ -60,30 +76,62 @@ fastify.decorate('authenticate', createAuthMiddleware(fastify))
 // Register notification middleware
 fastify.addHook('onRequest', createNotificationMiddleware(fastify))
 
-// Register routes
-await fastify.register(authRoutes, { prefix: '/auth' })
-await fastify.register(adminRoutes, { prefix: '/admin' })
-await fastify.register(doctorPatientRoutes, { prefix: '/doctor-patient' })
-await fastify.register(nurseServiceRoutes, { prefix: '/nurse-service' })
-await fastify.register(notificationRoutes, { prefix: '/api' })
-await fastify.register(chatRoutes, { prefix: '/chat' })
+// Register routes with API versioning prefix
+const apiPrefix = '/api/v1'
+await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` })
+await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` })
+await fastify.register(doctorPatientRoutes, { prefix: `${apiPrefix}/doctor-patient` })
+await fastify.register(nurseServiceRoutes, { prefix: `${apiPrefix}/nurse-service` })
+await fastify.register(notificationRoutes, { prefix: `${apiPrefix}/notifications` })
+await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` })
 
 // Health check route
-fastify.get('/health', async (request, reply) => {
-  return { status: 'ok' }
+fastify.get('/health', {
+  schema: {
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          status: { type: 'string' },
+          timestamp: { type: 'string' }
+        }
+      }
+    }
+  }
+}, async () => {
+  return { 
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  }
 })
 
 // Error handler
-fastify.setErrorHandler((error, request, reply) => {
-  fastify.log.error(error)
+fastify.setErrorHandler(async (error, request, reply) => {
+  request.log.error(error)
   
   // Handle validation errors
   if (error.validation) {
-    reply.status(400).send({
+    return reply.status(400).send({
       error: 'Validation Error',
+      message: error.message,
+      details: error.validation
+    })
+  }
+
+  // Handle JWT errors
+  if (error.statusCode === 401) {
+    return reply.status(401).send({
+      error: 'Unauthorized',
       message: error.message
     })
-    return
+  }
+
+  // Handle Prisma errors
+  if (error.code?.startsWith('P')) {
+    return reply.status(400).send({
+      error: 'Database Error',
+      message: error.message
+    })
   }
 
   reply.status(error.statusCode || 500).send({
@@ -92,12 +140,24 @@ fastify.setErrorHandler((error, request, reply) => {
   })
 })
 
+// Close Prisma when the server shuts down
+fastify.addHook('onClose', async () => {
+  await prisma.$disconnect()
+})
+
 // For local development
 if (import.meta.url === `file://${process.argv[1]}`) {
   const start = async () => {
     try {
-      await fastify.listen({ port: process.env.PORT || 3001, host: '0.0.0.0' })
-      httpServer.listen(process.env.WS_PORT || 3002)
+      await fastify.listen({ 
+        port: process.env.PORT || 3001, 
+        host: '0.0.0.0' 
+      })
+      console.log(`Server listening at http://localhost:${process.env.PORT || 3001}`)
+      
+      httpServer.listen(process.env.WS_PORT || 3002, () => {
+        console.log(`WebSocket server listening at ws://localhost:${process.env.WS_PORT || 3002}`)
+      })
     } catch (err) {
       fastify.log.error(err)
       process.exit(1)
