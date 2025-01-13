@@ -77,7 +77,6 @@ export class DoctorPatientService {
         }
       }
     })
-
     if (!request) {
       throw new Error('Request not found')
     }
@@ -185,7 +184,6 @@ export class DoctorPatientService {
         }
       })
       console.log('Created chat room:', chatRoom)
-
       console.log('Creating notification...')
       // Create notification for patient
       await prisma.notification.create({
