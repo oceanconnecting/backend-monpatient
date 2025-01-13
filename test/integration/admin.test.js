@@ -18,7 +18,6 @@ describe('Admin Routes', () => {
   before(async () => {
     await cleanupDatabase()
     app = await createTestApp()
-
     // Create test users
     adminUser = await createTestUser('ADMIN')
     testDoctor = await createTestUser('DOCTOR')

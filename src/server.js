@@ -77,7 +77,7 @@ fastify.decorate('authenticate', createAuthMiddleware(fastify))
 fastify.addHook('onRequest', createNotificationMiddleware(fastify))
 
 // Register routes with API versioning prefix
-const apiPrefix = '/api/v1'
+const apiPrefix = '/api'
 await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` })
 await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` })
 await fastify.register(doctorPatientRoutes, { prefix: `${apiPrefix}/doctor-patient` })

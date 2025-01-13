@@ -48,7 +48,7 @@ export async function createTestApp() {
   app.addHook('onRequest', createNotificationMiddleware(app))
 
   // Register routes
-  const apiPrefix = '/api'
+const apiPrefix = '/api'
   await app.register(authRoutes, { prefix: `${apiPrefix}/auth` })
   await app.register(adminRoutes, { prefix: `${apiPrefix}/admin` })
   await app.register(doctorPatientRoutes, { prefix: `${apiPrefix}/doctor-patient` })
