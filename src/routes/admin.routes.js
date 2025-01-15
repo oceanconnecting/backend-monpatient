@@ -1,6 +1,6 @@
 import { AdminService } from '../services/admin.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
-
+console.log("admin routes")
 export async function adminRoutes(fastify) {
   // Get all users
   fastify.get('/', {
