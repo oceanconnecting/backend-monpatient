@@ -23,7 +23,25 @@ export async function authRoutes(fastify) {
         200: {
           type: 'object',
           properties: {
-            user: { type: 'object' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                createdAt: { type: 'string' },
+                updatedAt: { type: 'string' },
+                profile: { 
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    name: { type: 'string' },
+                    // Other properties will be included based on role
+                  },
+                  additionalProperties: true
+                }
+              }
+            },
             token: { type: 'string' }
           }
         }
@@ -63,7 +81,25 @@ export async function authRoutes(fastify) {
         200: {
           type: 'object',
           properties: {
-            user: { type: 'object' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                createdAt: { type: 'string' },
+                updatedAt: { type: 'string' },
+                profile: { 
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    name: { type: 'string' },
+                    // Other properties will be included based on role
+                  },
+                  additionalProperties: true
+                }
+              }
+            },
             token: { type: 'string' }
           }
         }
@@ -105,18 +141,16 @@ export async function authRoutes(fastify) {
             admin: true,
           },
         })
+
         if (!user) {
           reply.code(404).send({ error: 'User not found' })
           return
         }
-        const { password, ...userWithoutPassword } = user
-        return userWithoutPassword
+
+        return AuthService.formatUserResponse(user)
       } catch (error) {
         fastify.log.error(error)
-        reply.code(500).send({ 
-          error: 'Internal server error',
-          message: error.message 
-        })
+        reply.code(500).send({ error: 'Internal server error' })
       }
     },
   })

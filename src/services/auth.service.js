@@ -12,6 +12,16 @@ export class AuthService {
     return bcrypt.compare(password, hash)
   }
 
+  static formatUserResponse(user) {
+    const { password: _, ...userBase } = user
+    const roleData = user[user.role.toLowerCase()]
+    
+    return {
+      ...userBase,
+      profile: roleData
+    }
+  }
+
   static async register(userData) {
     const hashedPassword = await this.hashPassword(userData.password)
     
@@ -35,6 +45,7 @@ export class AuthService {
         name: userData.name
       })
     }
+
     const user = await prisma.user.create({
       data: {
         email: userData.email,
@@ -53,9 +64,7 @@ export class AuthService {
       },
     })
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user
-    return userWithoutPassword
+    return this.formatUserResponse(user)
   }
 
   static async login(email, password) {
@@ -79,8 +88,6 @@ export class AuthService {
       throw new Error('Invalid password')
     }
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user
-    return userWithoutPassword
+    return this.formatUserResponse(user)
   }
 }
