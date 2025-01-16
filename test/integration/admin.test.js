@@ -40,7 +40,6 @@ describe('Admin Routes', () => {
         url: '/api/admin/doctors',
         headers: createAuthHeader(adminToken)
       })
-
       expect(response.statusCode).to.equal(200)
       const doctors = JSON.parse(response.body)
       expect(doctors).to.be.an('array')

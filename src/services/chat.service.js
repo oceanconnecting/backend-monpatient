@@ -112,7 +112,6 @@ export class ChatService {
         : { nurseId: parseInt(participantId) }
       )
     }
-
     let room = await this.prisma.chatRoom.findFirst({ where })
 
     if (!room) {
@@ -202,6 +201,7 @@ export class ChatService {
     })
   }
 
+  
   async getUserRooms(userId, userRole) {
     const query = {
       where: {}

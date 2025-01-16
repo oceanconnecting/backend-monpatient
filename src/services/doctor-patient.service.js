@@ -17,7 +17,7 @@ export class DoctorPatientService {
     if (existingRequest) {
       throw new Error('Request already exists')
     }
-
+  
     // Get doctor and patient details for notifications
     const [doctor, patient] = await Promise.all([
       prisma.doctor.findUnique({
@@ -144,7 +144,6 @@ export class DoctorPatientService {
       if (request.status !== 'PENDING') {
         throw new Error('Request is not pending')
       }
-
       console.log('Comparing doctor IDs:', { 
         requestDoctorId: request.doctorId, 
         providedDoctorId: doctorId,
@@ -204,6 +203,62 @@ export class DoctorPatientService {
       console.error('Error in acceptRequest:', error)
       throw error
     }
+  }
+
+  static async rejectRequest(requestId, doctorId, reason = '') {
+    const request = await prisma.doctorPatientRequest.findUnique({
+      where: { id: parseInt(requestId) },
+      include: {
+        patient: {
+          include: { user: true }
+        },
+        doctor: {
+          include: { user: true }
+        }
+      }
+    })
+
+    if (!request) {
+      throw new Error('Request not found')
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new Error('Request is not pending')
+    }
+
+    if (request.doctorId !== doctorId) {
+      throw new Error('Unauthorized to reject this request')
+    }
+
+    // Update request status
+    const updatedRequest = await prisma.doctorPatientRequest.update({
+      where: { id: parseInt(requestId) },
+      data: { 
+        status: 'REJECTED',
+        message: reason || 'Request rejected by doctor'
+      },
+      include: {
+        patient: true,
+        doctor: true
+      }
+    })
+
+    // Create notification for patient
+    await prisma.notification.create({
+      data: {
+        userId: request.patient.user.id,
+        type: 'REQUEST_REJECTED',
+        title: 'Doctor Request Rejected',
+        message: `Dr. ${request.doctor.name} has rejected your request. Reason: ${reason}`,
+        metadata: {
+          requestId: request.id,
+          doctorId: doctorId,
+          doctorName: request.doctor.name
+        }
+      }
+    })
+
+    return updatedRequest
   }
 
   static async getPatientDoctors(patientId) {

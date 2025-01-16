@@ -15,14 +15,7 @@ import { createNotificationMiddleware } from './middleware/notification.middlewa
 
 const fastify = Fastify({ 
   logger: {
-    level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname'
-      }
-    }
+    level: process.env.NODE_ENV === 'development' ? 'debug' : 'info'
   },
   trustProxy: true,
   ajv: {

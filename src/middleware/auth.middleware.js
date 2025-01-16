@@ -12,7 +12,6 @@ export function createAuthMiddleware(fastify, prismaClient = defaultPrisma) {
       }
 
       const token = authHeader.replace('Bearer ', '')
-      
       if (!token) {
         reply.code(401).send({ error: 'No token provided' })
         return

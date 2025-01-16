@@ -64,6 +64,43 @@ export async function doctorPatientRoutes(fastify) {
     }
   })
 
+  // Reject request
+  fastify.post('/request/:requestId/reject', {
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['requestId'],
+        properties: {
+          requestId: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string' }
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        if (!request.user.doctor) {
+          reply.code(400).send({ error: 'User is not a doctor' })
+          return
+        }
+
+        const result = await DoctorPatientService.rejectRequest(
+          request.params.requestId,
+          request.user.doctor.id,
+          request.body.reason
+        )
+        reply.code(200).send(result)
+      } catch (error) {
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
+
   // Get doctor's patients
   fastify.get('/patients', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],

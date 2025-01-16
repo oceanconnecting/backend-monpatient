@@ -55,7 +55,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-
   // Get room messages
   fastify.get('/room/:roomId/messages', {
     onRequest: [fastify.authenticate],
