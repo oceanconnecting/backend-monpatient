@@ -43,7 +43,6 @@ export class DoctorPatientService {
         doctor: true
       }
     })
-
     // Create notification for doctor
     await prisma.notification.create({
       data: {

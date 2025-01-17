@@ -79,7 +79,7 @@ await fastify.register(notificationRoutes, { prefix: `${apiPrefix}/notifications
 await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` })
 
 // Health check route
-fastify.get('/health', {
+fastify.get('/', {
   schema: {
     response: {
       200: {

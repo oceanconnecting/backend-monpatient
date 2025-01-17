@@ -21,7 +21,6 @@ export async function chatRoutes(fastify, options) {
         if (request.user.role !== 'PATIENT') {
           throw new Error('Only patients can initiate chats')
         }
-        
         if (!request.user.patient || !request.user.patient.id) {
           throw new Error('Patient data not found')
         }

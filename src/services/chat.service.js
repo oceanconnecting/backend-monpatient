@@ -103,28 +103,46 @@ export class ChatService {
 
     return room.patient.user.id === userId || room.doctor.user.id === userId
   }
-
   async createOrGetRoom(patientId, participantId, participantRole) {
+    // Get the participant's profile ID
+    const participant = await this.prisma.user.findUnique({
+      where: { id: parseInt(participantId) },
+      include: {
+        doctor: participantRole === 'DOCTOR' ? true : false,
+        nurse: participantRole === 'NURSE' ? true : false
+      }
+    });
+
+    if (!participant) {
+      throw new Error('Participant not found');
+    }
+
+    const profileId = participantRole === 'DOCTOR' ? participant.doctor?.id : participant.nurse?.id;
+    if (!profileId) {
+      throw new Error(`Participant is not a ${participantRole}`);
+    }
+
     const where = {
       patientId: parseInt(patientId),
       ...(participantRole === 'DOCTOR' 
-        ? { doctorId: parseInt(participantId) }
-        : { nurseId: parseInt(participantId) }
+        ? { doctorId: profileId }
+        : { nurseId: profileId }
       )
     }
     let room = await this.prisma.chatRoom.findFirst({ where })
 
     if (!room) {
       room = await this.prisma.chatRoom.create({
-        data: where,
+        data: {
+          ...where,
+          status: 'ACTIVE'
+        },
         include: {
           patient: true,
-          doctor: true,
-          nurse: true
+          doctor: true
         }
       })
     }
-
     return room
   }
 
@@ -201,7 +219,7 @@ export class ChatService {
     })
   }
 
-  
+
   async getUserRooms(userId, userRole) {
     const query = {
       where: {}
@@ -225,10 +243,31 @@ export class ChatService {
       ...query,
       include: {
         patient: {
-          include: { user: true }
+          include: { user: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          } }
         },
         doctor: {
-          include: { user: true }
+          include: { user:{
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }}
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'asc'
+          }
         }
       }
     })
