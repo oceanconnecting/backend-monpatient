@@ -18,8 +18,7 @@
     "@fastify/cors": "^8.4.1",
     "@fastify/jwt": "^7.2.4",
     "@prisma/client": "^5.7.0",
-    "bcryptjs": "^5.1.1",
-    "bcryptjsjs": "^2.4.3",
+    "bcryptjs": "^2.4.3",
     "fastify": "^4.24.0",
     "socket.io": "^4.8.1"
   },
