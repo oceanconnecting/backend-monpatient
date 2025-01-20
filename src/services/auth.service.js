@@ -1,15 +1,15 @@
-import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 export class AuthService {
   static async hashPassword(password) {
-    return bcrypt.hash(password, 10)
+    return bcryptjs.hash(password, 10)
   }
 
   static async verifyPassword(password, hash) {
-    return bcrypt.compare(password, hash)
+    return bcryptjs.compare(password, hash)
   }
 
   static formatUserResponse(user) {
