@@ -70,7 +70,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-
   // Send message
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -94,6 +93,22 @@ export async function chatRoutes(fastify, options) {
         return message
       } catch (error) {
         console.error('Error sending message:', error)
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
+  // Mark messages as read
+  fastify.post('/room/:roomId/messages/read', {
+    onRequest: [fastify.authenticate],
+    handler: async (request, reply) => {
+      try {
+        await chatService.markMessagesAsRead(
+          request.params.roomId,
+          request.user.id
+        )
+        return { success: true }
+      } catch (error) {
+        console.error('Error marking messages as read:', error)
         reply.code(400).send({ error: error.message })
       }
     }

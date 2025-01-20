@@ -23,7 +23,6 @@ describe('Notification Routes', () => {
   before(async () => {
     await cleanupDatabase()
     app = await createTestApp()
-
     // Create test users
     adminUser = await createTestUser('ADMIN')
     patientUser = await createTestUser('PATIENT')

@@ -33,7 +33,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Accept request
   fastify.post('/request/:requestId/accept', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
@@ -63,7 +62,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Reject request
   fastify.post('/request/:requestId/reject', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
@@ -100,7 +98,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Get doctor's patients
   fastify.get('/patients', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
@@ -120,7 +117,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Get patient's doctors
   fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
@@ -140,7 +136,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Get pending requests for doctor
   fastify.get('/requests/pending', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],

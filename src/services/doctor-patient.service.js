@@ -80,6 +80,15 @@ export class DoctorPatientService {
       throw new Error('Request not found')
     }
 
+    if (request.status !== 'PENDING') {
+      throw new Error('Request is not pending')
+    }
+
+    if (request.doctorId !== doctorId) {
+      throw new Error('Unauthorized to update this request')
+    }
+
+    // Update request status
     const updatedRequest = await prisma.doctorPatientRequest.update({
       where: { id: parseInt(requestId) },
       data: { status },
@@ -134,7 +143,8 @@ export class DoctorPatientService {
           }
         }
       })
-      console.log('Found request:', request)
+
+      console.log('Fetched request:', request)
 
       if (!request) {
         throw new Error('Request not found')

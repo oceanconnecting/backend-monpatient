@@ -5,7 +5,7 @@ export class ChatService {
     this.io = io
     this.prisma = new PrismaClient()
     this.connectedUsers = new Map()
-    
+
     if (io) {
       this.fastify = io.fastify // Get fastify instance from Socket.IO
       io.use(this.authenticateSocket.bind(this))
@@ -25,7 +25,6 @@ export class ChatService {
       next(new Error('Authentication failed'))
     }
   }
-
   handleConnection(socket) {
     console.log('New client connected:', socket.user.email)
     const userId = socket.user.id
@@ -147,13 +146,30 @@ export class ChatService {
   }
 
   async sendMessage(roomId, senderId, senderRole, content) {
-    const room = await this.prisma.chatRoom.findUnique({
+    // Get the sender's profile ID
+    const sender = await this.prisma.user.findUnique({
+      where: { id: parseInt(senderId) },
+      include: {
+        patient: true,
+        doctor: true
+      }
+    });
+
+    if (!sender) {
+      throw new Error('Sender not found');
+    }
+
+    const profileId = senderRole === 'PATIENT' ? sender.patient?.id : sender.doctor?.id;
+    if (!profileId) {
+      throw new Error(`Sender is not a ${senderRole}`);
+    }
+
+    const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: parseInt(roomId),
         OR: [
-          { patientId: parseInt(senderId) },
-          { doctorId: parseInt(senderId) },
-          { nurseId: parseInt(senderId) }
+          { patientId: profileId },
+          { doctorId: profileId }
         ]
       }
     })
@@ -164,37 +180,29 @@ export class ChatService {
 
     const message = await this.prisma.message.create({
       data: {
-        roomId: parseInt(roomId),
-        senderId: parseInt(senderId),
+        content,
+        isRead: false,
         senderRole,
-        content
-      },
-      include: {
-        room: {
-          include: {
-            patient: { select: { name: true } },
-            doctor: { select: { name: true } },
-            nurse: { select: { name: true } }
+        senderId: parseInt(senderId),
+        chatRoom: {
+          connect: {
+            id: parseInt(roomId)
           }
         }
+      },
+      include: {
+        chatRoom: true
       }
-    })
-
-    // Update room's last message timestamp
-    await this.prisma.chatRoom.update({
-      where: { id: parseInt(roomId) },
-      data: { lastMessageAt: new Date() }
     })
 
     return message
   }
-
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
       where: {
         roomId: parseInt(roomId),
         senderId: { not: parseInt(userId) },
-        isRead: false
+        
       },
       data: {
         isRead: true,
@@ -204,21 +212,51 @@ export class ChatService {
   }
 
   async getRoomMessages(roomId, userId) {
-    const canJoin = await this.canUserJoinRoom(userId, roomId)
-    if (!canJoin) {
-      throw new Error('Unauthorized to access this chat room')
+    // Get the user's profile
+    const user = await this.prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: {
+        patient: true,
+        doctor: true
+      }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    return this.prisma.message.findMany({
+    const profileId = user.patient?.id || user.doctor?.id;
+    if (!profileId) {
+      throw new Error('User profile not found');
+    }
+
+    // Check if user has access to the room
+    const room = await this.prisma.chatRoom.findFirst({
       where: {
-        roomId: parseInt(roomId)
+        id: parseInt(roomId),
+        OR: [
+          { patientId: profileId },
+          { doctorId: profileId }
+        ]
+      }
+    });
+
+    if (!room) {
+      throw new Error('Chat room not found or user not authorized');
+    }
+
+    // Get messages
+    const messages = await this.prisma.message.findMany({
+      where: {
+        chatRoomId: parseInt(roomId)
       },
       orderBy: {
         createdAt: 'asc'
       }
-    })
-  }
+    });
 
+    return messages;
+  }
 
   async getUserRooms(userId, userRole) {
     const query = {

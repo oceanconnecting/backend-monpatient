@@ -256,5 +256,7 @@ model Message {
   chatRoom    ChatRoom  @relation(fields: [chatRoomId], references: [id])
   chatRoomId  Int
   senderId    Int
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
   senderRole  Role
 }
