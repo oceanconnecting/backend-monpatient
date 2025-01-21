@@ -14,7 +14,6 @@ export async function nurseServiceRoutes(fastify) {
           description: { type: 'string' },
           preferredDate: { type: 'string', format: 'date-time' },
           urgency: { type: 'string', enum: ['Low', 'Medium', 'High'] },
-          location: { type: 'string' }
         }
       }
     },

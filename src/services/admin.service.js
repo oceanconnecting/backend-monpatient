@@ -119,8 +119,7 @@ export class AdminService {
           include: {
             patient: {
               select: {
-                name: true,
-                location: true
+                name: true
               }
             }
           }
@@ -208,7 +207,7 @@ export class AdminService {
         select: {
           
           name: true,
-          location: true,
+         
           contactInfo: true
         }
       },
@@ -270,7 +269,6 @@ export class AdminService {
         patient: {
           select: {
             name: true,
-            location: true,
             contactInfo: true
           }
         },
@@ -351,8 +349,7 @@ export class AdminService {
     const roleUpdateData = {
       name: userData.name,
       ...(roleModel === 'patient' && {
-        location: userData.location,
-        contactInfo: userData.contactInfo
+        name: userData.name,
       }),
       ...(roleModel === 'doctor' && {
         specialization: userData.specialization
@@ -384,8 +381,6 @@ export class AdminService {
           select: {
             id: true,
             name: true,
-            location: true,
-            contactInfo: true
           }
         },
         nurse: {
@@ -634,8 +629,6 @@ export class AdminService {
       id: patient.id,
       userId: patient.userId,
       name: patient.name,
-      location: patient.location,
-      contactInfo: patient.contactInfo,
       email: patient.user.email,
       role: patient.user.role,
       createdAt: patient.user.createdAt,

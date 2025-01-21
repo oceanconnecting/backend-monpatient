@@ -76,8 +76,7 @@ export async function adminRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+       
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -108,8 +107,7 @@ export async function adminRoutes(fastify) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+      
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -192,8 +190,7 @@ export async function adminRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+    
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -225,8 +222,6 @@ export async function adminRoutes(fastify) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
           specialization: { type: 'string' },
           availability: { type: 'boolean' },
         },
@@ -294,8 +289,8 @@ export async function adminRoutes(fastify) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+        
+       
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -327,8 +322,6 @@ export async function adminRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -436,8 +429,7 @@ export async function adminRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+        
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -469,8 +461,7 @@ export async function adminRoutes(fastify) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+        
           specialization: { type: 'string' },
           availability: { type: 'boolean' },
         },
@@ -564,8 +555,7 @@ export async function adminRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+         
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -617,8 +607,7 @@ export async function adminRoutes(fastify) {
         email: { type: 'string', format: 'email' },
         password: { type: 'string', minLength: 6 },
         name: { type: 'string' },
-        location: { type: 'string' },
-        contactInfo: { type: 'string' },
+     
         specialization: { type: 'string' },
         availability: { type: 'boolean' },
       },

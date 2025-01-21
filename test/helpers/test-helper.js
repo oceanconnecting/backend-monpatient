@@ -99,8 +99,6 @@ export async function createTestUser(role, email = null) {
       roleData = await prisma.patient.create({
         data: {
           name: 'Test Patient',
-          location: 'Test Location',
-          contactInfo: '+1234567890',
           userId: user.id
         }
       })

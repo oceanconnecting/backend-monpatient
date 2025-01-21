@@ -47,8 +47,6 @@ describe('Doctor-Patient Chat Flow', () => {
     testPatient = await prisma.patient.create({
       data: {
         name: 'Test Patient',
-        location: 'Test Location',
-        contactInfo: '1234567890',
         userId: patientUser.id
       }
     })

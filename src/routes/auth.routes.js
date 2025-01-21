@@ -14,8 +14,8 @@ export async function authRoutes(fastify) {
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          location: { type: 'string' },
-          contactInfo: { type: 'string' },
+       
+    
           specialization: { type: 'string' },
         },
       },

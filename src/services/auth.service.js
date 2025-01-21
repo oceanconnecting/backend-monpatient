@@ -28,8 +28,7 @@ export class AuthService {
     const roleData = {
       name: userData.name,
       ...(userData.role === 'PATIENT' && {
-        location: userData.location,
-        contactInfo: userData.contactInfo,
+        name: userData.name,
       }),
       ...(userData.role === 'DOCTOR' && {
         specialization: userData.specialization,
