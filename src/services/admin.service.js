@@ -359,9 +359,11 @@ export class AdminService {
       }),
       ...(roleModel === 'nurse' && {
         availability: userData.availability
+      }),
+      ...(roleModel === 'admin' && {
+        name: userData.name
       })
     }
-
     // Update both user and role data
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },

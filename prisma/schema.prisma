@@ -52,7 +52,6 @@ model User {
 model Patient {
   id            Int             @id @default(autoincrement())
   name          String
-
   user          User            @relation(fields: [userId], references: [id],onDelete: Cascade)
   userId        Int             @unique
   medicalRecord MedicalRecord?
