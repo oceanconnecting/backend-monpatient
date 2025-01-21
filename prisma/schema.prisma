@@ -264,19 +264,7 @@ model ChatRoomPatientNurse {
   @@unique([patientId, nurseId])
 }
 
-// model Message {
-//   id          Int       @id @default(autoincrement())
-//   content     String
-//   createdAt   DateTime  @default(now())
-//   chatRoom    ChatRoom  @relation(fields: [chatRoomId], references: [id])
-//   ChatRoomPatientNurse ChatRoomPatientNurse @relation(fields: [chatRoomPatientNurseId], references: [id])
-//   chatRoomId  Int
-//   chatRoomPatientNurseId Int
-//   senderId    Int
-//   isRead      Boolean   @default(false)
-//   readAt      DateTime?
-//   senderRole  Role
-// }
+
 model Message {
   id          Int       @id @default(autoincrement())
   content     String
