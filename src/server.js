@@ -10,6 +10,7 @@ import { doctorPatientRoutes } from './routes/doctor-patient.routes.js'
 import { nurseServiceRoutes } from './routes/nurse-service.routes.js'
 import { notificationRoutes } from './routes/notification.routes.js'
 import { chatRoutes } from './routes/chat.routes.js'
+import { chatPatientNurseRoutes } from './routes/chat-pationt-nurse.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 
@@ -77,6 +78,7 @@ await fastify.register(doctorPatientRoutes, { prefix: `${apiPrefix}/doctor-patie
 await fastify.register(nurseServiceRoutes, { prefix: `${apiPrefix}/nurse-service` })
 await fastify.register(notificationRoutes, { prefix: `${apiPrefix}/notifications` })
 await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` })
+await fastify.register(chatPatientNurseRoutes, { prefix: `${apiPrefix}/chat-patient-nurse` })
 
 //check route
 fastify.get('/', {

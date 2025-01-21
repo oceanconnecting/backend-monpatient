@@ -107,8 +107,7 @@ export class ChatService {
     const participant = await this.prisma.user.findUnique({
       where: { id: parseInt(participantId) },
       include: {
-        doctor: participantRole === 'DOCTOR' ? true : false,
-        nurse: participantRole === 'NURSE' ? true : false
+        doctor: participantRole === 'DOCTOR' ? true : false
       }
     });
 
@@ -116,17 +115,14 @@ export class ChatService {
       throw new Error('Participant not found');
     }
 
-    const profileId = participantRole === 'DOCTOR' ? participant.doctor?.id : participant.nurse?.id;
+    const profileId = participant.doctor?.id;
     if (!profileId) {
       throw new Error(`Participant is not a ${participantRole}`);
     }
 
     const where = {
       patientId: parseInt(patientId),
-      ...(participantRole === 'DOCTOR' 
-        ? { doctorId: profileId }
-        : { nurseId: profileId }
-      )
+      doctorId: profileId
     }
     let room = await this.prisma.chatRoom.findFirst({ where })
 
