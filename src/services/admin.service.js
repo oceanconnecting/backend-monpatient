@@ -206,7 +206,6 @@ export class AdminService {
       updatedAt: true,
       patient: {
         select: {
-          
           name: true,
           location: true,
           contactInfo: true
@@ -321,7 +320,6 @@ export class AdminService {
       ...roleSpecificData
     }
   }
-  
   static async updateUser(id, userData) {
     const existingUser = await prisma.user.findUnique({
       where: { id: parseInt(id) },
@@ -445,7 +443,6 @@ export class AdminService {
 
     return { message: 'User deleted successfully' }
   }
-
   // pharmacies
   static async getAllPharmacies() {
     const pharmacies = await prisma.pharmacy.findMany({

@@ -12,7 +12,7 @@ export async function chatRoutes(fastify, options) {
         required: ['participantId', 'participantRole'],
         properties: {
           participantId: { type: 'number' },
-          participantRole: { type: 'string', enum: ['DOCTOR', 'NURSE'] }
+          participantRole: { type: 'string', enum: ['DOCTOR'] }
         }
       }
     },
