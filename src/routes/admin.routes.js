@@ -564,7 +564,7 @@ export async function adminRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['email', 'password', 'name', 'role'],
+        required: ['name', 'location'],
         properties: {
           name: { type: 'string' },
           location: { type: 'string' },
