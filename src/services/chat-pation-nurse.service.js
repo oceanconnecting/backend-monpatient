@@ -23,9 +23,7 @@ export class ChatServicePatientNurse {
     } catch (error) {
       next(new Error('Authentication failed'));
     }
-  }
-
-  handleConnection(socket) {
+  } handleConnection(socket) {
     console.log('New client connected:', socket.user.email);
     const userId = socket.user.id;
     this.connectedUsers.set(userId, socket.id);
@@ -130,48 +128,6 @@ export class ChatServicePatientNurse {
     return room;
   }
 
-  // async sendMessage(roomId, senderId, senderRole, content) {
-  //   // Validate sender role (must be either PATIENT or NURSE)
-  //   if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {
-  //     throw new Error('Invalid sender role');
-  //   }
-  
-  //   // Check if the room exists and the sender is part of it
-  //   const room = await this.prisma.chatRoomPatientNurse.findFirst({
-  //     where: {
-  //       id: parseInt(roomId),
-  //       OR: [
-  //         { patientId: senderRole === 'PATIENT' ? parseInt(senderId) : undefined },
-  //         { nurseId: senderRole === 'NURSE' ? parseInt(senderId) : undefined },
-  //       ],
-  //     },
-  //   });
-  
-  //   if (!room) {
-  //     throw new Error('Chat room not found or user not authorized');
-  //   }
-  
-  //   // Create the message
-  //   const message = await this.prisma.message.create({
-  //     data: {
-  //       content,
-  //       isRead: false,
-  //       senderRole,
-  //       senderId: parseInt(senderId),
-  //       chatRoomPatientNurse: {
-  //         connect: {
-  //           id: parseInt(roomId),
-  //         },
-  //       },
-  //     },
-  //     include: {
-  //       chatRoomPatientNurse: true,
-  //     },
-  //   });
-  
-  //   return message;
-  // }
-
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
       where: {
@@ -185,6 +141,7 @@ export class ChatServicePatientNurse {
       },
     });
   }
+
   async sendMessage(roomId, senderId, senderRole, content) {
     // Validate sender role
     if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {
@@ -245,6 +202,7 @@ export class ChatServicePatientNurse {
   
     return message;
   }
+
   async getRoomMessages(roomId, userId) {
     // Check if the user has access to the room
     const room = await this.prisma.chatRoomPatientNurse.findFirst({
@@ -273,7 +231,7 @@ export class ChatServicePatientNurse {
 
     return messages;
   }
-
+  
   async getUserRooms(userId, userRole) {
     const query = {
       where: {},

@@ -60,7 +60,7 @@ await fastify.register(cors, {
 await fastify.register(jwt, {
   secret: process.env.JWT_SECRET,
   sign: {
-    expiresIn: '1d'
+    expiresIn: '20d'
   }
 })
 

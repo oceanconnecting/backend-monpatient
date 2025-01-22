@@ -195,7 +195,7 @@ export class AdminService {
     return doctor
   }
   //users
-  static async getAllUsers() {
+   static async getAllUsers() {
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -206,8 +206,6 @@ export class AdminService {
       patient: {
         select: {
           name: true,
-         
-          contactInfo: true
         }
       },
       nurse: {
@@ -251,8 +249,8 @@ export class AdminService {
       ...roleData
     }
   })
-  }
-  static async getUserById(id) {
+   }
+   static async getUserById(id) {
     if (!id || isNaN(parseInt(id))) {
       throw new Error('Invalid user ID')
     }
@@ -317,8 +315,8 @@ export class AdminService {
       ...baseUser,
       ...roleSpecificData
     }
-  }
-  static async updateUser(id, userData) {
+   }
+   static async updateUser(id, userData) {
     const existingUser = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -423,8 +421,8 @@ export class AdminService {
       ...baseUser,
       ...roleSpecificData
     }
-  }
-  static async deleteUser(id) {
+   }
+   static async deleteUser(id) {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) }
     })
@@ -439,9 +437,9 @@ export class AdminService {
     })
 
     return { message: 'User deleted successfully' }
-  }
-  // pharmacies
-  static async getAllPharmacies() {
+   }
+  //pharmacies
+   static async getAllPharmacies() {
     const pharmacies = await prisma.pharmacy.findMany({
       include: {
         user: {
@@ -472,8 +470,8 @@ export class AdminService {
       prescriptionsCount: pharmacy.prescriptions.length,
       medicalRecordsCount: pharmacy.medicalRecords.length
     }))
-  }
-  static async updatePharmacyById(id, data) {
+   }
+   static async updatePharmacyById(id, data) {
   if (!id || isNaN(parseInt(id))) {
     throw new Error('Invalid pharmacy ID')
   }
@@ -489,8 +487,8 @@ export class AdminService {
     where: { id: parseInt(id) },
     data
   })
-  }
-  static async deletePharmacy(id) {
+   }
+   static async deletePharmacy(id) {
   const pharmacy = await prisma.pharmacy.findUnique({
     where: { id: parseInt(id) }
   })
@@ -504,8 +502,8 @@ export class AdminService {
     where: { id: parseInt(id) }
   })
   return { message: 'Pharmacy deleted successfully' }
-  }
-  static async getPharmacyById(id){
+   }
+   static async getPharmacyById(id){
   if(!id || isNaN(parseInt(id))){
     throw new Error('Invalid user ID')
   }
@@ -516,9 +514,9 @@ export class AdminService {
     }
   })
   return pharmacy
-  }
+   }
   //admins
-  static async getAllAdmins() {
+   static async getAllAdmins() {
     const admins = await prisma.admin.findMany({
       include: {
         user: {
@@ -542,8 +540,8 @@ export class AdminService {
       createdAt: admin.user.createdAt,
       updatedAt: admin.user.updatedAt
     }))
-  } 
-  static async updateAdminById(id, data) {
+   } 
+   static async updateAdminById(id, data) {
   if (!id || isNaN(parseInt(id))) {
     throw new Error('Invalid admin ID')
   }
@@ -558,8 +556,8 @@ export class AdminService {
       where: { id: parseInt(id) },
       data
     })
-  }
-  static async deleteAdmin(id) {
+   }
+   static async deleteAdmin(id) {
     const admin = await prisma.admin.findUnique({
       where: { id: parseInt(id) }
     })
@@ -573,8 +571,8 @@ export class AdminService {
       where: { id: parseInt(id) }
     })
     return { message: 'Admin deleted successfully' }
-  }
-  static async getAdminByid(id){
+   }
+   static async getAdminByid(id){
     if(!id || isNaN(parseInt(id))){
       throw new Error('Invalid user ID')
     }
@@ -585,9 +583,9 @@ export class AdminService {
       }
     })
     return admin
-  }
+   }
   //patients
-  static async getAllPatients() {
+   static async getAllPatients() {
     const patients = await prisma.patient.findMany({
       include: {
         user: {
@@ -644,8 +642,8 @@ export class AdminService {
       hasMedicalRecord: !!patient.medicalRecord,
       activeChatRooms: patient.chatRooms.filter(room => room.status === 'ACTIVE').length
     }))
-  }
-  static async getPatientByid(id){
+   }
+   static async getPatientByid(id){
     if(!id || isNaN(parseInt(id))){
       throw new Error('Invalid user ID')
     }
@@ -678,8 +676,8 @@ export class AdminService {
       }
     })
     return patient
-  }
-  static async updatePatientById(id, data) {
+   }
+   static async updatePatientById(id, data) {
   if (!id || isNaN(parseInt(id))) {
     throw new Error('Invalid patient ID')
   }
@@ -694,8 +692,8 @@ export class AdminService {
       where: { id: parseInt(id) },
       data
     })
-  }
-  static async deletePatientById(id) {
+   }
+   static async deletePatientById(id) {
   if (!id || isNaN(parseInt(id))) {
     throw new Error('Invalid patient ID')
   }
@@ -708,5 +706,5 @@ export class AdminService {
   return await prisma.patient.delete({
     where: { id: parseInt(id) }
   })
-  } 
+   } 
 }

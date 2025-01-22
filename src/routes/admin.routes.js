@@ -2,7 +2,8 @@ import { AdminService } from '../services/admin.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
 console.log("admin routes")
 export async function adminRoutes(fastify) {
-  //  users
+  //users
+
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -142,7 +143,8 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-  // doctors
+
+  //doctors
   fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
@@ -267,6 +269,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   // nurses
   fastify.get('/nurses', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
@@ -279,6 +282,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.post("/nurses", {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -305,6 +309,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.put('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -336,6 +341,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.delete('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -356,6 +362,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.get('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -381,7 +388,8 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-  // patients
+
+  //patients
   fastify.get('/patients', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
@@ -393,6 +401,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.get('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -418,6 +427,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.post('/patients', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -444,6 +454,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   fastify.put('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -487,6 +498,7 @@ export async function adminRoutes(fastify) {
       return reply.code(400).send({ error: error.message });
     }
   });
+
   fastify.delete('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -506,9 +518,10 @@ export async function adminRoutes(fastify) {
       reply.code(500).send({ error: error.message })
     }
   }
-})
+  })
+
   //pharmacies
-  fastify.get('/pharmacies', {
+   fastify.get('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
@@ -518,8 +531,9 @@ export async function adminRoutes(fastify) {
         reply.code(500).send({ error: error.message })
       }
     }
-  })
-  fastify.get('/pharmacies/:id', {
+   })
+
+   fastify.get('/pharmacies/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
       params: {
@@ -543,8 +557,9 @@ export async function adminRoutes(fastify) {
         reply.code(500).send({ error: error.message })
       }
     }
-  })
-  fastify.post('/pharmacies', {
+   })
+
+   fastify.post('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
       body: {
@@ -569,8 +584,9 @@ export async function adminRoutes(fastify) {
         reply.code(400).send({ error: error.message })
       }
     }
-  })
-  fastify.delete('/pharmacies/:id', {
+   })
+
+   fastify.delete('/pharmacies/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
       params: {
@@ -589,8 +605,9 @@ export async function adminRoutes(fastify) {
       reply.code(500).send({ error: error.message })
     }
   }
-  })
-  fastify.put('/pharmacies/:id', {
+   })
+
+   fastify.put('/pharmacies/:id', {
   onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
   schema: {
     params: {
@@ -633,5 +650,5 @@ export async function adminRoutes(fastify) {
     request.log.error(error);
     return reply.code(400).send({ error: error.message });
   }
-  });
+   });
 }

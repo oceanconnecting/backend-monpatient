@@ -54,6 +54,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+  
   // Get room messages
   fastify.get('/room/:roomId/messages', {
     onRequest: [fastify.authenticate],
@@ -70,6 +71,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Send message
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -97,6 +99,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Mark messages as read
   fastify.post('/room/:roomId/messages/read', {
     onRequest: [fastify.authenticate],
