@@ -40,11 +40,11 @@ model User {
   role            Role
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  patient         Patient?
-  nurse           Nurse?
-  doctor          Doctor?
-  pharmacy        Pharmacy?
-  admin           Admin?
+  patient         Patient[]
+  nurse           Nurse[]
+  doctor          Doctor[]
+  pharmacy        Pharmacy[]
+  admin           Admin[]
   notifications   Notification[]
   notificationReads NotificationRead[]
 }
@@ -53,7 +53,7 @@ model Patient {
   id            Int             @id @default(autoincrement())
   name          String
   user          User            @relation(fields: [userId], references: [id],onDelete: Cascade)
-  userId        Int             @unique
+  userId        Int            
   medicalRecord MedicalRecord?
   prescriptions Prescription[]  @relation("PatientPrescriptions")
   nurseVisits   NurseVisit[]
@@ -71,7 +71,7 @@ model Nurse {
   availability  Boolean     @default(true)
   rating        Float       @default(0)
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        Int         @unique
+  userId        Int      
   nurseVisits   NurseVisit[]
   medicalRecords MedicalRecord[] @relation("NurseUpdates")
   serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
@@ -85,7 +85,7 @@ model Doctor {
   availability    Boolean       @default(true)
   rating          Float         @default(0)
   user            User          @relation(fields: [userId], references: [id])
-  userId          Int           @unique
+  userId          Int          
   patients        DoctorPatient[]        @relation("DoctorPatients")
   patientRequests DoctorPatientRequest[] @relation("DoctorRequests")
   medicalRecords  MedicalRecord[]        @relation("DoctorViews")
@@ -145,7 +145,7 @@ model Pharmacy {
   name            String
   location        String
   user            User          @relation(fields: [userId], references: [id])
-  userId          Int           @unique
+  userId          Int           
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
 }
 
@@ -153,7 +153,7 @@ model Admin {
   id        Int      @id @default(autoincrement())
   name      String
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int      @unique
+  userId    Int    
   reports   Report[]
 }
 
