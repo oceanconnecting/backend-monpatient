@@ -1,5 +1,6 @@
 import { AdminService } from '../services/admin.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
+import { Role } from '@prisma/client'
 console.log("admin routes")
 export async function adminRoutes(fastify) {
   //users
@@ -293,9 +294,6 @@ export async function adminRoutes(fastify) {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-        
-       
-          specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
       }
@@ -433,13 +431,9 @@ export async function adminRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['email', 'password', 'name', 'role'],
+        required: ['name', 'role'],
         properties: {
-          email: { type: 'string', format: 'email' },
-          password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
-          role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-        
+          name: { type: 'string' },      
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -603,8 +597,8 @@ export async function adminRoutes(fastify) {
    })
 
    fastify.put('/pharmacies/:id', {
-  onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
-  schema: {
+   onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+   schema: {
     params: {
       type: 'object',
       required: ['id'],
@@ -616,12 +610,8 @@ export async function adminRoutes(fastify) {
       type: 'object',
       required: [], // Specify required fields if necessary
       properties: {
-        email: { type: 'string', format: 'email' },
-        password: { type: 'string', minLength: 6 },
         name: { type: 'string' },
-     
-        specialization: { type: 'string' },
-        availability: { type: 'boolean' },
+        location: { type: 'string' },
       },
       additionalProperties: false, // Restrict extra fields
     },

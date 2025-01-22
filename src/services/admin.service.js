@@ -111,6 +111,7 @@ export class AdminService {
             id: true,
             email: true,
             role: true,
+            name:true,
             createdAt: true,
             updatedAt: true
           }
