@@ -566,13 +566,8 @@ export async function adminRoutes(fastify) {
         type: 'object',
         required: ['email', 'password', 'name', 'role'],
         properties: {
-          email: { type: 'string', format: 'email' },
-          password: { type: 'string', minLength: 6 },
           name: { type: 'string' },
-          role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-         
-          specialization: { type: 'string' },
-          availability: { type: 'boolean' }
+          location: { type: 'string' },
         }
       }
     },

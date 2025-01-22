@@ -34,7 +34,7 @@ export class AuthService {
         specialization: userData.specialization,
       }),
       ...(userData.role === 'PHARMACY' && {
-        location: userData.location,
+        name: userData.name,
       }),
       ...(userData.role === 'NURSE' && {
         availability: true,
