@@ -102,6 +102,7 @@ export class AdminService {
     })
     return nurse
   }
+  
   //doctors
   static async getAllDoctors() {
     const doctors = await prisma.doctor.findMany({
@@ -195,6 +196,7 @@ export class AdminService {
     })
     return doctor
   }
+
   //users
    static async getAllUsers() {
   const users = await prisma.user.findMany({
@@ -439,6 +441,7 @@ export class AdminService {
 
     return { message: 'User deleted successfully' }
    }
+
   //pharmacies
    static async getAllPharmacies() {
     const pharmacies = await prisma.pharmacy.findMany({
@@ -516,6 +519,7 @@ export class AdminService {
   })
   return pharmacy
    }
+
   //admins
    static async getAllAdmins() {
     const admins = await prisma.admin.findMany({
@@ -585,6 +589,7 @@ export class AdminService {
     })
     return admin
    }
+
   //patients
    static async getAllPatients() {
     const patients = await prisma.patient.findMany({
@@ -708,4 +713,5 @@ export class AdminService {
     where: { id: parseInt(id) }
   })
    } 
+
 }

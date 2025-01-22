@@ -29,6 +29,7 @@ export async function authRoutes(fastify) {
                 id: { type: 'number' },
                 email: { type: 'string' },
                 role: { type: 'string' },
+                name: { type: 'string' },
                 createdAt: { type: 'string' },
                 updatedAt: { type: 'string' },
                 profile: { 
@@ -49,20 +50,20 @@ export async function authRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const user = await AuthService.register(request.body)
-        const token = fastify.jwt.sign({ 
-          id: user.id, 
-          email: user.email, 
-          role: user.role 
-        })
-        
-        return { user, token }
+        const user = await AuthService.register(request.body);
+        const token = fastify.jwt.sign({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        });
+    
+        return { user, token };
       } catch (error) {
-        fastify.log.error(error)
-        reply.code(400).send({ 
+        fastify.log.error(error);
+        reply.code(400).send({
           error: 'Registration failed',
-          message: error.message 
-        })
+          message: error.message,
+        });
       }
     },
   })
@@ -96,32 +97,36 @@ export async function authRoutes(fastify) {
                     name: { type: 'string' },
                     // Other properties will be included based on role
                   },
+                  
                   additionalProperties: true
                 }
               }
             },
+           
             token: { type: 'string' }
           }
         }
+        
       }
     },
     handler: async (request, reply) => {
       try {
-        const { email, password } = request.body
-        const user = await AuthService.login(email, password)
-        const token = fastify.jwt.sign({ 
-          id: user.id, 
-          email: user.email, 
-          role: user.role 
-        })
-        
-        return { user, token }
+        const { email, password } = request.body;
+        const user = await AuthService.login(email, password);
+        const token = fastify.jwt.sign({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: user.profile.name,
+        });
+    
+        return { user, token };
       } catch (error) {
-        fastify.log.error(error)
-        reply.code(401).send({ 
+        fastify.log.error(error);
+        reply.code(401).send({
           error: 'Authentication failed',
-          message: error.message 
-        })
+          message: error.message,
+        });
       }
     },
   })

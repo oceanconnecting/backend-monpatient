@@ -104,7 +104,7 @@ export async function markNotificationAsRead(notificationId, userId, userRole) {
   const notification = await prisma.notification.findUnique({
     where: { id: notificationId }
   })
-
+  
   if (!notification) {
     throw new Error('Notification not found')
   }
