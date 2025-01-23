@@ -21,27 +21,26 @@ export class AuthService {
       profile: roleData
     }
   }
-
   static async register(userData) {
     const hashedPassword = await this.hashPassword(userData.password)
     
     const roleData = {
-      name: userData.name,
+     
       ...(userData.role === 'PATIENT' && {
-        name: userData.name,
       }),
       ...(userData.role === 'DOCTOR' && {
-        name: userData.name,
+        specialization: userData.specialization,
+     
       }),
       ...(userData.role === 'PHARMACY' && {
-        name: userData.name,
+      
       }),
       ...(userData.role === 'NURSE' && {
         availability: true,
-        rating: 0,
+        rating: 0
       }),
       ...(userData.role === 'ADMIN' && {
-        name: userData.name
+      
       })
     }
 
@@ -49,6 +48,8 @@ export class AuthService {
       data: {
         email: userData.email,
         password: hashedPassword,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
         role: userData.role,
         [userData.role.toLowerCase()]: {
           create: roleData

@@ -8,14 +8,13 @@ export async function authRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['email', 'password', 'name', 'role'],
+        required: ['email', 'password', 'firstname', 'lastname', 'role'],
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
+          firstname: { type: 'string' },
+          lastname: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-       
-    
           specialization: { type: 'string' },
         },
       },
@@ -29,7 +28,8 @@ export async function authRoutes(fastify) {
                 id: { type: 'number' },
                 email: { type: 'string' },
                 role: { type: 'string' },
-                name: { type: 'string' },
+                firstname: { type: 'string' },
+                lastname: { type: 'string' },
                 createdAt: { type: 'string' },
                 updatedAt: { type: 'string' },
                 profile: { 
@@ -89,12 +89,13 @@ export async function authRoutes(fastify) {
                 email: { type: 'string' },
                 role: { type: 'string' },
                 createdAt: { type: 'string' },
+                firstname: { type: 'string' },
+                lastname: { type: 'string' },
                 updatedAt: { type: 'string' },
                 profile: { 
                   type: 'object',
                   properties: {
                     id: { type: 'number' },
-                    name: { type: 'string' },
                     // Other properties will be included based on role
                   },
                   
@@ -116,8 +117,9 @@ export async function authRoutes(fastify) {
         const token = fastify.jwt.sign({
           id: user.id,
           email: user.email,
-          role: user.role,
-          name: user.profile.name,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          role: user.role
         });
     
         return { user, token };

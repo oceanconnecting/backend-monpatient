@@ -76,9 +76,9 @@ export async function adminRoutes(fastify) {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
           role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-       
+          firstname: { type: 'string' },
+          lastname: { type: 'string' },
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -293,7 +293,8 @@ export async function adminRoutes(fastify) {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
+          firstname: { type: 'string' },
+          lastname: { type: 'string' },
           availability: { type: 'boolean' }
         }
       }
