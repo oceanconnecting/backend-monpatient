@@ -13,7 +13,7 @@ import { chatRoutes } from './routes/chat.routes.js'
 import { chatPatientNurseRoutes } from './routes/chat-pationt-nurse.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
-
+import fastifyMailer from 'fastify-mailer'
 const fastify = Fastify({ 
   logger: {
     level: process.env.NODE_ENV === 'development' ? 'debug' : 'info'
@@ -30,6 +30,19 @@ const fastify = Fastify({
 })
 
 const prisma = new PrismaClient()
+fastify.register(fastifyMailer, {
+  defaults: { from: 'noreply@yourdomain.com' },
+  transport: {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: true, // use TLS
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD
+    }
+  }
+})
+
 
 // Create HTTP server
 const httpServer = createServer(fastify.server)
