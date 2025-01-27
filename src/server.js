@@ -13,7 +13,10 @@ import { chatRoutes } from './routes/chat.routes.js'
 import { chatPatientNurseRoutes } from './routes/chat-pationt-nurse.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
-import fastifyMailer from 'fastify-mailer'
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
+
 const fastify = Fastify({ 
   logger: {
     level: process.env.NODE_ENV === 'development' ? 'debug' : 'info'
@@ -30,18 +33,7 @@ const fastify = Fastify({
 })
 
 const prisma = new PrismaClient()
-fastify.register(fastifyMailer, {
-  defaults: { from: 'noreply@yourdomain.com' },
-  transport: {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: true, // use TLS
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD
-    }
-  }
-})
+
 
 
 // Create HTTP server
@@ -158,13 +150,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const start = async () => {
     try {
       await fastify.listen({ 
-        port: process.env.PORT || 3001, 
+        port: process.env.PORT || 3002, 
         host: '0.0.0.0' 
       })
-      console.log(`Server listening at http://localhost:${process.env.PORT || 3001}`)
+      console.log(`Server listening at http://localhost:${process.env.PORT || 3002}`)
       
       httpServer.listen(process.env.WS_PORT || 3002, () => {
-        console.log(`WebSocket server listening at ws://localhost:${process.env.WS_PORT || 3002}`)
+        console.log(`WebSocket server listening at ws://localhost:${process.env.WS_PORT || 3003}`)
       })
     } catch (err) {
       fastify.log.error(err)

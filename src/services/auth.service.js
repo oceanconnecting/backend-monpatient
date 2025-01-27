@@ -1,24 +1,25 @@
 import bcryptjs from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 import crypto from 'crypto'
+import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient()
 const generateToken = () => crypto.randomBytes(20).toString('hex')
 export class AuthService {
 
- constructor(mailer) {
+  constructor(mailer) {
     this.mailer = mailer
   }
 
-  async hashPassword(password) {
+  static async hashPassword(password) {
     return bcryptjs.hash(password, 10)
   }
 
-  async verifyPassword(password, hash) {
+  static async verifyPassword(password, hash) {
     return bcryptjs.compare(password, hash)
   }
 
-  formatUserResponse(user) {
+  static async formatUserResponse(user) {
     const { password: _, ...userBase } = user
     const roleData = user[user.role.toLowerCase()]
     
@@ -28,7 +29,7 @@ export class AuthService {
     }
   }
 
-   static validateUserInput(userData) {
+  static validateUserInput(userData) {
     // Required fields validation
     const requiredFields = ['email', 'firstname', 'lastname', 'password', 'role']
     const missingFields = requiredFields.filter(field => !userData[field])
@@ -60,25 +61,25 @@ export class AuthService {
     }
   }
 
-  async register(userData) {
-    this.validateUserInput(userData)
-
-    const hashedPassword = await this.hashPassword(userData.password)
-    
-    let verificationData = {}
-    if (userData.role !== 'ADMIN') {
-      verificationData = {
-        isEmailVerified: false,
-        emailVerificationToken: generateToken(),
-        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
-      }
-    } else {
-      verificationData = { isEmailVerified: true }
-    }
-
-    const roleData = this.getRoleSpecificData(userData)
-
+  static async register(userData) {
     try {
+      this.validateUserInput(userData) // Moved inside try block
+
+      const hashedPassword = await this.hashPassword(userData.password)
+      
+      let verificationData = {}
+      if (userData.role !== 'ADMIN') {
+        verificationData = {
+          isEmailVerified: false,
+          emailVerificationToken: generateToken(),
+          emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        }
+      } else {
+        verificationData = { isEmailVerified: true }
+      }
+
+      const roleData = this.getRoleSpecificData(userData)
+
       const user = await prisma.user.create({
         data: {
           email: userData.email,
@@ -112,30 +113,50 @@ export class AuthService {
       if (error.code === 'P2002') {
         throw new Error('Email already exists')
       }
-      throw new Error('Registration failed')
+      // Check if the error is a validation error to avoid wrapping its message
+      if (error.message.startsWith('Missing') || 
+          error.message.startsWith('Invalid') || 
+          error.message.startsWith('Password') || 
+          error.message.startsWith('Specialization')) {
+        throw error // Re-throw validation errors without modification
+      }
+      console.error('Registration error:', error)
+      throw new Error('Registration failed: ' + error.message)
     }
   }
-
-  async sendVerificationEmail(email, token) {
+  static async sendVerificationEmail(email, token) {
     try {
-      await this.mailer.sendMail({
-        from: 'noreply@yourdomain.com',
-        to: email,
-        subject: 'Verify Your Email',
-        text: `Verification token: ${token}\n\nUse this token to verify your account.`,
+      // Create a transporter using SMTP settings (Gmail example)
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.SMTP_USER,   // Your Gmail address
+          pass: process.env.SMTP_PASSWORD // Your Gmail password (or app password)
+        }
+      });
+
+      // Email content
+      const mailOptions = {
+        from: 'zakaryabaouali255@gmail.com', // Sender address
+        to: email,                          // Recipient address
+        subject: 'Verify Your Email',       // Subject line
+        text: `Verification token: ${token}\n\nUse this token to verify your account.`, // Plain text body
         html: `
           <h1>Email Verification</h1>
           <p>Use this token to verify your account:</p>
           <strong>${token}</strong>
           <p>Or click the link below:</p>
-          <a href="http://yourdomain.com/verify-email?token=${token}">
-            Verify Email
-          </a>
-        `
-      })
+         
+        ` // HTML body
+      };
+
+      // Send the email
+      await transporter.sendMail(mailOptions);
+
+      console.log('Verification email sent successfully');
     } catch (error) {
-      console.error('Failed to send verification email:', error)
-      throw new Error('Failed to send verification email')
+      console.error('Failed to send verification email:', error);
+      throw new Error('Failed to send verification email');
     }
   }
 

@@ -27,7 +27,7 @@ app.register(fastifyMailer, {
 export const sendEmail = async (to, subject, html) => {
   try {
     await app.mailer.sendMail({
-      from: '"Monopation" <no-reply@monopation.com>', // Sender info
+      from: 'zakaryabaouali255@gmail.com', // Sender info
       to,                                           // Recipient
       subject,                                      // Subject
       html,                                         // HTML body
