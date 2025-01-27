@@ -25,7 +25,6 @@ export class AuthService {
     const hashedPassword = await this.hashPassword(userData.password)
     
     const roleData = {
-     
       ...(userData.role === 'PATIENT' && {
       }),
       ...(userData.role === 'DOCTOR' && {
