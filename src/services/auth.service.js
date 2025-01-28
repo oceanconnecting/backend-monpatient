@@ -10,15 +10,12 @@ export class AuthService {
   constructor(mailer) {
     this.mailer = mailer
   }
-
   static async hashPassword(password) {
     return bcryptjs.hash(password, 10)
   }
-
   static async verifyPassword(password, hash) {
     return bcryptjs.compare(password, hash)
   }
-
   static async formatUserResponse(user) {
     const { password: _, ...userBase } = user
     const roleData = user[user.role.toLowerCase()]
@@ -28,7 +25,6 @@ export class AuthService {
       profile: roleData
     }
   }
-
   static validateUserInput(userData) {
     // Required fields validation
     const requiredFields = ['email', 'firstname', 'lastname', 'password', 'role']
@@ -201,8 +197,7 @@ export class AuthService {
       console.error('Failed to verify email:', error);
       throw new Error('Email verification failed: ' + error.message);
     }
-  }  
-
+  } 
   static async login(email, password) {
     const user = await prisma.user.findUnique({
       where: { email },
