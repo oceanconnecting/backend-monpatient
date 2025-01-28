@@ -60,7 +60,6 @@ export class AuthService {
       throw new Error('Specialization is required for doctors')
     }
   }
-
   static async register(userData) {
     try {
       this.validateUserInput(userData) // Moved inside try block
@@ -100,7 +99,6 @@ export class AuthService {
           admin: true,
         },
       })
-
       if (userData.role !== 'ADMIN') {
         await this.sendVerificationEmail(
           user.email, 
@@ -142,14 +140,13 @@ export class AuthService {
         subject: 'Verify Your Email',       // Subject line
         text: `Verification token: ${token}\n\nUse this token to verify your account.`, // Plain text body
         html: `
-          <h1>Email Verification</h1>
+          <h1>Monpation</h1>
           <p>Use this token to verify your account:</p>
           <strong>${token}</strong>
           <p>Or click the link below:</p>
-         
+          <a href="http://localhost:3001/verify-email?token=${token}">Verify Email</a>
         ` // HTML body
       };
-
       // Send the email
       await transporter.sendMail(mailOptions);
 
@@ -159,8 +156,6 @@ export class AuthService {
       throw new Error('Failed to send verification email');
     }
   }
-
-
   static getRoleSpecificData(userData) {
     return {
       ...(userData.role === 'PATIENT' && {}),
@@ -175,7 +170,38 @@ export class AuthService {
       ...(userData.role === 'ADMIN' && {})
     }
   }
-
+  static async verifyEmail(token) {
+    try {
+      // Find the user by email verification token and ensure the token is not expired
+      const user = await prisma.user.findFirst({
+        where: {
+          emailVerificationToken: token,
+          emailVerificationExpires: {
+            gt: new Date(), // The token must still be valid (not expired)
+          },
+        },
+      });
+  
+      if (!user) {
+        throw new Error('Invalid or expired verification token');
+      }
+  
+      // Update the user's email verification status and reset token and expiry fields
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          isEmailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationExpires: null,
+        },
+      });
+  
+      return { message: 'Email verified successfully' };
+    } catch (error) {
+      console.error('Failed to verify email:', error);
+      throw new Error('Email verification failed: ' + error.message);
+    }
+  }  
 
   static async login(email, password) {
     const user = await prisma.user.findUnique({

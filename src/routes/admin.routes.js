@@ -93,6 +93,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+  
   fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {

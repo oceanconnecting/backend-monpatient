@@ -102,7 +102,6 @@ export class AdminService {
     })
     return nurse
   }
-  
   //doctors
   static async getAllDoctors() {
     const doctors = await prisma.doctor.findMany({
@@ -441,7 +440,11 @@ export class AdminService {
 
     return { message: 'User deleted successfully' }
    }
-
+   static async createUser(data){
+      return await prisma.user.create({
+        data
+      })
+   }
   //pharmacies
    static async getAllPharmacies() {
     const pharmacies = await prisma.pharmacy.findMany({

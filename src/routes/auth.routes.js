@@ -67,7 +67,6 @@ export async function authRoutes(fastify) {
       }
     },
   })
-
   fastify.post('/login', {
     schema: {
       body: {
@@ -131,8 +130,7 @@ export async function authRoutes(fastify) {
         });
       }
     },
-  })
-
+  });
   // Protected route example
   fastify.get('/me', {
     onRequest: [fastify.authenticate],
@@ -160,5 +158,37 @@ export async function authRoutes(fastify) {
         reply.code(500).send({ error: 'Internal server error' })
       }
     },
-  })
+  });
+  fastify.post('/verify-email', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['token'],
+        properties: {
+          token: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+    handler: async (request, reply) => {
+      try {
+        const { token } = request.body;
+        const result = await AuthService.verifyEmail(token);
+        reply.code(200).send(result);
+      } catch (error) {
+        fastify.log.error(error);
+        reply.code(400).send({
+          error: 'Email verification failed',
+          message: error.message,
+        });
+      }
+    },
+  });
 }
