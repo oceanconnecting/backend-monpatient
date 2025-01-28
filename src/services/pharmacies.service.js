@@ -4,7 +4,7 @@ export class PharmacyService {
     static async getAllPharmacies() {
         const users = await prisma.user.findMany({
           where: {
-            role: 'pharmacy'
+            role: 'PHARMACY'
           },
           include: {
             pharmacy: {

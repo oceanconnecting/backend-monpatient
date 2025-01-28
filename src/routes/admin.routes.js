@@ -1,10 +1,14 @@
 import { AdminService } from '../services/admin.service.js'
+import { PatientService } from '../services/patients.service.js'
+import { PharmacyService } from '../services/pharmacies.service.js'
+import { DoctorService } from '../services/doctor.service.js'
+import { NurseService } from '../services/nurse.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
 import { Role } from '@prisma/client'
 console.log("admin routes")
 export async function adminRoutes(fastify) {
-  //users
 
+  //users
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -93,7 +97,6 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-  
   fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -145,13 +148,12 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-
   //doctors
   fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
-        const doctors = await AdminService.getAllDoctors()
+        const doctors = await DoctorService.getAllDoctors()
         return doctors
       } catch (error) {
         reply.code(500).send({ error: error.message })
@@ -176,7 +178,7 @@ export async function adminRoutes(fastify) {
           reply.code(400).send({ error: 'Invalid user ID' })
           return
         }
-        const doctor = await AdminService.getDoctorByid(id)
+        const doctor = await DoctorService.getDoctorByid(id)
         return doctor
       } catch (error) {
         reply.code(500).send({ error: error.message })
@@ -202,7 +204,7 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const doctor = await AdminService.createDoctor(request.body)
+        const doctor = await DoctorService.createDoctor(request.body)
         return doctor
       } catch (error) {
         reply.code(400).send({ error: error.message })
@@ -238,7 +240,7 @@ export async function adminRoutes(fastify) {
       const updateData = request.body;
   
       // Call the service layer to update the user
-      const updatedUser = await AdminService.updateUser(id, updateData);
+      const updatedUser = await DoctorService.updateUser(id, updateData);
   
       if (!updatedUser) {
         return reply.code(404).send({ error: 'Doctor not found' });
@@ -251,6 +253,7 @@ export async function adminRoutes(fastify) {
       return reply.code(400).send({ error: error.message });
     }
   });
+
   fastify.delete('/doctors/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -264,27 +267,25 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const result = await AdminService.deleteUser(request.params.id)
+        const result = await DoctorService.deleteUser(request.params.id)
         return result
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
   })
-
-  // nurses
+  //nurses
   fastify.get('/nurses', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
-        const nurses = await AdminService.getAllNurses()
+        const nurses = await NurseService.getAllNurses()
         return nurses
       } catch (error) {
         reply.code(500).send({ error: error.message })
       }
     }
   })
-
   fastify.post("/nurses", {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -302,14 +303,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const nurse = await AdminService.createNurse(request.body)
+        const nurse = await NurseService.createNurse(request.body)
         return nurse
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
   })
-
   fastify.put('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -334,14 +334,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const result = await AdminService.updateUser(request.params.id, request.body)
+        const result = await NurseService.UpdateNurse(request.params.id, request.body)
         return result
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
   })
-
   fastify.delete('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -355,14 +354,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const result = await AdminService.deleteUser(request.params.id)
+        const result = await NurseService.deleteNurse(request.params.id)
         return result
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
   })
-
   fastify.get('/nurses/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -381,27 +379,25 @@ export async function adminRoutes(fastify) {
           reply.code(400).send({ error: 'Invalid user ID' })
           return
         }
-        const nurse = await AdminService.getNurseByid(id)
+        const nurse = await NurseService.getNurseByid(id)
         return nurse
       } catch (error) {
         reply.code(500).send({ error: error.message })
       }
     }
   })
-
   //patients
   fastify.get('/patients', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
-        const patients = await AdminService.getAllPatients()
+        const patients = await PatientService.getAllPatients()
         return patients
       } catch (error) {
         reply.code(500).send({ error: error.message })
       }
     }
   })
-
   fastify.get('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -420,14 +416,13 @@ export async function adminRoutes(fastify) {
           reply.code(400).send({ error: 'Invalid user ID' })
           return
         }
-        const patient = await AdminService.getPatientByid(id)
+        const patient = await PatientService.getAllPatients(id)
         return patient
       } catch (error) {
         reply.code(500).send({ error: error.message })
       }
     }
   })
-
   fastify.post('/patients', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -443,14 +438,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const patient = await AdminService.createPatient(request.body)
+        const patient = await PatientService.createPatient(request.body)
         return patient
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
   })
-
   fastify.put('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -481,7 +475,7 @@ export async function adminRoutes(fastify) {
       const updateData = request.body;
   
       // Call the service layer to update the user
-      const updatedUser = await AdminService.updateUser(id, updateData);
+      const updatedUser = await PatientService.updateUser(id, updateData);
   
       if (!updatedUser) {
         return reply.code(404).send({ error: 'Patient not found' });
@@ -494,7 +488,6 @@ export async function adminRoutes(fastify) {
       return reply.code(400).send({ error: error.message });
     }
   });
-
   fastify.delete('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -508,27 +501,25 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const result = await AdminService.deleteUser(request.params.id)
+        const result = await PatientService.deletePatientById(request.params.id)
         return result
     } catch (error) {
       reply.code(500).send({ error: error.message })
     }
   }
   })
-
   //pharmacies
    fastify.get('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
-        const pharmacies = await AdminService.getAllPharmacies()
+        const pharmacies = await PharmacyService.getAllPharmacies()
         return pharmacies
       } catch (error) {
         reply.code(500).send({ error: error.message })
       }
     }
    })
-
    fastify.get('/pharmacies/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -547,14 +538,13 @@ export async function adminRoutes(fastify) {
           reply.code(400).send({ error: 'Invalid user ID' })
           return
         }
-        const pharmacy = await AdminService.getPharmacyByid(id)
+        const pharmacy = await PharmacyService.getPharmacyByid(id)
         return pharmacy
       } catch (error) { 
         reply.code(500).send({ error: error.message })
       }
     }
    })
-
    fastify.post('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -569,14 +559,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const pharmacy = await AdminService.createPharmacy(request.body)
+        const pharmacy = await PharmacyService.createPharmacy(request.body)
         return pharmacy
       } catch (error) {
         reply.code(400).send({ error: error.message })
       }
     }
    })
-
    fastify.delete('/pharmacies/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -590,14 +579,13 @@ export async function adminRoutes(fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const result = await AdminService.deleteUser(request.params.id)
+        const result = await PharmacyService.deleteUser(request.params.id)
         return result
     } catch (error) {
       reply.code(500).send({ error: error.message })
     }
   }
    })
-
    fastify.put('/pharmacies/:id', {
    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
    schema: {
@@ -624,7 +612,7 @@ export async function adminRoutes(fastify) {
     const updateData = request.body;
   
     // Call the service layer to update the user
-    const updatedUser = await AdminService.updateUser(id, updateData);
+    const updatedUser = await PharmacyService.updateUser(id, updateData);
   
     if (!updatedUser) {
       return reply.code(404).send({ error: 'Pharmacy not found' });
