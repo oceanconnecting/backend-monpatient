@@ -13,7 +13,6 @@ import { chatRoutes } from './routes/chat.routes.js'
 import { chatPatientNurseRoutes } from './routes/chat-pationt-nurse.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 

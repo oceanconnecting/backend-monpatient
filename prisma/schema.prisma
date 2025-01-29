@@ -138,7 +138,6 @@ model DoctorPatient {
   startDate   DateTime      @default(now())
   endDate     DateTime?
   active      Boolean       @default(true)
-
   @@unique([patientId, doctorId])
 }
 
