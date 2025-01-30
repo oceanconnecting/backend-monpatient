@@ -7,20 +7,14 @@ export class AdminService {
    //users
    static async getAllUsers() {
    const users = await prisma.user.findMany({
-    where: {
-    role: 'ADMIN'
-    },
     select: {
       id: true,
       email: true,
       role: true,
+      firstname: true,
+      lastname: true,
       createdAt: true,
-      updatedAt: true,
-      patient: true,
-      nurse: true,
-      doctor: true,
-      pharmacy: true,
-      admin: true
+      updatedAt: true
     },
     orderBy: {
       createdAt: 'desc'
@@ -44,7 +38,7 @@ export class AdminService {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id),role: 'ADMIN' },
+      where: { id: parseInt(id) },
       select: {
         id: true,
         email: true,

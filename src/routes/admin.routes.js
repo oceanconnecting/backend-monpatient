@@ -21,6 +21,8 @@ export async function adminRoutes(fastify) {
               id: { type: 'number' },
               email: { type: 'string' },
               role: { type: 'string' },
+              firstname: { type: 'string' },
+              lastname: { type: 'string' },
               createdAt: { type: 'string' },
               updatedAt: { type: 'string' }
             }
@@ -274,7 +276,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-  
+
   //nurses
   fastify.get('/nurses', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
