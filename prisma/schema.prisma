@@ -246,6 +246,7 @@ model ChatRoom {
 
   @@unique([patientId, doctorId])
 }
+
 model ChatRoomPatientNurse {
   id        Int       @id @default(autoincrement())
   status    String    // ACTIVE, ARCHIVED

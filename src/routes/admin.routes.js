@@ -148,6 +148,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   //doctors
   fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
@@ -253,7 +254,6 @@ export async function adminRoutes(fastify) {
       return reply.code(400).send({ error: error.message });
     }
   });
-
   fastify.delete('/doctors/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {
@@ -274,6 +274,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+  
   //nurses
   fastify.get('/nurses', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
@@ -386,6 +387,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
+
   //patients
   fastify.get('/patients', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
@@ -508,6 +510,7 @@ export async function adminRoutes(fastify) {
     }
   }
   })
+
   //pharmacies
    fastify.get('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],

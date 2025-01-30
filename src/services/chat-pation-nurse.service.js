@@ -82,7 +82,7 @@ export class ChatServicePatientNurse {
       console.log('Client disconnected:', socket.user.email);
       this.connectedUsers.delete(userId);
     });
-  }
+   }
 
   async canUserJoinRoom(userId, roomId) {
     const room = await this.prisma.chatRoomPatientNurse.findUnique({
@@ -148,7 +148,6 @@ export class ChatServicePatientNurse {
     if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {
       throw new Error('Invalid sender role');
     }
-  
     // Get the sender's profile
     const sender = await this.prisma.user.findUnique({
       where: { id: parseInt(senderId) },

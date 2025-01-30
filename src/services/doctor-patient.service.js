@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export class DoctorPatientService {
+  
   static async sendRequest(patientId, doctorId, message) {
     // Check if request already exists
     const existingRequest = await prisma.doctorPatientRequest.findUnique({

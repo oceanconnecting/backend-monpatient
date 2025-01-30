@@ -102,6 +102,7 @@ export class ChatService {
 
     return room.patient.user.id === userId || room.doctor.user.id === userId
   }
+
   async createOrGetRoom(patientId, participantId, participantRole) {
     // Get the participant's profile ID
     const participant = await this.prisma.user.findUnique({
@@ -193,12 +194,13 @@ export class ChatService {
 
     return message
   }
+
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
       where: {
         roomId: parseInt(roomId),
         senderId: { not: parseInt(userId) },
-        
+        isRead: false,
       },
       data: {
         isRead: true,

@@ -15,7 +15,6 @@ import { createAuthMiddleware } from './middleware/auth.middleware.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 import dotenv from 'dotenv';
 dotenv.config();
-
 const fastify = Fastify({ 
   logger: {
     level: process.env.NODE_ENV === 'development' ? 'debug' : 'info'

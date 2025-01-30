@@ -52,9 +52,9 @@ export class AuthService {
     }
 
     // Role-specific field validation
-    if (userData.role === 'DOCTOR' && !userData.specialization) {
-      throw new Error('Specialization is required for doctors')
-    }
+    // if (userData.role === 'DOCTOR' && !userData.specialization) {
+    //   throw new Error('Specialization is required for doctors')
+    // }
   }
   static async register(userData) {
     try {
@@ -110,8 +110,7 @@ export class AuthService {
       // Check if the error is a validation error to avoid wrapping its message
       if (error.message.startsWith('Missing') || 
           error.message.startsWith('Invalid') || 
-          error.message.startsWith('Password') || 
-          error.message.startsWith('Specialization')) {
+          error.message.startsWith('Password') ) {
         throw error // Re-throw validation errors without modification
       }
       console.error('Registration error:', error)
