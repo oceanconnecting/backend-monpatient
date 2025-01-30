@@ -16,36 +16,11 @@ export class AdminService {
       role: true,
       createdAt: true,
       updatedAt: true,
-      patient: {
-        select: {
-          name: true,
-        }
-      },
-      nurse: {
-        select: {
-          name: true,
-          availability: true,
-          rating: true
-        }
-      },
-      doctor: {
-        select: {
-          name: true,
-          specialization: true
-        }
-      },
-      pharmacy: {
-        select: {
-          name: true,
-          location: true
-        }
-      },
-      admin: {
-        select: {
-         
-          name: true
-        }
-      }
+      patient: true,
+      nurse: true,
+      doctor: true,
+      pharmacy: true,
+      admin: true
     },
     orderBy: {
       createdAt: 'desc'
