@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient()
 export class PharmacyService {
+  //pharmacy controller
     static async getAllPharmacies() {
         const users = await prisma.user.findMany({
           where: {

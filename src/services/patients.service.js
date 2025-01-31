@@ -136,4 +136,55 @@ export class PatientService {
       where: { id: parseInt(id) },
     });
   }
+  static async getAlldoctors() {
+    return await prisma.doctor.findMany(
+      {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstname:true,
+              lastname:true,
+            
+            },
+          },
+        },
+      }
+    );
+  }
+  static async getAllnurses() {
+    return await prisma.nurse.findMany(
+      {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstname:true,
+              lastname:true,
+            
+            },
+          },
+        },
+      }
+    );
+  }
+  static async getAllpharmacies() {
+    return await prisma.pharmacy.findMany(
+      {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstname:true,
+              lastname:true,
+            
+            },
+          },
+        },
+      }
+    );
+  }
 }

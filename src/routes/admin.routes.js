@@ -4,7 +4,6 @@ import { PharmacyService } from '../services/pharmacies.service.js'
 import { DoctorService } from '../services/doctor.service.js'
 import { NurseService } from '../services/nurse.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
-import { Role } from '@prisma/client'
 console.log("admin routes")
 export async function adminRoutes(fastify) {
 
@@ -150,7 +149,30 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-
+  //chat
+  fastify.get('/chat/room', {
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    handler: async (request, reply) => {
+      try {
+        const rooms = await AdminService.getAdminChatRooms(request.params.id)
+        return rooms
+      } catch (error) {
+        reply.code(500).send({ error: error.message })
+      }
+    }
+  })
+  //nurses
+  fastify.get('/chat/room/nurse', {
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    handler: async (request, reply) => {
+      try {
+        const rooms = await AdminService.getAdminChatRoomNurse(request.params.id)
+        return rooms
+      } catch (error) {
+        reply.code(500).send({ error: error.message })
+      }
+    }
+  })
   //doctors
   fastify.get('/doctors', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],

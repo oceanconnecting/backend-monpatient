@@ -1,11 +1,11 @@
 import { ChatServicePatientNurse } from '../services/chat-pation-nurse.service.js';
-
+import { checkRole } from '../middleware/auth.middleware.js';
 export async function chatPatientNurseRoutes(fastify, options) {
   const chatService = new ChatServicePatientNurse(fastify.io);
 
   // Create or get chat room between patient and nurse
   fastify.post('/room', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
     schema: {
       body: {
         type: 'object',
@@ -43,7 +43,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
 
   // Get user's chat rooms (patient or nurse)
   fastify.get('/rooms', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE'])],
     handler: async (request, reply) => {
       try {
         const rooms = await chatService.getUserRooms(

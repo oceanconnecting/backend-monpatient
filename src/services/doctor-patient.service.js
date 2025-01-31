@@ -197,7 +197,7 @@ export class DoctorPatientService {
       // Create notification for patient
       await prisma.notification.create({
         data: {
-          userId: request.patient.user.id,
+          // userId: request.patient.id,
           type: 'REQUEST_ACCEPTED',
           title: 'Doctor Request Accepted',
           message: `Dr. ${request.doctor.name} has accepted your request. You can now start chatting.`,

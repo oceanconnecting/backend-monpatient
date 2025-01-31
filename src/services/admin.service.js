@@ -276,17 +276,15 @@ export class AdminService {
     })
    }
    static async deleteAdmin(id) { 
-    const admin = await prisma.user.findFirst({
+     const admin = await prisma.user.findFirst({
       where: { id: parseInt(id), role: 'ADMIN' },
       include: {
         admin: true
       }
-    })
-  
+     })
     if (!admin) {
       throw new Error('Admin not found')
     }
-  
     // Delete the admin (this will cascade delete role-specific data)
     await prisma.user.delete({
       where: { id: parseInt(id),role: 'ADMIN' }
@@ -305,5 +303,41 @@ export class AdminService {
     })
     return admin
    }
+   static async createAdmin(data){
+    return await prisma.user.create({
+      data
+    })
+   }
 
+   //admin controller for chat
+   static async getAdminChatRooms(){
+    
+    const chatRooms = await prisma.chatRoom.findMany({
+     include: {
+       patient: {
+         include: { user: true }
+       },
+       doctor: {
+         include: { user: true }
+       }
+     }
+    })
+    return chatRooms
+   }
+   //admin controller for chat
+   //get admin chat room nurse
+   static async getAdminChatRoomNurse(id){
+    if(!id || isNaN(parseInt(id))){
+      throw new Error('Invalid user ID')
+    }
+    const chatRoom = await prisma.chatRoomPatientNurse.findMany({
+      where: { 
+        OR: [
+          { patient: { id: parseInt(id) } },
+          { nurse: { id: parseInt(id) } }
+        ]
+      }
+    })
+    return chatRoom
+   }
 }

@@ -189,7 +189,6 @@ model NotificationRead {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         Int           @unique
   readAt         DateTime     @default(now())
-
   @@unique([notificationId, userId])
 }
 
