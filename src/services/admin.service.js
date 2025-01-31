@@ -276,7 +276,7 @@ export class AdminService {
     })
    }
    static async deleteAdmin(id) { 
-     const admin = await prisma.user.findFirst({
+    const admin = await prisma.user.findFirst({
       where: { id: parseInt(id), role: 'ADMIN' },
       include: {
         admin: true
@@ -308,7 +308,6 @@ export class AdminService {
       data
     })
    }
-
    //admin controller for chat
    static async getAdminChatRooms(){
     
@@ -324,7 +323,6 @@ export class AdminService {
     })
     return chatRooms
    }
-   //admin controller for chat
    //get admin chat room nurse
    static async getAdminChatRoomNurse(id){
     if(!id || isNaN(parseInt(id))){
@@ -336,6 +334,14 @@ export class AdminService {
           { patient: { id: parseInt(id) } },
           { nurse: { id: parseInt(id) } }
         ]
+      },
+      include: {
+        patient: {
+          include: { user: true }
+        },
+        nurse: {
+          include: { user: true }
+        }
       }
     })
     return chatRoom

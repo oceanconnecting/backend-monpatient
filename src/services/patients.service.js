@@ -179,8 +179,7 @@ export class PatientService {
               id: true,
               email: true,
               firstname:true,
-              lastname:true,
-            
+              lastname:true
             },
           },
         },
