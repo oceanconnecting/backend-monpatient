@@ -7,6 +7,9 @@ export class PharmacyService {
           where: {
             role: 'PHARMACY'
           },
+          select: {
+            role: true
+          },
           include: {
             pharmacy: {
               select: {

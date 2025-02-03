@@ -144,6 +144,7 @@ export class PatientService {
             select: {
               id: true,
               email: true,
+              role:true,
               firstname:true,
               lastname:true,
             
@@ -161,6 +162,7 @@ export class PatientService {
             select: {
               id: true,
               email: true,
+              role:true,
               firstname:true,
               lastname:true,
             
@@ -178,6 +180,7 @@ export class PatientService {
             select: {
               id: true,
               email: true,
+              role:true,
               firstname:true,
               lastname:true
             },

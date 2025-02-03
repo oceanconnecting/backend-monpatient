@@ -8,7 +8,7 @@ import {
 import { checkRole } from '../middleware/auth.middleware.js'
 
 export async function notificationRoutes(fastify) {
-  // Get all notifications
+  //Get all notifications
   fastify.get('/', {
     onRequest: [fastify.authenticate],
     preValidation: [checkRole(['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'])],
@@ -25,8 +25,7 @@ export async function notificationRoutes(fastify) {
       }
     }
   })
-
-  // Get all unread notifications for the authenticated user
+  //Get all unread notifications for the authenticated user
   fastify.get('/unread', {
     onRequest: [fastify.authenticate],
     preValidation: [checkRole(['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'])],
@@ -43,7 +42,6 @@ export async function notificationRoutes(fastify) {
       }
     }
   })
-
   // Mark a notification as read
   fastify.put('/:id/read', {
     onRequest: [fastify.authenticate],
@@ -68,7 +66,6 @@ export async function notificationRoutes(fastify) {
       }
     }
   })
-
   // Create a new notification (admin only)
   fastify.post('/', {
     onRequest: [fastify.authenticate],
@@ -86,7 +83,6 @@ export async function notificationRoutes(fastify) {
       }
     }
   })
-
   // Delete a notification (admin only)
   fastify.delete('/:id', {
     onRequest: [fastify.authenticate],

@@ -161,7 +161,7 @@ export async function adminRoutes(fastify) {
       }
     }
   })
-  //nurses
+  //chat//nurses
   fastify.get('/chat/room/nurse', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
