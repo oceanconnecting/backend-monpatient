@@ -4,7 +4,7 @@ import { PharmacyService } from '../services/pharmacies.service.js'
 import { DoctorService } from '../services/doctor.service.js'
 import { NurseService } from '../services/nurse.service.js'
 import { checkRole } from '../middleware/auth.middleware.js'
-console.log("admin routes")
+
 export async function adminRoutes(fastify) {
 
   //users

@@ -146,14 +146,14 @@ fastify.addHook('onClose', async () => {
 })
 
 // For local development
-if (import.meta.url === `file://${process.argv[1]}`) {
+
   const start = async () => {
     try {
       await fastify.listen({ 
-        port: process.env.PORT || 3002, 
+        port: process.env.PORT || 3001, 
         host: '0.0.0.0' 
       })
-      console.log(`Server listening at http://localhost:${process.env.PORT || 3002}`)
+      console.log(`Server listening at http://localhost:${process.env.PORT}`)
       
       httpServer.listen(process.env.WS_PORT || 3002, () => {
         console.log(`WebSocket server listening at ws://localhost:${process.env.WS_PORT || 3003}`)
@@ -164,7 +164,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
   start()
-}
+
 
 // Export for Vercel
 export default async (req, res) => {

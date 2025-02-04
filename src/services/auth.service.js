@@ -133,15 +133,16 @@ export class AuthService {
         from: 'zakaryabaouali255@gmail.com', // Sender address
         to: email,                          // Recipient address
         subject: 'Verify Your Email',       // Subject line
-        text: `Verification token: ${token}\n\nUse this token to verify your account.`, // Plain text body
+        text: `Verification  your account.`, // Plain text body
         html: `
           <h1>Monpation</h1>
           <p>Use this token to verify your account:</p>
           <strong>${token}</strong>
           <p>Or click the link below:</p>
-          <a href="http://localhost:3001/verify-email?token=${token}">Verify Email</a>
+          <a href="https://monpatient.vercel.app/verify-email?token=${token}">Verify Email</a>
         ` // HTML body
       };
+
       // Send the email
       await transporter.sendMail(mailOptions);
 
