@@ -150,7 +150,7 @@ fastify.addHook('onClose', async () => {
   const start = async () => {
     try {
       await fastify.listen({ 
-        port: process.env.PORT || 3001, 
+        port: process.env.PORT, 
         host: '0.0.0.0' 
       })
       console.log(`Server listening at http://localhost:${process.env.PORT}`)
@@ -164,7 +164,6 @@ fastify.addHook('onClose', async () => {
     }
   }
   start()
-
 
 // Export for Vercel
 export default async (req, res) => {

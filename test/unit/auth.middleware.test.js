@@ -7,7 +7,6 @@ describe('Auth Middleware', () => {
     email: 'admin@test.com',
     admin: { id: 1 }
   }
-
   const mockPrisma = {
     user: {
       findUnique: async ({ where }) => {
