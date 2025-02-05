@@ -3,8 +3,6 @@ import { checkRole } from "../middleware/auth.middleware.js";
 import { PatientService } from "../services/patients.service.js";
 
 export async function patientRoutes(fastify, options) {
-   
-
     fastify.get('/doctors', {
         onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
         handler: async (request, reply) => {

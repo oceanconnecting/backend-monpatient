@@ -2,6 +2,7 @@ import { ChatService } from '../../services/chat.service.js';
 import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function chatRoutes(fastify) {
+    
   fastify.get('/messages', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {

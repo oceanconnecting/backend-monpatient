@@ -123,9 +123,7 @@ export class AdminService {
       ...baseUser,
       ...roleSpecificData
     }
-  }
-  
-  
+   }
    static async updateUser(id, userData) {
     const existingUser = await prisma.user.findUnique({
       where: { id: parseInt(id),role: 'ADMIN' },
