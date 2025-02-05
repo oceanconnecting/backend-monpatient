@@ -11,8 +11,13 @@ export class AdminService {
       id: true,
       email: true,
       role: true,
+      profilePhoto: true,
       firstname: true,
       lastname: true,
+      telephoneNumber: true,
+      dateOfBirth: true,
+      gender: true,
+      address: true,
       createdAt: true,
       updatedAt: true
     },
@@ -43,40 +48,86 @@ export class AdminService {
         id: true,
         email: true,
         role: true,
+        telephoneNumber: true,
+        dateOfBirth: true,
+        gender: true,
+        address: true,
+        profilePhoto: true,
+        firstname: true,
+        lastname: true,
         createdAt: true,
         updatedAt: true,
         patient: {
           select: {
             name: true,
+            allergies:true,
+            emergencyContactName:true,
+            emergencyContactNumber:true,
+            insuranceInfo:true,
+            preferredPharmacy:true,
             contactInfo: true
+          },
+          include: {
+            medicalRecord: true,
+            prescriptions: true,
+            nurseServiceRequests: true,
+            nurseVisits: true,
+            doctorRequests: true,
+            chatRoomPatients:true,
+            chatRooms: true
           }
         },
         nurse: {
           select: {
             id: true,
-            name: true,
             availability: true,
-            rating: true
+            rating: true,
+            professionalLicenseNumber:true,
+            nursingCertification:true,
+            hospitalAffiliation:true,
+            yearsOfExperience:true
+          },
+          include: {
+            nurseVisits: true,
+            medicalRecords: true,
+            serviceRequests: true,
+            nurseChats: true,
           }
         },
         doctor: {
           select: {
             id: true,
-            name: true,
-            specialization: true
+            specialization: true,
+            professionalLicenseNumber: true,
+            medicalDiploma: true,
+            hospitalAffiliation:true,
+            experience:true
+          }, 
+          include: {
+            patients: true,
+            patientRequests: true,
+            medicalRecords: true,
+            prescriptions: true,
+            chatRooms: true,
           }
         },
         pharmacy: {
           select: {
             id: true,
-            name: true,
+            pharmacyName:true,
+            pharmacyLicenseNumber:true,
+            pharmacyAddress:true,
+            contactName:true,
+            openingHours:true,
+            deliveryOptions:true,
             location: true
           }
         },
         admin: {
           select: {
             id: true,
-            name: true
+          },include: {
+            reports: true
           }
         }
       }
@@ -254,6 +305,11 @@ export class AdminService {
       userId: user.userId,
       name: user.name,
       email: user.email,
+      telephoneNumber: user.telephoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      address: user.address,
+      profilePhoto: user.profilePhoto,
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -305,12 +361,23 @@ export class AdminService {
    }
    static async createAdmin(data){
     return await prisma.user.create({
-      data
+      data: {
+        firstname: data.firstname,
+        lastname: data.lastname,
+        role: 'ADMIN',  // Ensure role is always 'PATIENT'
+        telephoneNumber: data.telephoneNumber,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        address: data.address,
+        profilePhoto: data.profilePhoto, // Default to true if not provided
+      },
+      include: {
+        admin: true
+      }
     })
    }
    //admin controller for chat
    static async getAdminChatRooms(){
-    
     const chatRooms = await prisma.chatRoom.findMany({
      include: {
        patient: {

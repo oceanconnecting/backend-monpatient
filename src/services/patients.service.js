@@ -9,6 +9,7 @@ export class PatientService {
       where: {
         role: 'PATIENT',
       },
+      
       include: {
         doctor: {
           select: {
@@ -35,9 +36,15 @@ export class PatientService {
     return patients.map((patient) => ({
       id: patient.id,
       userId: patient?.id,
-      name: patient.name,
-      email: patient?.email,
-      role: patient?.role,
+      firstname: patient.firstname,
+      lastname: patient.lastname,
+      email: patient.email,
+      role: patient.role,
+      telephoneNumber: patient.telephoneNumber,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      address: patient.address,
+      profilePhoto: patient.profilePhoto,
       createdAt: patient?.createdAt,
       updatedAt: patient?.updatedAt,
       doctorsCount: patient.doctor?.length || 0,
@@ -56,7 +63,6 @@ export class PatientService {
     if (!id || isNaN(parseInt(id))) {
       throw new Error('Invalid patient ID');
     }
-
     const patient = await prisma.patient.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -112,12 +118,34 @@ export class PatientService {
     });
   }
  // Cretae a patient
-  static async createPatient(data) {
-    return await prisma.user.create({
-      data,
-      role: 'PATIENT',
-    });
-  }
+ static async createPatient(data) {
+  return await prisma.user.create({
+    data: {
+      firstname: data.firstname,
+      lastname: data.lastname,
+      role: 'PATIENT',  // Ensure role is always 'PATIENT'
+      telephoneNumber: data.telephoneNumber,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      address: data.address,
+      profilePhoto: data.profilePhoto,
+      patient: {
+        create: {
+          allergies: data.patient.allergies,
+          emergencyContactName: data.patient.emergencyContactName,
+          emergencyContactPhone: data.patient.emergencyContactPhone,
+          emergencyContactRelationship: data.patient.emergencyContactRelationship,
+          insuranceInfo: data.patient.insuranceInfo,
+          preferredPharmacy: data.patient.preferredPharmacy
+        }
+      }
+    },
+    include: {
+      patient: true
+    }
+  });
+}
+
   // Delete a patient by ID
   static async deletePatientById(id) {
     if (!id || isNaN(parseInt(id))) {

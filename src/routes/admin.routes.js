@@ -67,7 +67,7 @@ export async function adminRoutes(fastify) {
         if (error.code === 'P2001') {
           reply.code(404).send({ error: 'User not found' })
         } else {
-          reply.code(500).send({ error: error.message })
+          reply.code(500).send({ error: 'Internal Server Error' });
         }
       }
     }
@@ -215,15 +215,22 @@ export async function adminRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['email', 'password', 'name', 'role'],
+        required: ['email', 'password', 'firstname', 'lastname', 'role','doctor'],
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
-          role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-    
-          specialization: { type: 'string' },
-          availability: { type: 'boolean' }
+          firstname: { type: 'string' },
+          lastname: { type: 'string' },
+          role: { type: 'string', enum: ['DOCTOR'] },
+          doctor: {
+            type: 'object',
+            required: ['specialization', 'availability'],
+            properties: {
+              specialization: { type: 'string' },
+              availability: { type: 'boolean' }
+            },
+          },
+     
         }
       }
     },
@@ -350,8 +357,8 @@ export async function adminRoutes(fastify) {
         properties: {
           email: { type: 'string', format: 'email' },
           password: { type: 'string', minLength: 6 },
-          name: { type: 'string' },
-          role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
+          firstname: { type: 'string' },
+          lastname: { type: 'string' },
           specialization: { type: 'string' },
           availability: { type: 'boolean' }
         }
@@ -454,23 +461,42 @@ export async function adminRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['name', 'role'],
+        required: ['firstname', 'lastname', 'role', 'patient', 'telephoneNumber', 'dateOfBirth', 'gender', 'address', 'profilePhoto'],
         properties: {
-          name: { type: 'string' },      
-          specialization: { type: 'string' },
-          availability: { type: 'boolean' }
+          firstname: { type: 'string' },      
+          lastname: { type: 'string' },
+          role: { type: 'string', enum: ['PATIENT'] },  // Ensure only 'PATIENT' is allowed
+          telephoneNumber: { type: 'string' },
+          dateOfBirth: { type: 'string', format: 'date' },
+          gender: { type: 'string', enum: ['MALE', 'FEMALE', 'OTHER'] },
+          address: { type: 'string' },
+          profilePhoto: { type: 'string' },  // Assuming it's a URL or base64 string
+          availability: { type: 'boolean' }, // Optional field
+          patient: {
+            type: 'object',
+            required: ['allergies', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship', 'insuranceInfo', 'preferredPharmacy'],
+            properties: {
+              allergies: { type: 'string' },
+              emergencyContactName: { type: 'string' },
+              emergencyContactPhone: { type: 'string' },
+              emergencyContactRelationship: { type: 'string' },
+              insuranceInfo: { type: 'string' },
+              preferredPharmacy: { type: 'string' }
+            }
+          }
         }
       }
     },
     handler: async (request, reply) => {
       try {
-        const patient = await PatientService.createPatient(request.body)
-        return patient
+        const patient = await PatientService.createPatient(request.body);
+        return reply.code(201).send(patient);
       } catch (error) {
-        reply.code(400).send({ error: error.message })
+        return reply.code(400).send({ error: error.message });
       }
     }
-  })
+  });
+  
   fastify.put('/patients/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     schema: {

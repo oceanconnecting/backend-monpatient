@@ -27,7 +27,7 @@ export class NurseService{
                     }
                   },
               } ,
-               nurseVisits: true,
+             nurseVisits: true,
              medicalRecords: true
             },
             
@@ -70,11 +70,22 @@ export class NurseService{
        return prisma.user.update({
         where:{id:parseInt(id)},
         data:{
-          name:userData.name,
+          firstname: userData.firstname,
+          lastname: userData.lastname,
+          role: 'NURSE',  
+          telephoneNumber: userData.telephoneNumber,
+          dateOfBirth: userData.dateOfBirth,
+          gender: userData.gender,
+          address: userData.address,
+          profilePhoto: userData.profilePhoto,
           nurse:{
             update:{
-              availability:userData.availability,
-              rating:userData.rating
+              availability: userData.nurse.availability,
+              rating: userData.nurse.rating,
+              professionalLicenseNumber: userData.nurse.professionalLicenseNumber,
+              nursingCertification: userData.nurse.nursingCertification,
+              hospitalAffiliation: userData.nurse.hospitalAffiliation,
+              yearsOfExperience: userData.nurse.yearsOfExperience,
             }
           }
         }
@@ -82,8 +93,29 @@ export class NurseService{
     }
     static async createNurse(userData) {
         return await prisma.user.create({
-          data: userData,
-          role:'NURSE'
+          data: {
+            firstname: userData.firstname,
+            lastname: userData.lastname,
+            role: 'NURSE',  
+            telephoneNumber: userData.telephoneNumber,
+            dateOfBirth: userData.dateOfBirth,
+            gender: userData.gender,
+            address: userData.address,
+            profilePhoto: userData.profilePhoto,
+            nurse: {
+              create: {
+                availability: userData.nurse.availability,
+                rating: userData.nurse.rating,
+                professionalLicenseNumber: userData.nurse.professionalLicenseNumber,
+                nursingCertification: userData.nurse.nursingCertification,
+                hospitalAffiliation: userData.nurse.hospitalAffiliation,
+                yearsOfExperience: userData.nurse.yearsOfExperience,
+              }
+            }
+          },
+          include: {
+            nurse: true
+          }
         })
     }
     static async deleteNurse(id) {

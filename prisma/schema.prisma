@@ -40,6 +40,11 @@ model User {
   lastname        String
   password        String
   role            Role
+  telephoneNumber String?
+  dateOfBirth     DateTime?
+  gender          String?
+  address         String?
+  profilePhoto    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   isEmailVerified Boolean   @default(false)
@@ -58,10 +63,15 @@ model Patient {
   id            Int             @id @default(autoincrement())
   user          User            @relation(fields: [userId], references: [id],onDelete: Cascade)
   userId        Int              @unique
+  allergies     String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelationship String?
+  insuranceInfo String?
+  preferredPharmacy String?
   medicalRecord MedicalRecord?
   prescriptions Prescription[]  @relation("PatientPrescriptions")
   nurseVisits   NurseVisit[]
-  relatives     Relative[]
   doctorRequests DoctorPatientRequest[] @relation("PatientRequests")
   doctors       DoctorPatient[]         @relation("PatientDoctors")
   nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
@@ -73,6 +83,10 @@ model Nurse {
   id            Int         @id @default(autoincrement())
   availability  Boolean     @default(true)
   rating        Float       @default(0)
+  professionalLicenseNumber String?
+  nursingCertification String?
+  hospitalAffiliation String?
+  yearsOfExperience Int?
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        Int         @unique
   nurseVisits   NurseVisit[]
@@ -86,6 +100,10 @@ model Doctor {
   specialization  String?
   availability    Boolean       @default(true)
   rating          Float         @default(0)
+  professionalLicenseNumber String?
+  medicalDiploma String?
+  hospitalAffiliation String?
+  experience      String?
   user            User          @relation(fields: [userId], references: [id])
   userId          Int           @unique
   patients        DoctorPatient[]        @relation("DoctorPatients")
@@ -144,7 +162,13 @@ model DoctorPatient {
 model Pharmacy {
   id              Int           @id @default(autoincrement())
   user            User          @relation(fields: [userId], references: [id])
-  userId          Int            @unique      
+  userId          Int            @unique
+  pharmacyName    String?
+  pharmacyLicenseNumber String?
+  pharmacyAddress String?
+  contactName     String?
+  openingHours    String?
+  deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
 }
 
@@ -223,14 +247,7 @@ model NurseVisit {
   patientId   Int
 }
 
-model Relative {
-  id          Int      @id @default(autoincrement())
-  name        String
-  relation    String
-  contactInfo String
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  patientId   Int
-}
+
 
 model ChatRoom {
   id        Int       @id @default(autoincrement())

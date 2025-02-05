@@ -78,4 +78,27 @@ export class PharmacyService {
       })
       return pharmacy
     }
+    static async createPharmacy(userData) {
+      return await prisma.user.create({
+        data: {
+          firstname: userData.firstname,
+          lastname: userData.lastname,
+          role: 'PHARMACY',  // Ensure role is always 'PATIENT'
+          telephoneNumber: userData.telephoneNumber,
+          dateOfBirth: userData.dateOfBirth,
+          gender: userData.gender,
+          address: userData.address,
+          profilePhoto: userData.profilePhoto,
+          pharmacy: {
+            create: {
+              name: userData.pharmacy.name,
+              location: userData.pharmacy.location
+            }
+          }
+        },
+        include: {
+          pharmacy: true
+        }
+      })
+    }
 }
