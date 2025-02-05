@@ -33,7 +33,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Accept request
   fastify.post('/request/:requestId/accept', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
@@ -63,7 +62,6 @@ export async function doctorPatientRoutes(fastify) {
       }
     }
   })
-
   // Reject request
   fastify.post('/request/:requestId/reject', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],

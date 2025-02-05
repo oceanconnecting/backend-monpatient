@@ -29,7 +29,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Nurse views available service requests
   fastify.get('/available', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
@@ -42,7 +41,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Nurse accepts a service request
   fastify.put('/accept/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
@@ -105,7 +103,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Patient rates completed service
   fastify.put('/rate/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
@@ -140,7 +137,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Patient views their service requests
   fastify.get('/patient/requests', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],

@@ -40,7 +40,6 @@ export async function chatPatientNurseRoutes(fastify, options) {
       }
     },
   });
-
   // Get user's chat rooms (patient or nurse)
   fastify.get('/rooms', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE'])],
@@ -57,7 +56,6 @@ export async function chatPatientNurseRoutes(fastify, options) {
       }
     },
   });
-
   // Send message in a room
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],

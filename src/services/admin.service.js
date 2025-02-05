@@ -4,14 +4,14 @@ import { AuthService } from './auth.service.js'
 const prisma = new PrismaClient()
 
 export class AdminService {
-   //users
+  //users
    static async getAllUsers() {
-   const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      profilePhoto: true,
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        profilePhoto: true,
       firstname: true,
       lastname: true,
       telephoneNumber: true,
