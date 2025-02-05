@@ -38,60 +38,35 @@ export class AdminService {
   })
    }
    static async getUserById(id) {
-    if (!id || isNaN(parseInt(id))) {
+    if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
       throw new Error('Invalid user ID')
     }
-
+  
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: Number(id) },
       select: {
         id: true,
+        firstname: true,
+        lastname:true,
         email: true,
         role: true,
-        telephoneNumber: true,
-        dateOfBirth: true,
-        gender: true,
-        address: true,
-        profilePhoto: true,
-        firstname: true,
-        lastname: true,
         createdAt: true,
         updatedAt: true,
-        patient: {
-          select: {
-            name: true,
-            allergies:true,
-            emergencyContactName:true,
-            emergencyContactNumber:true,
-            insuranceInfo:true,
-            preferredPharmacy:true,
-            contactInfo: true
-          },
-          include: {
-            medicalRecord: true,
-            prescriptions: true,
-            nurseServiceRequests: true,
-            nurseVisits: true,
-            doctorRequests: true,
-            chatRoomPatients:true,
-            chatRooms: true
-          }
-        },
+        // Exclude password
+        patient: true,
         nurse: {
           select: {
             id: true,
             availability: true,
             rating: true,
-            professionalLicenseNumber:true,
-            nursingCertification:true,
-            hospitalAffiliation:true,
-            yearsOfExperience:true
-          },
-          include: {
+            professionalLicenseNumber: true,
+            nursingCertification: true,
+            hospitalAffiliation: true,
+            yearsOfExperience: true,
             nurseVisits: true,
             medicalRecords: true,
             serviceRequests: true,
-            nurseChats: true,
+            nurseChats: true
           }
         },
         doctor: {
@@ -100,55 +75,57 @@ export class AdminService {
             specialization: true,
             professionalLicenseNumber: true,
             medicalDiploma: true,
-            hospitalAffiliation:true,
-            experience:true
-          }, 
-          include: {
+            hospitalAffiliation: true,
+            experience: true,
             patients: true,
             patientRequests: true,
             medicalRecords: true,
             prescriptions: true,
-            chatRooms: true,
+            chatRooms: true
           }
         },
         pharmacy: {
           select: {
             id: true,
-            pharmacyName:true,
-            pharmacyLicenseNumber:true,
-            pharmacyAddress:true,
-            contactName:true,
-            openingHours:true,
-            deliveryOptions:true,
-            location: true
+            pharmacyName: true,
+            pharmacyLicenseNumber: true,
+            pharmacyAddress: true,
+            contactName: true,
+            openingHours: true,
+            deliveryOptions: true,
+       
           }
         },
         admin: {
           select: {
             id: true,
-          },include: {
             reports: true
           }
         }
       }
     })
-
+  
     if (!user) {
       const error = new Error('User not found')
       error.code = 'P2001'
       throw error
     }
-
-    // Get the role-specific data
-    const roleSpecificData = user[user.role.toLowerCase()]
-    // Remove all role fields
+  
+    // Ensure `user.role` is a valid property
+    const roleKey = user.role ? user.role.toLowerCase() : null
+    const roleSpecificData = roleKey && user[roleKey] ? user[roleKey] : {}
+  
+    // Remove all role-specific fields from the base user
     const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user
+  
     // Return combined data
     return {
       ...baseUser,
       ...roleSpecificData
     }
-   }
+  }
+  
+  
    static async updateUser(id, userData) {
     const existingUser = await prisma.user.findUnique({
       where: { id: parseInt(id),role: 'ADMIN' },
