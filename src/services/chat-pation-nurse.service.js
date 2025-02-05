@@ -24,7 +24,7 @@ export class ChatServicePatientNurse {
       next(new Error('Authentication failed'));
     }
   } 
-   handleConnection(socket) {
+    handleConnection(socket) {
     console.log('New client connected:', socket.user.email);
     const userId = socket.user.id;
     this.connectedUsers.set(userId, socket.id);
@@ -82,8 +82,7 @@ export class ChatServicePatientNurse {
       console.log('Client disconnected:', socket.user.email);
       this.connectedUsers.delete(userId);
     });
-   }
-
+    }
   async canUserJoinRoom(userId, roomId) {
     const room = await this.prisma.chatRoomPatientNurse.findUnique({
       where: { id: parseInt(roomId) },

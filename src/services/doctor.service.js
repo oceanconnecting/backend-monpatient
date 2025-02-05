@@ -86,7 +86,8 @@ export class DoctorService {
       throw new Error('Invalid user ID')
     }
     const doctor =await  prisma.user.findUnique({
-      where: { id: parseInt(id) ,role:'DOCTOR'},
+      where: { id: parseInt(id),
+        role:'DOCTOR'},
       include: {
         doctor: true
       }

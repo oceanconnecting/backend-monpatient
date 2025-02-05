@@ -182,7 +182,7 @@ export class DoctorPatientService {
           active: true
         }
       })
-
+      
       console.log('Creating chat room...')
       // Create chat room for doctor and patient
       const chatRoom = await prisma.chatRoom.create({
