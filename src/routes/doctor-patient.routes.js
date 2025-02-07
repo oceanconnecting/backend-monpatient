@@ -10,7 +10,7 @@ export async function doctorPatientRoutes(fastify) {
         type: 'object',
         required: ['doctorId'],
         properties: {
-          doctorId: { type: 'number' },
+          doctorId: { type: 'string' },
           message: { type: 'string' }
         }
       }

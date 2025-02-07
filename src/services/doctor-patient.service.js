@@ -9,8 +9,8 @@ export class DoctorPatientService {
     const existingRequest = await prisma.doctorPatientRequest.findUnique({
       where: {
         patientId_doctorId: {
-          patientId: parseInt(patientId),
-          doctorId: parseInt(doctorId)
+          patientId: patientId,
+          doctorId: doctorId
         }
       }
     })
@@ -22,11 +22,11 @@ export class DoctorPatientService {
     // Get doctor and patient details for notifications
     const [doctor, patient] = await Promise.all([
       prisma.doctor.findUnique({
-        where: { id: parseInt(doctorId) },
+        where: { id: doctorId },
         include: { user: true }
       }),
       prisma.patient.findUnique({
-        where: { id: parseInt(patientId) },
+        where: { id: patientId },
         include: { user: true }
       })
     ])
@@ -34,8 +34,8 @@ export class DoctorPatientService {
     // Create new request
     const request = await prisma.doctorPatientRequest.create({
       data: {
-        patientId: parseInt(patientId),
-        doctorId: parseInt(doctorId),
+        patientId: patientId,
+        doctorId: doctorId,
         message,
         status: 'PENDING'
       },
@@ -65,8 +65,8 @@ export class DoctorPatientService {
   static async handleRequest(requestId, doctorId, status) {
     const request = await prisma.doctorPatientRequest.findFirst({
       where: {
-        id: parseInt(requestId),
-        doctorId: parseInt(doctorId)
+        id: requestId,
+        doctorId: doctorId
       },
       include: {
         patient: {
@@ -91,7 +91,7 @@ export class DoctorPatientService {
 
     // Update request status
     const updatedRequest = await prisma.doctorPatientRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data: { status },
       include: {
         patient: true,
@@ -134,7 +134,7 @@ export class DoctorPatientService {
     try {
       console.log('Accepting request:', { requestId, doctorId })
       const request = await prisma.doctorPatientRequest.findUnique({
-        where: { id: parseInt(requestId) },
+        where: { id: requestId },
         include: {
           patient: {
             include: { user: true }
@@ -167,7 +167,7 @@ export class DoctorPatientService {
       console.log('Updating request status...')
       // Update request status to ACCEPTED
       const updatedRequest = await prisma.doctorPatientRequest.update({
-        where: { id: parseInt(requestId) },
+        where: { id: requestId },
         data: { status: 'ACCEPTED' }
       })
       console.log('Updated request:', updatedRequest)
@@ -217,7 +217,7 @@ export class DoctorPatientService {
 
   static async rejectRequest(requestId, doctorId, reason = '') {
     const request = await prisma.doctorPatientRequest.findUnique({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       include: {
         patient: {
           include: { user: true }
@@ -242,7 +242,7 @@ export class DoctorPatientService {
 
     // Update request status
     const updatedRequest = await prisma.doctorPatientRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data: { 
         status: 'REJECTED',
         message: reason || 'Request rejected by doctor'
@@ -274,7 +274,7 @@ export class DoctorPatientService {
   static async getPatientDoctors(patientId) {
     return prisma.doctorPatient.findMany({
       where: {
-        patientId: parseInt(patientId),
+        patientId: patientId,
         active: true
       },
       include: {
@@ -295,7 +295,7 @@ export class DoctorPatientService {
   static async getDoctorPatients(doctorId) {
     return prisma.doctorPatient.findMany({
       where: {
-        doctorId: parseInt(doctorId),
+        doctorId: doctorId,
         active: true
       },
       include: {
@@ -316,7 +316,7 @@ export class DoctorPatientService {
   static async getPendingRequests(doctorId) {
     return prisma.doctorPatientRequest.findMany({
       where: {
-        doctorId: parseInt(doctorId),
+        doctorId: doctorId,
         status: 'PENDING'
       },
       include: {
@@ -341,8 +341,8 @@ export class DoctorPatientService {
     return prisma.doctorPatient.update({
       where: {
         patientId_doctorId: {
-          patientId: parseInt(patientId),
-          doctorId: parseInt(doctorId)
+          patientId,
+          doctorId
         }
       },
       data: {

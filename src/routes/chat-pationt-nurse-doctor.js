@@ -12,8 +12,8 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
         type: 'object',
         required: ['nurseId', 'doctorId'],
         properties: {
-          nurseId: { type: 'number' }, // Nurse ID
-          doctorId: { type: 'number' } // Doctor ID
+          nurseId: {type: 'string' }, // Nurse ID
+          doctorId: { type: 'string' } // Doctor ID 
         },
       },
     },
@@ -43,17 +43,21 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
 
   // Get user's chat rooms (patient, nurse, or doctor)
   fastify.get('/rooms', {
-    onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE', 'DOCTOR'])],
+    onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE'])],
     handler: async (request, reply) => {
       try {
-        const rooms = await chatService.getUserRooms(request.user.id, request.user.role);
+        const rooms = await chatService.getUserRooms(
+          request.user.id, // User ID
+          request.user.role // User role (PATIENT or NURSE)
+        );
         return rooms;
       } catch (error) {
         console.error('Error getting rooms:', error);
-        reply.code(500).send({ error: error.message });
+        reply.code(400).send({ error: error.message });
       }
     },
   });
+  
 
   // Send message in a room
   fastify.post('/room/:roomId/message', {

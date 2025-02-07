@@ -6,7 +6,7 @@ export class NurseServiceService {
   static async createServiceRequest(patientId, requestData) {
     return prisma.nurseServiceRequest.create({
       data: {
-        patientId: parseInt(patientId),
+        patientId,
         serviceType: requestData.serviceType,
         description: requestData.description,
         preferredDate: new Date(requestData.preferredDate),
@@ -41,7 +41,7 @@ export class NurseServiceService {
 
   static async acceptRequest(requestId, nurseId) {
     const request = await prisma.nurseServiceRequest.findUnique({
-      where: { id: parseInt(requestId) }
+      where: { id:requestId }
     })
 
     if (!request) {
@@ -53,9 +53,9 @@ export class NurseServiceService {
     }
 
     return prisma.nurseServiceRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data: {
-        nurseId: parseInt(nurseId),
+        nurseId: nurseId,
         status: 'ACCEPTED'
       },
       include: {
@@ -68,8 +68,8 @@ export class NurseServiceService {
   static async updateRequestStatus(requestId, nurseId, status, notes) {
     const request = await prisma.nurseServiceRequest.findFirst({
       where: {
-        id: parseInt(requestId),
-        nurseId: parseInt(nurseId)
+        id: requestId,
+        nurseId: nurseId
       }
     })
 
@@ -84,7 +84,7 @@ export class NurseServiceService {
     }
 
     return prisma.nurseServiceRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data,
       include: {
         patient: true,
@@ -96,8 +96,8 @@ export class NurseServiceService {
   static async rateService(requestId, patientId, rating, feedback) {
     const request = await prisma.nurseServiceRequest.findFirst({
       where: {
-        id: parseInt(requestId),
-        patientId: parseInt(patientId),
+        id: requestId,
+        patientId: patientId,
         status: 'COMPLETED'
       }
     })
@@ -112,7 +112,7 @@ export class NurseServiceService {
 
     // Update the service request with rating and feedback
     const updatedRequest = await prisma.nurseServiceRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data: {
         rating,
         feedback
@@ -145,7 +145,7 @@ export class NurseServiceService {
   static async getPatientRequests(patientId) {
     return prisma.nurseServiceRequest.findMany({
       where: {
-        patientId: parseInt(patientId)
+        patientId: patientId
       },
       include: {
         nurse: true
@@ -159,7 +159,7 @@ export class NurseServiceService {
   static async getNurseRequests(nurseId) {
     return prisma.nurseServiceRequest.findMany({
       where: {
-        nurseId: parseInt(nurseId)
+        nurseId: nurseId
       },
       include: {
         patient: true
@@ -173,8 +173,8 @@ export class NurseServiceService {
   static async cancelRequest(requestId, patientId) {
     const request = await prisma.nurseServiceRequest.findFirst({
       where: {
-        id: parseInt(requestId),
-        patientId: parseInt(patientId),
+        id: requestId,
+        patientId: patientId,
         status: { in: ['REQUESTED', 'ACCEPTED'] }
       }
     })
@@ -184,7 +184,7 @@ export class NurseServiceService {
     }
 
     return prisma.nurseServiceRequest.update({
-      where: { id: parseInt(requestId) },
+      where: { id: requestId },
       data: {
         status: 'CANCELLED'
       }

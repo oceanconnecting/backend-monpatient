@@ -126,7 +126,7 @@ export class AdminService {
    }
    static async updateUser(id, userData) {
     const existingUser = await prisma.user.findUnique({
-      where: { id: parseInt(id),role: 'ADMIN' },
+      where: { id,role: 'ADMIN' },
       include: {
         patient: true,
         nurse: true,
@@ -151,9 +151,11 @@ export class AdminService {
     // Prepare role-specific update
     const roleModel = existingUser.role.toLowerCase()
     const roleUpdateData = {
-      name: userData.name,
+      firstname: userData.firstname,
+      lastname: userData.lastname,
       ...(roleModel === 'patient' && {
-        name: userData.name,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
       }),
       ...(roleModel === 'doctor' && {
         specialization: userData.specialization
@@ -165,12 +167,13 @@ export class AdminService {
         availability: userData.availability
       }),
       ...(roleModel === 'admin' && {
-        name: userData.name
+        firstname: userData.firstname,
+        lastname: userData.lastname,
       })
     }
     // Update both user and role data
     const updatedUser = await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         ...updateData,
         [roleModel]: {
@@ -186,13 +189,15 @@ export class AdminService {
         patient: {
           select: {
             id: true,
-            name: true,
+            firstname: true,
+            lastname: true
           }
         },
         nurse: {
           select: {
             id: true,
-            name: true,
+            firstname: true,
+            lastname: true,
             availability: true,
             rating: true
           }
@@ -200,21 +205,24 @@ export class AdminService {
         doctor: {
           select: {
             id: true,
-            name: true,
+            firstname: true,
+            lastname: true,
             specialization: true
           }
         },
         pharmacy: {
           select: {
             id: true,
-            name: true,
+            firstname: true,
+            lastname: true,
             location: true
           }
         },
         admin: {
           select: {
             id: true,
-            name: true
+            firstname: true,
+            lastname: true
           }
         }
       }
@@ -232,7 +240,7 @@ export class AdminService {
    }
    static async deleteUser(id) {
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id),role: 'ADMIN' },
+      where: { id,role: 'ADMIN' },
       include: {
         patient: true,
         nurse: true,
@@ -248,7 +256,7 @@ export class AdminService {
 
     // Delete the user (this will cascade delete role-specific data)
     await prisma.user.delete({
-      where: { id: parseInt(id) }
+      where: { id}
     })
 
     return { message: 'User deleted successfully' }
@@ -278,7 +286,8 @@ export class AdminService {
     return users.map(user => ({
       id: user.id,
       userId: user.userId,
-      name: user.name,
+      firstname: user.firstname,
+      lastname: user.lastname,
       email: user.email,
       telephoneNumber: user.telephoneNumber,
       dateOfBirth: user.dateOfBirth,
@@ -291,24 +300,24 @@ export class AdminService {
     }))
    } 
    static async updateAdminById(id, data) {
-  if (!id || isNaN(parseInt(id))) {
+  if (!id || isNaN(id)) {
     throw new Error('Invalid admin ID')
   }
   const admin = await prisma.user.findUnique({
-    where: { id: parseInt(id),role: 'ADMIN' }
+    where: { id,role: 'ADMIN' }
   })
 
   if (!admin) {
     throw new Error('Admin not found')
   }
     return await prisma.admin.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data
     })
    }
    static async deleteAdmin(id) { 
     const admin = await prisma.user.findFirst({
-      where: { id: parseInt(id), role: 'ADMIN' },
+      where: { id, role: 'ADMIN' },
       include: {
         admin: true
       }
@@ -318,16 +327,16 @@ export class AdminService {
     }
     // Delete the admin (this will cascade delete role-specific data)
     await prisma.user.delete({
-      where: { id: parseInt(id),role: 'ADMIN' }
+      where: { id,role: 'ADMIN' }
     })
     return { message: 'Admin deleted successfully' }
    }
    static async getAdminByid(id){ 
-    if(!id || isNaN(parseInt(id))){
+    if(!id || isNaN(id)){
       throw new Error('Invalid user ID')
     }
     const admin =await  prisma.user.findFirst({
-      where: { id: parseInt(id),role: 'ADMIN' },
+      where: { id,role: 'ADMIN' },
       include: {
         admin: true
       }
@@ -367,14 +376,14 @@ export class AdminService {
    }
    //get admin chat room nurse
    static async getAdminChatRoomNurse(id){
-    if(!id || isNaN(parseInt(id))){
+    if(!id || isNaN(id)){
       throw new Error('Invalid user ID')
     }
     const chatRoom = await prisma.chatRoomPatientNurse.findMany({
       where: { 
         OR: [
-          { patient: { id: parseInt(id) } },
-          { nurse: { id: parseInt(id) } }
+          { patient: { id } },
+          { nurse: { id } }
         ]
       },
       include: {

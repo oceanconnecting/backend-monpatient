@@ -25,7 +25,7 @@ export async function authRoutes(fastify) {
             user: {
               type: 'object',
               properties: {
-                id: { type: 'number' },
+                id: { type: 'string' },
                 email: { type: 'string' },
                 role: { type: 'string' },
                 ValidityState: { type: 'string' },
@@ -39,7 +39,7 @@ export async function authRoutes(fastify) {
                 profile: { 
                   type: 'object',
                   properties: {
-                    id: { type: 'number' },
+                    id: { type: 'string' },
                     name: { type: 'string' },
                     // Other properties will be included based on role
                   },
@@ -88,7 +88,7 @@ export async function authRoutes(fastify) {
             user: {
               type: 'object',
               properties: {
-                id: { type: 'number' },
+                id: { type: 'string' },
                 email: { type: 'string' },
                 role: { type: 'string' },
                 createdAt: { type: 'string' },
@@ -101,7 +101,7 @@ export async function authRoutes(fastify) {
                 profile: { 
                   type: 'object',
                   properties: {
-                    id: { type: 'number' },
+                    id: { type: 'string' },
                     // Other properties will be included based on role
                   },
                   

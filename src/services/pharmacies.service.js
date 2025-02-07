@@ -36,11 +36,11 @@ export class PharmacyService {
         }))
     }
     static async updatePharmacyById(id, data) {
-      if (!id || isNaN(parseInt(id))) {
+      if (!id || isNaN(id)) {
         throw new Error('Invalid pharmacy ID')
       }
       const pharmacy = await prisma.user.findUnique({
-        where: { id: parseInt(id) ,role:'PHARMACY' }
+        where: { id ,role:'PHARMACY' }
       })
     
       if (!pharmacy) {
@@ -48,13 +48,13 @@ export class PharmacyService {
       }
     
       return await prisma.user.update({
-        where: { id: parseInt(id) ,role:'PHARMACY'},
+        where: { id ,role:'PHARMACY'},
         data
       })
     }
     static async deletePharmacy(id) {
       const pharmacy = await prisma.user.findUnique({
-        where: { id: parseInt(id) ,role:'PHARMACY'}
+        where: { id ,role:'PHARMACY'}
       })
     
       if (!pharmacy) {
@@ -62,16 +62,16 @@ export class PharmacyService {
       }
       // Delete the pharmacy (this will cascade delete role-specific data)
       await prisma.user.delete({
-        where: { id: parseInt(id) ,role:'PHARMACY'}
+        where: { id ,role:'PHARMACY'}
       })
       return { message: 'Pharmacy deleted successfully' }
     }
     static async getPharmacyById(id){
-      if(!id || isNaN(parseInt(id))){
+      if(!id || isNaN(id)){
         throw new Error('Invalid user ID')
       }
       const pharmacy =await  prisma.user.findUnique({
-        where: { id: parseInt(id) ,role:'PHARMACY'},
+        where: { id ,role:'PHARMACY'},
         include: {
           pharmacy: true
         }

@@ -84,8 +84,8 @@ export class ChatServicePatientNurseDoctor {
     });
     }
   async canUserJoinRoom(userId, roomId) {
-    const room = await this.prisma.chatRoomPatientNurseDoctor.findUnique({
-      where: { id: parseInt(roomId) },
+    const room = await this.prisma.chatRoomDoctorNursePatient.findUnique({
+      where: { id: roomId },
       include: {
         patient: {
           include: { user: true },
@@ -108,9 +108,9 @@ export class ChatServicePatientNurseDoctor {
     // Check if a room already exists between the patient and nurse
     let room = await this.prisma.chatRoomDoctorNursePatient.findFirst({
       where: {
-        patientId: parseInt(patientId),
-        nurseId: parseInt(nurseId),
-        doctorId: parseInt(doctorId),
+        patientId,
+        nurseId,
+        doctorId,    
       },
     });
 
@@ -118,9 +118,9 @@ export class ChatServicePatientNurseDoctor {
       // Create a new room if it doesn't exist
       room = await this.prisma.chatRoomDoctorNursePatient.create({
         data: {
-          patientId: parseInt(patientId),
-          nurseId: parseInt(nurseId),
-          doctorId: parseInt(doctorId),
+          patientId,
+          nurseId,
+          doctorId,
           status: 'ACTIVE',
         },
         include: {
@@ -137,8 +137,8 @@ export class ChatServicePatientNurseDoctor {
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
       where: {
-        chatRoomPatientNurseId: parseInt(roomId),
-        senderId: { not: parseInt(userId) },
+        chatRoomDoctorNursePatientId: roomId,
+        senderId: { not: userId },
         isRead: false,
       },
       data: {
@@ -150,15 +150,17 @@ export class ChatServicePatientNurseDoctor {
 
   async sendMessage(roomId, senderId, senderRole, content) {
     // Validate sender role
-    if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {
+    if (senderRole !== 'PATIENT' && senderRole !== 'NURSE' && senderRole !== 'DOCTOR') {
       throw new Error('Invalid sender role');
     }
+  
     // Get the sender's profile
     const sender = await this.prisma.user.findUnique({
-      where: { id: parseInt(senderId) },
+      where: { id: senderId },
       include: {
         patient: true,
         nurse: true,
+        doctor: true,
       },
     });
   
@@ -167,7 +169,15 @@ export class ChatServicePatientNurseDoctor {
     }
   
     // Check if the sender has the correct profile
-    const profileId = senderRole === 'PATIENT' ? sender.patient?.id : sender.nurse?.id;
+    let profileId;
+    if (senderRole === 'PATIENT') {
+      profileId = sender.patient?.id;
+    } else if (senderRole === 'NURSE') {
+      profileId = sender.nurse?.id;
+    } else if (senderRole === 'DOCTOR') {
+      profileId = sender.doctor?.id;
+    }
+  
     if (!profileId) {
       throw new Error(`Sender is not a ${senderRole}`);
     }
@@ -175,10 +185,11 @@ export class ChatServicePatientNurseDoctor {
     // Verify that the sender is part of the chat room
     const room = await this.prisma.chatRoomDoctorNursePatient.findFirst({
       where: {
-        id: parseInt(roomId),
+        id: roomId,
         OR: [
           { patientId: senderRole === 'PATIENT' ? profileId : undefined },
           { nurseId: senderRole === 'NURSE' ? profileId : undefined },
+          { doctorId: senderRole === 'DOCTOR' ? profileId : undefined },
         ],
       },
     });
@@ -193,10 +204,10 @@ export class ChatServicePatientNurseDoctor {
         content,
         isRead: false,
         senderRole,
-        senderId: parseInt(senderId),
+        senderId,
         chatRoomDoctorNursePatient: {
           connect: {
-            id: parseInt(roomId),
+            id: roomId,
           },
         },
       },
@@ -210,13 +221,13 @@ export class ChatServicePatientNurseDoctor {
 
   async getRoomMessages(roomId, userId) {
     // Check if the user has access to the room
-    const room = await this.prisma.chatRoomPatientNurseDoctor.findFirst({
+    const room = await this.prisma.chatRoomDoctorNursePatient.findFirst({
       where: {
-        id: parseInt(roomId),
+        id: roomId,
         OR: [
-          { patient: { user: { id: parseInt(userId) } } },
-          { nurse: { user: { id: parseInt(userId) } } },
-          { doctor: { user: { id: parseInt(userId) } } },
+          { patient: { user: { id: userId } } },
+          { nurse: { user: { id: userId } } },
+          { doctor: { user: { id: userId } } },
         ],
       },
     });
@@ -228,7 +239,7 @@ export class ChatServicePatientNurseDoctor {
     // Get messages for the room
     const messages = await this.prisma.message.findMany({
       where: {
-        chatRoomDoctorNursePatientId: parseInt(roomId),
+        chatRoomDoctorNursePatientId: roomId,
       },
       orderBy: {
         createdAt: 'asc',
@@ -246,20 +257,26 @@ export class ChatServicePatientNurseDoctor {
     if (userRole === 'PATIENT') {
       query.where.patient = {
         user: {
-          id: parseInt(userId),
+          id: userId,
         },
       };
     } else if (userRole === 'NURSE') {
       query.where.nurse = {
         user: {
-          id: parseInt(userId),
+          id: userId,
+        },
+      };
+    } else if (userRole === 'DOCTOR') {
+      query.where.doctor = {
+        user: {
+          id: userId,
         },
       };
     } else {
       throw new Error('Invalid user role');
     }
 
-    return this.prisma.chatRoomPatientNurse.findMany({
+    return this.prisma.chatRoomDoctorNursePatient.findMany({
       ...query,
       include: {
         patient: {

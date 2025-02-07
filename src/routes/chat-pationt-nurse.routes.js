@@ -11,7 +11,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         type: 'object',
         required: ['nurseId'],
         properties: {
-          nurseId: { type: 'number' }, // Nurse ID to start a chat with
+          nurseId: { type: 'string' }, // Nurse ID to start a chat with
         },
       },
     },

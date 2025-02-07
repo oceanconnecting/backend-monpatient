@@ -89,7 +89,8 @@ export async function createTestUser(role, email = null) {
     case 'DOCTOR':
       roleData = await prisma.doctor.create({
         data: {
-          name: 'Test Doctor',
+          firstname: 'Test Doctor',
+          lastname: 'Test Doctor',
           specialization: 'General',
           userId: user.id
         }
@@ -98,7 +99,8 @@ export async function createTestUser(role, email = null) {
     case 'PATIENT':
       roleData = await prisma.patient.create({
         data: {
-          name: 'Test Patient',
+          firstname: 'Test Patient',
+          lastname: 'Test Patient',
           userId: user.id
         }
       })
@@ -106,7 +108,8 @@ export async function createTestUser(role, email = null) {
     case 'NURSE':
       roleData = await prisma.nurse.create({
         data: {
-          name: 'Test Nurse',
+          firstname: 'Test Nurse',
+          lastname: 'Test Nurse',
           availability: Boolean(true),
           rating: 4.5,
           userId: user.id
@@ -116,7 +119,8 @@ export async function createTestUser(role, email = null) {
     case 'ADMIN':
       roleData = await prisma.admin.create({
         data: {
-          name: 'Test Admin',
+          firstname: 'Test Admin',
+          lastname: 'Test Admin',
           userId: user.id
         }
       })

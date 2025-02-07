@@ -49,8 +49,7 @@ export async function notificationRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const { id } = request.params
-        const notification = await markNotificationAsRead(
-          parseInt(id), 
+        const notification = await markNotificationAsRead(id, 
           request.user.id,
           request.user.role
         )
@@ -90,7 +89,7 @@ export async function notificationRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const { id } = request.params
-        await deleteNotification(parseInt(id), request.user.id)
+        await deleteNotification(id, request.user.id)
         reply.code(204).send()
       } catch (error) {
         if (error.name === 'UnauthorizedError') {

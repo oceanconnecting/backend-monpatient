@@ -18,7 +18,7 @@ export async function patientRoutes(fastify) {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
-        const id = parseInt(request.params.id);
+        const id = request.params.id;
         if (isNaN(id)) {
           return reply.code(400).send({ error: 'Invalid patient ID' });
         }

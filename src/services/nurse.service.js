@@ -19,11 +19,7 @@ export class NurseService{
               include:{
                 serviceRequests: {
                     include: {
-                      patient: {
-                        select: {
-                          name: true
-                        }
-                      }
+                      patient: true,
                     }
                   },
               } ,
@@ -37,7 +33,8 @@ export class NurseService{
         return nurses.map(user => ({
           id: user.id,
           userId: user.userId,
-          name: user.name,
+          firstname: user.firstname,
+          lastname: user.lastname,
           availability: user.availability,
           rating: user.rating,
           email: user.email,
@@ -59,7 +56,7 @@ export class NurseService{
     }
     static async UpdateNurse(id,userData){
        const existingNurse=await prisma.user.findUnique({
-        where:{id:parseInt(id)},
+        where:{id},
         include: {
           nurse: true
         }
@@ -68,7 +65,7 @@ export class NurseService{
         throw new Error('Nurse not found')
        }
        return prisma.user.update({
-        where:{id:parseInt(id)},
+        where:{id},
         data:{
           firstname: userData.firstname,
           lastname: userData.lastname,
@@ -120,7 +117,7 @@ export class NurseService{
     }
     static async deleteNurse(id) {
         const existingNurse = await prisma.user.findUnique({
-          where: { id: parseInt(id) },
+          where: { id },
           include: {
             nurse: true
           }
@@ -130,15 +127,15 @@ export class NurseService{
           throw new Error('Nurse not found')
         }
         return await prisma.user.delete({
-          where: { id: parseInt(id) ,role:'NURSE'}
+          where: { id ,role:'NURSE'}
         })
     }
     static async getNurseByid(id){
-        if(!id || isNaN(parseInt(id))){
+        if(!id || isNaN(id)){
           throw new Error('Invalid user ID')
         }
         const user =await prisma.user.findUnique({
-          where: { id: parseInt(id) },
+          where: { id },
           include: {
             nurse: true
           }

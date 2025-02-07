@@ -38,6 +38,8 @@ describe('Doctor-Patient Chat Flow', () => {
     // Create test users and tokens
     const patientUser = await prisma.user.create({
       data: {
+        firstname: 'Test Patient',
+        lastname: 'Test Patient',
         email: 'testpatient@test.com',
         password: 'password123',
         role: 'PATIENT'
@@ -46,13 +48,16 @@ describe('Doctor-Patient Chat Flow', () => {
 
     testPatient = await prisma.patient.create({
       data: {
-        name: 'Test Patient',
+        firstname: 'Test Patient',
+        lastname: 'Test Patient',
         userId: patientUser.id
       }
     })
 
     const doctorUser = await prisma.user.create({
       data: {
+        firstname: 'Test Doctor',
+        lastname: 'Test Doctor',
         email: 'testdoctor@test.com',
         password: 'password123',
         role: 'DOCTOR'
@@ -61,7 +66,6 @@ describe('Doctor-Patient Chat Flow', () => {
 
     testDoctor = await prisma.doctor.create({
       data: {
-        name: 'Dr. Test',
         specialization: 'General',
         userId: doctorUser.id
       }
@@ -79,7 +83,6 @@ describe('Doctor-Patient Chat Flow', () => {
       role: 'DOCTOR',
       doctor: {
         id: testDoctor.id,
-        name: testDoctor.name,
         specialization: testDoctor.specialization
       }
     })

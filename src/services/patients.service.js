@@ -22,11 +22,7 @@ export class PatientService {
         medicalRecord: true,
         nurseServiceRequests: {
           include: {
-            nurse: {
-              select: {
-                name: true,
-              },
-            },
+            nurse: true,
           },
         },
         chatRooms: true,
@@ -60,18 +56,17 @@ export class PatientService {
   }
   // Fetch a single patient by ID
   static async getPatientById(id) {
-    if (!id || isNaN(parseInt(id))) {
+    if (!id || isNaN(id)) {
       throw new Error('Invalid patient ID');
     }
     const patient = await prisma.patient.findUnique({
-      where: { id: parseInt(id) },
+      where: { id },
       include: {
         user: true,
         doctors: {
           include: {
             doctor: {
               select: {
-                name: true,
                 specialization: true,
               },
             },
@@ -81,11 +76,7 @@ export class PatientService {
         medicalRecord: true,
         nurseServiceRequests: {
           include: {
-            nurse: {
-              select: {
-                name: true,
-              },
-            },
+            nurse: true,
           },
         },
         chatRooms: true,
@@ -100,12 +91,12 @@ export class PatientService {
   }
   // Update a patient by ID
   static async updatePatientById(id, data) {
-    if (!id || isNaN(parseInt(id))) {
+    if (!id || isNaN(id)) {
       throw new Error('Invalid patient ID');
     }
 
     const patient = await prisma.user.findFirst({
-      where: { id: parseInt(id), role: 'PATIENT' },
+      where: { id, role: 'PATIENT' },
     });
 
     if (!patient) {
@@ -113,7 +104,7 @@ export class PatientService {
     }
 
     return await prisma.patient.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data,
     });
   }
@@ -148,12 +139,12 @@ export class PatientService {
 
   // Delete a patient by ID
   static async deletePatientById(id) {
-    if (!id || isNaN(parseInt(id))) {
+    if (!id || isNaN(id)) {
       throw new Error('Invalid patient ID');
     }
 
     const patient = await prisma.user.findFirst({
-      where: { id: parseInt(id), role: 'PATIENT' },
+      where: { id, role: 'PATIENT' },
     });
 
     if (!patient) {
@@ -161,7 +152,7 @@ export class PatientService {
     }
 
     return await prisma.user.delete({
-      where: { id: parseInt(id) },
+      where: { id},
     });
   }
   static async getAlldoctors() {

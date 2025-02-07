@@ -87,7 +87,7 @@ export class ChatService {
 
   async canUserJoinRoom(userId, roomId) {
     const room = await this.prisma.chatRoom.findUnique({
-      where: { id: parseInt(roomId) },
+      where: { id: roomId },
       include: {
         patient: {
           include: { user: true }
@@ -106,7 +106,7 @@ export class ChatService {
   async createOrGetRoom(patientId, participantId, participantRole) {
     // Get the participant's profile ID
     const participant = await this.prisma.user.findUnique({
-      where: { id: parseInt(participantId) },
+      where: { id: participantId },
       include: {
         doctor: participantRole === 'DOCTOR' ? true : false
       }
@@ -122,7 +122,7 @@ export class ChatService {
     }
 
     const where = {
-      patientId: parseInt(patientId),
+      patientId: patientId,
       doctorId: profileId
     }
     let room = await this.prisma.chatRoom.findFirst({ where })
@@ -145,7 +145,7 @@ export class ChatService {
   async sendMessage(roomId, senderId, senderRole, content) {
     // Get the sender's profile ID
     const sender = await this.prisma.user.findUnique({
-      where: { id: parseInt(senderId) },
+      where: { id: senderId },
       include: {
         patient: true,
         doctor: true
@@ -163,7 +163,7 @@ export class ChatService {
 
     const room = await this.prisma.chatRoom.findFirst({
       where: {
-        id: parseInt(roomId),
+        id: roomId,
         OR: [
           { patientId: profileId },
           { doctorId: profileId }
@@ -180,10 +180,10 @@ export class ChatService {
         content,
         isRead: false,
         senderRole,
-        senderId: parseInt(senderId),
+        senderId: senderId,
         chatRoom: {
           connect: {
-            id: parseInt(roomId)
+            id: roomId
           }
         }
       },
@@ -198,8 +198,8 @@ export class ChatService {
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
       where: {
-        roomId: parseInt(roomId),
-        senderId: { not: parseInt(userId) },
+        roomId: roomId,
+        senderId: { not: userId },
         isRead: false,
       },
       data: {
@@ -212,7 +212,7 @@ export class ChatService {
   async getRoomMessages(roomId, userId) {
     // Get the user's profile
     const user = await this.prisma.user.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
       include: {
         patient: true,
         doctor: true
@@ -231,7 +231,7 @@ export class ChatService {
     // Check if user has access to the room
     const room = await this.prisma.chatRoom.findFirst({
       where: {
-        id: parseInt(roomId),
+        id: roomId,
         OR: [
           { patientId: profileId },
           { doctorId: profileId }
@@ -246,7 +246,7 @@ export class ChatService {
     // Get messages
     const messages = await this.prisma.message.findMany({
       where: {
-        chatRoomId: parseInt(roomId)
+        chatRoomId: roomId
       },
       orderBy: {
         createdAt: 'asc'
@@ -264,13 +264,13 @@ export class ChatService {
     if (userRole === 'PATIENT') {
       query.where.patient = {
         user: {
-          id: parseInt(userId)
+          id: userId
         }
       }
     } else if (userRole === 'DOCTOR') {
       query.where.doctor = {
         user: {
-          id: parseInt(userId)
+          id: userId
         }
       }
     }

@@ -43,7 +43,7 @@ export class DoctorService {
 
   static async updateDoctor(id, userData) {
     const existingDoctor = await prisma.user.findUnique({
-      where: { id: parseInt(id), role:'DOCTOR'},
+      where: { id, role:'DOCTOR'},
 
       include: {
         doctor: true
@@ -54,7 +54,7 @@ export class DoctorService {
       throw new Error('Doctor not found')
     }
     return await prisma.user.update({
-      where: { id: parseInt(id) ,role:'DOCTOR'},
+      where: { id ,role:'DOCTOR'},
       data: {
         firstname: userData.firstname,
         lastname: userData.lastname,
@@ -102,7 +102,7 @@ export class DoctorService {
   }
   static async deleteDoctor(id) {
     const existingDoctor = await prisma.user.findUnique({
-      where: { id: parseInt(id) ,role:'DOCTOR'},
+      where: { id ,role:'DOCTOR'},
       include: {
         user: true
       }
@@ -112,15 +112,15 @@ export class DoctorService {
       throw new Error('Doctor not found')
     }
     return await prisma.user.delete({
-      where: { id: parseInt(id) ,role:'DOCTOR'}
+      where: { id ,role:'DOCTOR'}
     })
   }
   static async getDoctorByid(id){
-    if(!id || isNaN(parseInt(id))){
+    if(!id || isNaN(id)){
       throw new Error('Invalid doctor ID')
     }
     const doctor =await prisma.doctor.findUnique({
-      where: { id: parseInt(id)},
+      where: { id},
       include: {
         user: true
       }
