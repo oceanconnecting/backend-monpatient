@@ -1,61 +1,60 @@
-import { ChatServicePatientNurse } from '../services/chat-pation-nurse.service.js';
+import { ChatServicePatientNurseDoctor } from '../services/chat-pationt-nurse-doctor.service.js';
 import { checkRole } from '../middleware/auth.middleware.js';
-export async function chatPatientNurseRoutes(fastify, options) {
-  const chatService = new ChatServicePatientNurse(fastify.io);
 
-  // Create or get chat room between patient and nurse
+export async function chatPatientNurseDoctorRoutes(fastify, options) {
+  const chatService = new ChatServicePatientNurseDoctor(fastify.io);
+
+  // Create or get chat room between patient, nurse, and doctor
   fastify.post('/room', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
     schema: {
       body: {
         type: 'object',
-        required: ['nurseId'],
+        required: ['nurseId', 'doctorId'],
         properties: {
-          nurseId: { type: 'number' }, // Nurse ID to start a chat with
+          nurseId: { type: 'number' }, // Nurse ID
+          doctorId: { type: 'number' } // Doctor ID
         },
       },
     },
     handler: async (request, reply) => {
       try {
-        // Only patients can initiate chats with nurses
         if (request.user.role !== 'PATIENT') {
-          throw new Error('Only patients can initiate chats with nurses');
+          return reply.code(403).send({ error: 'Only patients can initiate chats' });
         }
 
-        // Ensure the patient profile exists
         if (!request.user.patient || !request.user.patient.id) {
-          throw new Error('Patient data not found');
+          return reply.code(400).send({ error: 'Patient data not found' });
         }
 
-        // Create or get the chat room
         const room = await chatService.createOrGetRoom(
-          request.user.patient.id, // Patient ID
-          request.body.nurseId // Nurse ID
+          request.user.patient.id, 
+          request.body.nurseId,
+          request.body.doctorId
         );
 
         return room;
       } catch (error) {
         console.error('Error creating/getting room:', error);
-        reply.code(400).send({ error: error.message });
+        reply.code(500).send({ error: error.message });
       }
     },
   });
-  // Get user's chat rooms (patient or nurse)
+
+  // Get user's chat rooms (patient, nurse, or doctor)
   fastify.get('/rooms', {
-    onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE'])],
+    onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE', 'DOCTOR'])],
     handler: async (request, reply) => {
       try {
-        const rooms = await chatService.getUserRooms(
-          request.user.id, // User ID
-          request.user.role // User role (PATIENT or NURSE)
-        );
+        const rooms = await chatService.getUserRooms(request.user.id, request.user.role);
         return rooms;
       } catch (error) {
         console.error('Error getting rooms:', error);
-        reply.code(400).send({ error: error.message });
+        reply.code(500).send({ error: error.message });
       }
     },
   });
+
   // Send message in a room
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -75,14 +74,14 @@ export async function chatPatientNurseRoutes(fastify, options) {
           request.user.id,
           request.user.role,
           request.body.content
-        )
-        return message
+        );
+        return message;
       } catch (error) {
-        console.error('Error sending message:', error)
-        reply.code(400).send({ error: error.message })
+        console.error('Error sending message:', error);
+        reply.code(500).send({ error: error.message });
       }
     }
-  })
+  });
 
   // Get room messages
   fastify.get('/room/:roomId/messages', {
@@ -90,13 +89,13 @@ export async function chatPatientNurseRoutes(fastify, options) {
     handler: async (request, reply) => {
       try {
         const messages = await chatService.getRoomMessages(
-          request.params.roomId, // Room ID
-          request.user.id // User ID (to verify access)
+          request.params.roomId,
+          request.user.id
         );
         return messages;
       } catch (error) {
         console.error('Error getting messages:', error);
-        reply.code(400).send({ error: error.message });
+        reply.code(500).send({ error: error.message });
       }
     },
   });
@@ -107,13 +106,13 @@ export async function chatPatientNurseRoutes(fastify, options) {
     handler: async (request, reply) => {
       try {
         await chatService.markMessagesAsRead(
-          request.params.roomId, // Room ID
-          request.user.id // User ID (to mark messages as read)
+          request.params.roomId,
+          request.user.id
         );
         return { success: true };
       } catch (error) {
         console.error('Error marking messages as read:', error);
-        reply.code(400).send({ error: error.message });
+        reply.code(500).send({ error: error.message });
       }
     },
   });

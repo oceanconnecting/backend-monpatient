@@ -76,6 +76,7 @@ model Patient {
   doctors       DoctorPatient[]         @relation("PatientDoctors")
   nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
   chatRooms     ChatRoom[]     @relation("PatientChats")
+  ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   chatRoomPatients ChatRoomPatientNurse[] @relation("PatientChats")
 }
 
@@ -93,6 +94,8 @@ model Nurse {
   medicalRecords MedicalRecord[] @relation("NurseUpdates")
   serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
+   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
+  doctors     Doctor[]    @relation("DoctorNurses") 
 }
 
 model Doctor {
@@ -111,6 +114,8 @@ model Doctor {
   medicalRecords  MedicalRecord[]        @relation("DoctorViews")
   prescriptions   Prescription[]         @relation("DoctorPrescriptions")
   chatRooms       ChatRoom[]     @relation("DoctorChats")
+  ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[] 
+  nurses          Nurse[]     @relation("DoctorNurses") 
 }
 
 model NurseServiceRequest {
@@ -277,7 +282,21 @@ model ChatRoomPatientNurse {
   @@unique([patientId, nurseId])
 }
 
+model ChatRoomDoctorNursePatient {
+  id        Int       @id @default(autoincrement())
+  status    String    // ACTIVE, ARCHIVED
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  doctor    Doctor?   @relation(fields: [doctorId], references: [id])
+  doctorId  Int?
+  nurse     Nurse?    @relation(fields: [nurseId], references: [id])
+  nurseId   Int?
+  patient   Patient?  @relation(fields: [patientId], references: [id])
+  patientId Int?
+  messages  Message[]
 
+  @@unique([doctorId, nurseId, patientId])
+}
 model Message {
   id          Int       @id @default(autoincrement())
   content     String
@@ -286,12 +305,14 @@ model Message {
   isRead      Boolean   @default(false)
   readAt      DateTime?
   senderRole  Role
-  // Polymorphic relationship: Message can belong to either ChatRoom or ChatRoomPatientNurse
-  chatRoomId               Int?                // Foreign key for ChatRoom
-  chatRoom                 ChatRoom?           @relation(fields: [chatRoomId], references: [id])
-  chatRoomPatientNurseId   Int?                // Foreign key for ChatRoomPatientNurse
-  chatRoomPatientNurse     ChatRoomPatientNurse? @relation(fields: [chatRoomPatientNurseId], references: [id])
-
-  // Ensure that a message belongs to either ChatRoom or ChatRoomPatientNurse, but not both
-  // This validation must be handled at the application level, as Prisma does not support @@check constraints.
+  
+  // Polymorphic relationship: Message can belong to different chat rooms
+  chatRoomId                     Int?  
+  chatRoom                       ChatRoom?  @relation(fields: [chatRoomId], references: [id])
+  chatRoomPatientNurseId         Int?  
+  chatRoomPatientNurse           ChatRoomPatientNurse? @relation(fields: [chatRoomPatientNurseId], references: [id])
+  chatRoomDoctorNursePatientId   Int?  
+  chatRoomDoctorNursePatient     ChatRoomDoctorNursePatient? @relation(fields: [chatRoomDoctorNursePatientId], references: [id])
+  
+  // Ensure that a message belongs to only one chat type
 }

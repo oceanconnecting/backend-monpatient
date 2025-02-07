@@ -10,4 +10,4 @@ export async function adminRoutes(fastify) {
   fastify.register(nurseRoutes, { prefix: '/nurses' });
   fastify.register(patientRoutes, { prefix: '/patients' });
   fastify.register(chatRoutes, { prefix: '/chat' });
-} 
+}

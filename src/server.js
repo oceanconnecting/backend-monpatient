@@ -12,6 +12,7 @@ import { notificationRoutes } from './routes/notification.routes.js'
 import { chatRoutes } from './routes/chat.routes.js'
 import { chatPatientNurseRoutes } from './routes/chat-pationt-nurse.routes.js'
 import { createAuthMiddleware } from './middleware/auth.middleware.js'
+import { chatPatientNurseDoctorRoutes } from './routes/chat-pationt-nurse-doctor.js'
 import { createNotificationMiddleware } from './middleware/notification.middleware.js'
 import { patientRoutes } from './routes/patient.route.js'
 import dotenv from 'dotenv';
@@ -84,6 +85,7 @@ await fastify.register(nurseServiceRoutes, { prefix: `${apiPrefix}/nurse-service
 await fastify.register(notificationRoutes, { prefix: `${apiPrefix}/notifications` })
 await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` })
 await fastify.register(chatPatientNurseRoutes, { prefix: `${apiPrefix}/chat-patient-nurse` })
+await fastify.register(chatPatientNurseDoctorRoutes, { prefix: `${apiPrefix}/chat-patient-nurse-doctor` })
 
 //check route
 fastify.get('/', {

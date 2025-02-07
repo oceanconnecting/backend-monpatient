@@ -2,7 +2,6 @@ import { ChatService } from '../services/chat.service.js'
 
 export async function chatRoutes(fastify, options) {
   const chatService = new ChatService(fastify.io)
-
   // Create or get chat room
   fastify.post('/room', {
     onRequest: [fastify.authenticate],
@@ -37,7 +36,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-
   // Get user's chat rooms
   fastify.get('/rooms', {
     onRequest: [fastify.authenticate],
@@ -54,7 +52,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-  
   // Get room messages
   fastify.get('/room/:roomId/messages', {
     onRequest: [fastify.authenticate],
@@ -71,7 +68,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-
   // Send message
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -99,7 +95,6 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
-
   // Mark messages as read
   fastify.post('/room/:roomId/messages/read', {
     onRequest: [fastify.authenticate],
