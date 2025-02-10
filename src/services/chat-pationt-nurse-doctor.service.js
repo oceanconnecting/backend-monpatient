@@ -287,7 +287,7 @@ export class ChatServicePatientNurseDoctor {
                 email: true,
                 role: true,
                 createdAt: true,
-                updatedAt: true,
+                updatedAt: true
               },
             },
           },

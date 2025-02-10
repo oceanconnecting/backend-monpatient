@@ -19,9 +19,7 @@ export async function doctorRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const id = request.params.id;
-        if (isNaN(id)) {
-          return reply.code(400).send({ error: 'Invalid user ID' });
-        }
+    
         const doctor = await DoctorService.getDoctorById(id);
         return doctor;
       } catch (error) {

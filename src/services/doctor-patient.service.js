@@ -18,7 +18,6 @@ export class DoctorPatientService {
     if (existingRequest) {
       throw new Error('Request already exists')
     }
-  
     // Get doctor and patient details for notifications
     const [doctor, patient] = await Promise.all([
       prisma.doctor.findUnique({

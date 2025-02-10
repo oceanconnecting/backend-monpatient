@@ -253,8 +253,6 @@ model NurseVisit {
   patientId   String
 }
 
-
-
 model ChatRoom {
   id        String       @id @default(cuid())
   status    String    // ACTIVE, ARCHIVED

@@ -116,7 +116,7 @@ export class DoctorService {
     })
   }
   static async getDoctorByid(id){
-    if(!id || isNaN(id)){
+    if(!id){
       throw new Error('Invalid doctor ID')
     }
     const doctor =await prisma.doctor.findUnique({

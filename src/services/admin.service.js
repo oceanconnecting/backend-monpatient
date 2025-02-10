@@ -5,45 +5,54 @@ const prisma = new PrismaClient()
 
 export class AdminService {
   //users
-   static async getAllUsers() {
+  static async getAllUsers() {
     const users = await prisma.user.findMany({
       select: {
         id: true,
         email: true,
         role: true,
         profilePhoto: true,
-      firstname: true,
-      lastname: true,
-      telephoneNumber: true,
-      dateOfBirth: true,
-      gender: true,
-      address: true,
-      createdAt: true,
-      updatedAt: true
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
-  return users.map(user => {
-    // Get the role-specific data
-    const roleData = user[user.role.toLowerCase()]
-    // Remove all role fields
-    const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user
-    // Return combined data
-    return {
-      ...baseUser,
-      ...roleData
-    }
-  })
-   }
+        firstname: true,
+        lastname: true,
+        telephoneNumber: true,
+        dateOfBirth: true,
+        gender: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        patient: true,  // Include patient details
+        doctor: true,   // Include doctor details
+        nurse: true,    // Include nurse details
+        pharmacy: true, // Include pharmacy details
+        admin: true     // Include admin details
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  
+    return users.map(user => {
+      // Extract role-specific data dynamically
+      const roleData = user[user.role.toLowerCase()] || {};
+  
+      // Remove role-specific fields from the base user object
+      const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user;
+  
+      // Merge base user data with role-specific data
+      return {
+        ...baseUser,
+        ...roleData // Add only the relevant role data
+      };
+    });
+  }
+  
    static async getUserById(id) {
-    if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id))) {
+    if (!id) {
       throw new Error('Invalid user ID')
     }
   
     const user = await prisma.user.findUnique({
-      where: { id: Number(id) },
+      where: { id },
       select: {
         id: true,
         firstname: true,
@@ -300,7 +309,7 @@ export class AdminService {
     }))
    } 
    static async updateAdminById(id, data) {
-  if (!id || isNaN(id)) {
+  if (!id) {
     throw new Error('Invalid admin ID')
   }
   const admin = await prisma.user.findUnique({
@@ -332,7 +341,7 @@ export class AdminService {
     return { message: 'Admin deleted successfully' }
    }
    static async getAdminByid(id){ 
-    if(!id || isNaN(id)){
+    if(!id){
       throw new Error('Invalid user ID')
     }
     const admin =await  prisma.user.findFirst({
@@ -376,7 +385,7 @@ export class AdminService {
    }
    //get admin chat room nurse
    static async getAdminChatRoomNurse(id){
-    if(!id || isNaN(id)){
+    if(!id){
       throw new Error('Invalid user ID')
     }
     const chatRoom = await prisma.chatRoomPatientNurse.findMany({

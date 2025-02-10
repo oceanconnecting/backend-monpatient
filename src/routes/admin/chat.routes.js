@@ -20,9 +20,7 @@ export async function chatRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const id = request.params.id;
-        if (isNaN(id)) {
-          return reply.code(400).send({ error: 'Invalid message ID' });
-        }
+     
         const message = await ChatService.getMessageById(id);
         return message;
       } catch (error) {

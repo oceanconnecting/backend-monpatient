@@ -6,7 +6,7 @@ export function createNotificationMiddleware(fastify) {
   return async function notificationHandler(request, reply) {
     // Store the request start time
     request.startTime = Date.now()
-
+    
     // Execute route handler
     reply.then(async () => {
       try {
@@ -52,7 +52,6 @@ export async function getUnreadNotifications(userId, userRole) {
       }
     })
   }
-
   // For other roles, return only their notifications
   return prisma.notification.findMany({
     where: {
@@ -126,7 +125,6 @@ export async function deleteNotification(notificationId, userId) {
   const notification = await prisma.notification.findUnique({
     where: { id: notificationId }
   })
-
   if (!notification) {
     throw new Error('Notification not found')
   }

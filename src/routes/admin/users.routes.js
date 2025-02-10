@@ -19,9 +19,6 @@ export async function userRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const id = request.params.id;
-        if (isNaN(id)) {
-          return reply.code(400).send({ error: 'Invalid user ID' });
-        }
         const user = await AdminService.getUserById(id);
         if (!user) {
           return reply.code(404).send({ error: 'User not found' });

@@ -4,7 +4,7 @@ import { checkRole } from '../middleware/auth.middleware.js';
 export async function chatPatientNurseDoctorRoutes(fastify, options) {
   const chatService = new ChatServicePatientNurseDoctor(fastify.io);
 
-  // Create or get chat room between patient, nurse, and doctor
+   // Create or get chat room between patient, nurse, and doctor
   fastify.post('/room', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
     schema: {
@@ -26,7 +26,6 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
         if (!request.user.patient || !request.user.patient.id) {
           return reply.code(400).send({ error: 'Patient data not found' });
         }
-
         const room = await chatService.createOrGetRoom(
           request.user.patient.id, 
           request.body.nurseId,
@@ -40,8 +39,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
-
-  // Get user's chat rooms (patient, nurse, or doctor)
+    // Get user's chat rooms (patient, nurse, or doctor)
   fastify.get('/rooms', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT', 'NURSE'])],
     handler: async (request, reply) => {
@@ -56,9 +54,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
         reply.code(400).send({ error: error.message });
       }
     },
-  });
-  
-
+});
   // Send message in a room
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -86,7 +82,6 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     }
   });
-
   // Get room messages
   fastify.get('/room/:roomId/messages', {
     onRequest: [fastify.authenticate],
@@ -103,7 +98,6 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
-
   // Mark messages as read in a room
   fastify.post('/room/:roomId/messages/read', {
     onRequest: [fastify.authenticate],

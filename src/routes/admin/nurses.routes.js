@@ -19,7 +19,7 @@ export async function nurseRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const id = request.params.id;
-        if (isNaN(id)) {
+        if (!id) {
           return reply.code(400).send({ error: 'Invalid nurse ID' });
         }
         const nurse = await NurseService.getNurseById(id);

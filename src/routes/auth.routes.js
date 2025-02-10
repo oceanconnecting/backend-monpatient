@@ -104,16 +104,13 @@ export async function authRoutes(fastify) {
                     id: { type: 'string' },
                     // Other properties will be included based on role
                   },
-                  
                   additionalProperties: true
                 }
               }
             },
-           
             token: { type: 'string' }
           }
         }
-        
       }
     },
     handler: async (request, reply) => {

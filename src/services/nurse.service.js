@@ -131,7 +131,7 @@ export class NurseService{
         })
     }
     static async getNurseByid(id){
-        if(!id || isNaN(id)){
+        if(!id){
           throw new Error('Invalid user ID')
         }
         const user =await prisma.user.findUnique({

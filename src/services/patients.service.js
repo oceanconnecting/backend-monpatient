@@ -56,7 +56,7 @@ export class PatientService {
   }
   // Fetch a single patient by ID
   static async getPatientById(id) {
-    if (!id || isNaN(id)) {
+    if (!id) {
       throw new Error('Invalid patient ID');
     }
     const patient = await prisma.patient.findUnique({
@@ -91,7 +91,7 @@ export class PatientService {
   }
   // Update a patient by ID
   static async updatePatientById(id, data) {
-    if (!id || isNaN(id)) {
+    if (!id) {
       throw new Error('Invalid patient ID');
     }
 
@@ -139,7 +139,7 @@ export class PatientService {
 
   // Delete a patient by ID
   static async deletePatientById(id) {
-    if (!id || isNaN(id)) {
+    if (!id ) {
       throw new Error('Invalid patient ID');
     }
 

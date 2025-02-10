@@ -36,7 +36,7 @@ export class PharmacyService {
         }))
     }
     static async updatePharmacyById(id, data) {
-      if (!id || isNaN(id)) {
+      if (!id) {
         throw new Error('Invalid pharmacy ID')
       }
       const pharmacy = await prisma.user.findUnique({
@@ -67,7 +67,7 @@ export class PharmacyService {
       return { message: 'Pharmacy deleted successfully' }
     }
     static async getPharmacyById(id){
-      if(!id || isNaN(id)){
+      if(!id){
         throw new Error('Invalid user ID')
       }
       const pharmacy =await  prisma.user.findUnique({

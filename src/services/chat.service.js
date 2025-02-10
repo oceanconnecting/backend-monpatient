@@ -25,7 +25,7 @@ export class ChatService {
       next(new Error('Authentication failed'))
     }
   }
-  handleConnection(socket) {
+   handleConnection(socket) {
     console.log('New client connected:', socket.user.email)
     const userId = socket.user.id
     this.connectedUsers.set(userId, socket.id)
