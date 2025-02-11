@@ -5,54 +5,40 @@ const prisma = new PrismaClient();
 export class PatientService {
   // Fetch all patients with related data
   static async getAllPatients() {
-    const patients = await prisma.user.findMany({
-      where: {
-        role: 'PATIENT',
-      },
-      
-      include: {
-        doctor: {
-          select: {
-            id: true,
-            createdAt: true,
-            updatedAt: true,
+    try {
+      const patients = await prisma.patient.findMany({
+        include: {
+          doctors: true,
+          user: true,
+          medicalRecord: true,
+          nurseServiceRequests: {
+            include: {
+              nurse: true,
+            },
           },
+          chatRooms: true,
         },
-        prescriptions: true,
-        medicalRecord: true,
-        nurseServiceRequests: {
-          include: {
-            nurse: true,
-          },
-        },
-        chatRooms: true,
-      },
-    });
+      });
 
-    return patients.map((patient) => ({
-      id: patient.id,
-      userId: patient?.id,
-      firstname: patient.firstname,
-      lastname: patient.lastname,
-      email: patient.email,
-      role: patient.role,
-      telephoneNumber: patient.telephoneNumber,
-      dateOfBirth: patient.dateOfBirth,
-      gender: patient.gender,
-      address: patient.address,
-      profilePhoto: patient.profilePhoto,
-      createdAt: patient?.createdAt,
-      updatedAt: patient?.updatedAt,
-      doctorsCount: patient.doctor?.length || 0,
-      activePrescriptions: patient.prescriptions.filter((p) => !p.approved).length,
-      completedPrescriptions: patient.prescriptions.filter((p) => p.approved).length,
-      hasActiveNurseService: patient.nurseServiceRequests.some(
-        (service) => service.status === 'IN_PROGRESS' || service.status === 'REQUESTED'
-      ),
-      activeNurseRequests: patient.nurseServiceRequests.filter((req) => req.status === 'REQUESTED').length,
-      hasMedicalRecord: !!patient.medicalRecord,
-      activeChatRooms: patient.chatRooms.filter((room) => room.status === 'ACTIVE').length,
-    }));
+      return patients.map((patient) => ({
+        id: patient.id,
+        userId: patient.user.id,
+        firstname: patient.user.firstname,
+        lastname: patient.user.lastname,
+        email: patient.user.email,
+        role: patient.user.role,
+        telephoneNumber: patient.user.telephoneNumber,
+        dateOfBirth: patient.user.dateOfBirth,
+        gender: patient.user.gender,
+        address: patient.user.address,
+        profilePhoto: patient.user.profilePhoto,
+        createdAt: patient.user.createdAt,
+        updatedAt: patient.user.updatedAt,
+        doctorsCount: patient.doctors?.length || 0,
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch patients: ${error.message}`);
+    }
   }
   // Fetch a single patient by ID
   static async getPatientById(id) {
