@@ -1,4 +1,4 @@
-import { DoctorService } from '../../services/doctor.service.js';
+import { DoctorService } from '../../services/users/doctor.service.js';
 import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function doctorRoutes(fastify) {

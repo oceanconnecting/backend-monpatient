@@ -12,7 +12,7 @@ export class ChatService {
       io.on('connection', this.handleConnection.bind(this))
     }
   }
-
+  
   async authenticateSocket(socket, next) {
     try {
       const token = socket.handshake.auth.token

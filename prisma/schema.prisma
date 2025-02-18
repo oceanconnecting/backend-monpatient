@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -28,6 +25,13 @@ enum ServiceStatus {
   REQUESTED
   ACCEPTED
   REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -96,12 +100,13 @@ model Nurse {
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   doctors     Doctor[]    @relation("DoctorNurses") 
+  doctorNurses    DoctorNurse[]
+  tasks       Task[]
 }
 
 model Doctor {
   id              String           @id @default(cuid())
   specialization  String?
-
   availability    Boolean       @default(true)
   rating          Float         @default(0)
   professionalLicenseNumber String?
@@ -117,6 +122,45 @@ model Doctor {
   chatRooms       ChatRoom[]     @relation("DoctorChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[] 
   nurses          Nurse[]     @relation("DoctorNurses") 
+  doctorNurses    DoctorNurse[]
+  tasks           Task[]  
+  scheduledTasks  Schedule[]     
+}
+
+model DoctorNurse {
+  id        String   @id @default(cuid())
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  nurse     Nurse    @relation(fields: [nurseId], references: [id])
+  nurseId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([doctorId, nurseId])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
+  doctorId    String
+  nurse       Nurse       @relation(fields: [nurseId], references: [id])
+  nurseId     String
+  details     String
+  status      TaskStatus  @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  completedAt DateTime?
+}
+
+model Schedule {
+  id          String       @id @default(cuid())
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
+  doctorId    String
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model NurseServiceRequest {
@@ -296,6 +340,7 @@ model ChatRoomDoctorNursePatient {
 
   @@unique([doctorId, nurseId, patientId])
 }
+
 model Message {
   id          String       @id @default(cuid())
   content     String

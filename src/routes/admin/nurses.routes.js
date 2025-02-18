@@ -1,4 +1,4 @@
-import { NurseService } from '../../services/nurse.service.js';
+import { NurseService } from '../../services/users/nurse.service.js';
 import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function nurseRoutes(fastify) {

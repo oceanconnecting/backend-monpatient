@@ -7,6 +7,7 @@ const prisma = new PrismaClient()
 const generateToken = () => crypto.randomBytes(20).toString('hex')
 export class AuthService {
 
+  
   constructor(mailer) {
     this.mailer = mailer
   }

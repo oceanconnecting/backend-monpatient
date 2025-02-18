@@ -1,56 +1,59 @@
-import { AuthService } from '../services/auth.service.js'
-import { PrismaClient } from '@prisma/client'
+import { AuthService } from "../services/auth/auth.service.js";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export async function authRoutes(fastify) {
-  fastify.post('/register', {
+  fastify.post("/register", {
     schema: {
       body: {
-        type: 'object',
-        required: ['email', 'password', 'firstname', 'lastname', 'role'],
+        type: "object",
+        required: ["email", "password", "firstname", "lastname", "role"],
         properties: {
-          email: { type: 'string', format: 'email' },
-          password: { type: 'string', minLength: 6 },
-          firstname: { type: 'string' },
-          lastname: { type: 'string' },
-          role: { type: 'string', enum: ['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'] },
-          specialization: { type: 'string' },
+          email: { type: "string", format: "email" },
+          password: { type: "string", minLength: 6 },
+          firstname: { type: "string" },
+          lastname: { type: "string" },
+          role: {
+            type: "string",
+            enum: ["PATIENT", "NURSE", "DOCTOR", "PHARMACY", "ADMIN"],
+          },
+          specialization: { type: "string" },
         },
       },
       response: {
         200: {
-          type: 'object',
+          type: "object",
           properties: {
             user: {
-              type: 'object',
+              type: "object",
               properties: {
-                id: { type: 'string' },
-                email: { type: 'string' },
-                role: { type: 'string' },
-                ValidityState: { type: 'string' },
-                isEmailVerified: { type: 'boolean' },
-                emailVerificationToken: { type: 'string' },
-                emailVerificationExpires: { type: 'string' },
-                firstname: { type: 'string' },
-                lastname: { type: 'string' },
-                createdAt: { type: 'string' },
-                updatedAt: { type: 'string' },
-                profile: { 
-                  type: 'object',
+                id: { type: "string" },
+                email: { type: "string" },
+                role: { type: "string" },
+                ValidityState: { type: "string" },
+                isEmailVerified: { type: "boolean" },
+                emailVerificationToken: { type: "string" },
+                emailVerificationExpires: { type: "string" },
+                firstname: { type: "string" },
+                lastname: { type: "string" },
+                createdAt: { type: "string" },
+                updatedAt: { type: "string" },
+                profile: {
+                  type: "object",
                   properties: {
-                    id: { type: 'string' },
-                    name: { type: 'string' },
+                    id: { type: "string" },
+                    name: { type: "string" },
                     // Other properties will be included based on role
                   },
-                  additionalProperties: true
-                }
-              }
+                  additionalProperties: true,
+                },
+              },
             },
-            token: { type: 'string' }
-          }
-        }
-      }
+            token: { type: "string" },
+          },
+        },
+      },
     },
     handler: async (request, reply) => {
       try {
@@ -60,58 +63,58 @@ export async function authRoutes(fastify) {
           email: user.email,
           role: user.role,
         });
-    
+
         return { user, token };
       } catch (error) {
         fastify.log.error(error);
         reply.code(400).send({
-          error: 'Registration failed',
+          error: "Registration failed",
           message: error.message,
         });
       }
     },
-  })
-  fastify.post('/login', {
+  });
+  fastify.post("/login", {
     schema: {
       body: {
-        type: 'object',
-        required: ['email', 'password'],
+        type: "object",
+        required: ["email", "password"],
         properties: {
-          email: { type: 'string', format: 'email' },
-          password: { type: 'string' },
+          email: { type: "string", format: "email" },
+          password: { type: "string" },
         },
       },
       response: {
         200: {
-          type: 'object',
+          type: "object",
           properties: {
             user: {
-              type: 'object',
+              type: "object",
               properties: {
-                id: { type: 'string' },
-                email: { type: 'string' },
-                role: { type: 'string' },
-                createdAt: { type: 'string' },
-                firstname: { type: 'string' },
-                lastname: { type: 'string' },
-                isEmailVerified: { type: 'boolean' },
-                emailVerificationToken: { type: 'string' },
-                emailVerificationExpires: { type: 'string' },
-                updatedAt: { type: 'string' },
-                profile: { 
-                  type: 'object',
+                id: { type: "string" },
+                email: { type: "string" },
+                role: { type: "string" },
+                createdAt: { type: "string" },
+                firstname: { type: "string" },
+                lastname: { type: "string" },
+                isEmailVerified: { type: "boolean" },
+                emailVerificationToken: { type: "string" },
+                emailVerificationExpires: { type: "string" },
+                updatedAt: { type: "string" },
+                profile: {
+                  type: "object",
                   properties: {
-                    id: { type: 'string' },
+                    id: { type: "string" },
                     // Other properties will be included based on role
                   },
-                  additionalProperties: true
-                }
-              }
+                  additionalProperties: true,
+                },
+              },
             },
-            token: { type: 'string' }
-          }
-        }
-      }
+            token: { type: "string" },
+          },
+        },
+      },
     },
     handler: async (request, reply) => {
       try {
@@ -122,21 +125,21 @@ export async function authRoutes(fastify) {
           email: user.email,
           firstname: user.firstname,
           lastname: user.lastname,
-          role: user.role
+          role: user.role,
         });
-    
+
         return { user, token };
       } catch (error) {
         fastify.log.error(error);
         reply.code(401).send({
-          error: 'Authentication failed',
+          error: "Authentication failed",
           message: error.message,
         });
       }
     },
   });
   // Protected route example
-  fastify.get('/me', {
+  fastify.get("/me", {
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -149,34 +152,34 @@ export async function authRoutes(fastify) {
             pharmacy: true,
             admin: true,
           },
-        })
+        });
 
         if (!user) {
-          reply.code(404).send({ error: 'User not found' })
-          return
+          reply.code(404).send({ error: "User not found" });
+          return;
         }
 
-        return AuthService.formatUserResponse(user)
+        return AuthService.formatUserResponse(user);
       } catch (error) {
-        fastify.log.error(error)
-        reply.code(500).send({ error: 'Internal server error' })
+        fastify.log.error(error);
+        reply.code(500).send({ error: "Internal server error" });
       }
     },
   });
-  fastify.post('/verify-email', {
+  fastify.post("/verify-email", {
     schema: {
       body: {
-        type: 'object',
-        required: ['token'],
+        type: "object",
+        required: ["token"],
         properties: {
-          token: { type: 'string' },
+          token: { type: "string" },
         },
       },
       response: {
         200: {
-          type: 'object',
+          type: "object",
           properties: {
-            message: { type: 'string' },
+            message: { type: "string" },
           },
         },
       },
@@ -189,7 +192,7 @@ export async function authRoutes(fastify) {
       } catch (error) {
         fastify.log.error(error);
         reply.code(400).send({
-          error: 'Email verification failed',
+          error: "Email verification failed",
           message: error.message,
         });
       }

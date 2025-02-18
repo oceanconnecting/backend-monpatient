@@ -1,4 +1,4 @@
-import { AdminService } from '../../services/admin.service.js';
+import { AdminService } from '../../services/admin/admin.service.js';
 import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function userRoutes(fastify) {

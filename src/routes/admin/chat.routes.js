@@ -1,4 +1,4 @@
-import { ChatService } from '../../services/chat.service.js';
+import { ChatService } from '../../services/chat/chat.service.js';
 import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function chatRoutes(fastify) {

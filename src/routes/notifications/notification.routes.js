@@ -4,8 +4,8 @@ import {
   deleteNotification, 
   getAllNotifications, 
   createNotification 
-} from '../middleware/notification.middleware.js'
-import { checkRole } from '../middleware/auth.middleware.js'
+} from '../../middleware/notification.middleware.js'
+import { checkRole } from '../../middleware/auth.middleware.js'
 
 export async function notificationRoutes(fastify) {
   //Get all notifications

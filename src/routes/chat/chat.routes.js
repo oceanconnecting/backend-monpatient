@@ -1,4 +1,4 @@
-import { ChatService } from '../services/chat.service.js'
+import { ChatService } from '../../services/chat/chat.service.js'
 
 export async function chatRoutes(fastify, options) {
   const chatService = new ChatService(fastify.io)

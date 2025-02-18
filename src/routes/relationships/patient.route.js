@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { checkRole } from "../middleware/auth.middleware.js";
-import { PatientService } from "../services/patients.service.js";
+import { checkRole } from "../../middleware/auth.middleware.js";
+import { PatientService } from "../../services/users/patients.service.js";
 
 export async function patientRoutes(fastify, options) {
     fastify.get('/doctors', {
