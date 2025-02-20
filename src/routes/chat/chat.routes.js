@@ -1,114 +1,159 @@
-import { ChatService } from '../../services/chat/chat.service.js'
+import { ChatService } from '../../services/chat/chat.service.js';
 
 export async function chatRoutes(fastify, options) {
-  const chatService = new ChatService(fastify.io)
-  // Create or get chat room
-  fastify.post('/room', {
-    onRequest: [fastify.authenticate],
-    schema: {
-      body: {
-        type: 'object',
-        required: ['participantId', 'participantRole'],
-        properties: {
-          participantId: { type: 'string' },
-          participantRole: { type: 'string', enum: ['DOCTOR'] }
-        }
-      }
-    },
-    handler: async (request, reply) => {
+  const chatService = new ChatService(fastify.io);
+  
+  // Set up socket.io event handlers
+  fastify.io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    
+    // Authenticate the socket connection
+    socket.on('authenticate', async (token, callback) => {
       try {
-        if (request.user.role !== 'PATIENT') {
-          throw new Error('Only patients can initiate chats')
+        const decoded = fastify.jwt.verify(token);
+        socket.user = decoded;
+        
+        // Join user's rooms
+        const rooms = await chatService.getUserRooms(decoded.id, decoded.role);
+        rooms.forEach(room => {
+          socket.join(room.id);
+        });
+        
+        callback({ success: true, userId: decoded.id, role: decoded.role });
+      } catch (error) {
+        console.error('Authentication error:', error);
+        callback({ success: false, error: 'Authentication failed' });
+      }
+    });
+    
+    // Create or get chat room
+    socket.on('createRoom', async (data, callback) => {
+      try {
+        if (!socket.user) {
+          return callback({ success: false, error: 'Not authenticated' });
         }
-        if (!request.user.patient || !request.user.patient.id) {
-          throw new Error('Patient data not found')
+        
+        if (socket.user.role !== 'PATIENT') {
+          return callback({ success: false, error: 'Only patients can initiate chats' });
         }
-
+        
+        if (!socket.user.patient || !socket.user.patient.id) {
+          return callback({ success: false, error: 'Patient data not found' });
+        }
+        
         const room = await chatService.createOrGetRoom(
-          request.user.patient.id,
-          request.body.participantId,
-          request.body.participantRole
-        )
-        return room
+          socket.user.patient.id,
+          data.participantId,
+          data.participantRole
+        );
+        
+        // Join the room
+        socket.join(room.id);
+        
+        callback({ success: true, room });
       } catch (error) {
-        console.error('Error creating/getting room:', error)
-        reply.code(400).send({ error: error.message })
+        console.error('Error creating/getting room:', error);
+        callback({ success: false, error: error.message });
       }
-    }
-  })
-  // Get user's chat rooms
-  fastify.get('/rooms', {
-    onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
+    });
+    
+    // Get user's chat rooms
+    socket.on('getRooms', async (_, callback) => {
       try {
-        const rooms = await chatService.getUserRooms(
-          request.user.id,
-          request.user.role
-        )
-        return rooms
-      } catch (error) {
-        console.error('Error getting rooms:', error)
-        reply.code(400).send({ error: error.message })
-      }
-    }
-  })
-  // Get room messages
-  fastify.get('/room/:roomId/messages', {
-    onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
-      try {
-        const messages = await chatService.getRoomMessages(
-          request.params.roomId,
-          request.user.id
-        )
-        return messages
-      } catch (error) {
-        console.error('Error getting messages:', error)
-        reply.code(400).send({ error: error.message })
-      }
-    }
-  })
-  // Send message
-  fastify.post('/room/:roomId/message', {
-    onRequest: [fastify.authenticate],
-    schema: {
-      body: {
-        type: 'object',
-        required: ['content'],
-        properties: {
-          content: { type: 'string' }
+        if (!socket.user) {
+          return callback({ success: false, error: 'Not authenticated' });
         }
+        
+        const rooms = await chatService.getUserRooms(
+          socket.user.id,
+          socket.user.role
+        );
+        
+        callback({ success: true, rooms });
+      } catch (error) {
+        console.error('Error getting rooms:', error);
+        callback({ success: false, error: error.message });
       }
-    },
-    handler: async (request, reply) => {
+    });
+    
+    // Get room messages
+    socket.on('getRoomMessages', async (roomId, callback) => {
       try {
+        if (!socket.user) {
+          return callback({ success: false, error: 'Not authenticated' });
+        }
+        
+        const messages = await chatService.getRoomMessages(
+          roomId,
+          socket.user.id
+        );
+        
+        callback({ success: true, messages });
+      } catch (error) {
+        console.error('Error getting messages:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+    
+    // Send message
+    socket.on('sendMessage', async (data, callback) => {
+      try {
+        if (!socket.user) {
+          return callback({ success: false, error: 'Not authenticated' });
+        }
+        
         const message = await chatService.sendMessage(
-          request.params.roomId,
-          request.user.id,
-          request.user.role,
-          request.body.content
-        )
-        return message
+          data.roomId,
+          socket.user.id,
+          socket.user.role,
+          data.content
+        );
+        
+        // Broadcast to room members
+        fastify.io.to(data.roomId).emit('newMessage', message);
+        
+        callback({ success: true, message });
       } catch (error) {
-        console.error('Error sending message:', error)
-        reply.code(400).send({ error: error.message })
+        console.error('Error sending message:', error);
+        callback({ success: false, error: error.message });
       }
-    }
-  })
-  // Mark messages as read
-  fastify.post('/room/:roomId/messages/read', {
-    onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
+    });
+    
+    // Mark messages as read
+    socket.on('markMessagesAsRead', async (roomId, callback) => {
       try {
+        if (!socket.user) {
+          return callback({ success: false, error: 'Not authenticated' });
+        }
+        
         await chatService.markMessagesAsRead(
-          request.params.roomId,
-          request.user.id
-        )
-        return { success: true }
+          roomId,
+          socket.user.id
+        );
+        
+        // Notify other room members that messages were read
+        socket.to(roomId).emit('messagesRead', {
+          roomId,
+          userId: socket.user.id
+        });
+        
+        callback({ success: true });
       } catch (error) {
-        console.error('Error marking messages as read:', error)
-        reply.code(400).send({ error: error.message })
+        console.error('Error marking messages as read:', error);
+        callback({ success: false, error: error.message });
       }
+    });
+    
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+  });
+  
+  // Keep a minimal HTTP endpoint for health check
+  fastify.get('/health', {
+    handler: async (request, reply) => {
+      return { status: 'ok', connections: Object.keys(fastify.io.sockets.sockets).length };
     }
-  })
+  });
 }

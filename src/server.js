@@ -38,7 +38,7 @@ const prisma = new PrismaClient();
 const httpServer = createServer(fastify.server);
 
 // Create Socket.IO instance
-const io = new Server(httpServer, {
+const io = new Server(fastify.server, {
   cors: {
     origin: true,
     methods: ["GET", "POST"],
@@ -164,18 +164,11 @@ fastify.addHook("onClose", async () => {
 const start = async () => {
   try {
     await fastify.listen({
-      port: process.env.PORT,
+      port: process.env.PORT || 3000,
       host: "0.0.0.0",
     });
-    console.log(`Server listening at http://localhost:${process.env.PORT}`);
-
-    httpServer.listen(process.env.WS_PORT || 3002, () => {
-      console.log(
-        `WebSocket server listening at ws://localhost:${
-          process.env.WS_PORT || 3003
-        }`
-      );
-    });
+    console.log(`Server running at http://localhost:${process.env.PORT || 3000}`);
+    console.log(`WebSocket connections available on same port`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
