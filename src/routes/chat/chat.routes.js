@@ -1,94 +1,114 @@
-import { ChatService } from '../../services/chat/chat.service.js';
+import { ChatService } from '../../services/chat/chat.service.js'
 
 export async function chatRoutes(fastify, options) {
-  const chatService = new ChatService(fastify.io);
-
-  // Set up socket.io event handlers
-  fastify.io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    // Authenticate the socket connection (Removed authentication for testing)
-    socket.on('authenticate', async (token, callback) => {
-      callback({ success: true, message: 'Authentication skipped for testing' });
-    });
-
-    // Create or get chat room (Removed authentication check)
-    socket.on('createRoom', async (data, callback) => {
+  const chatService = new ChatService(fastify.io)
+  // Create or get chat room
+  fastify.post('/room', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['participantId', 'participantRole'],
+        properties: {
+          participantId: { type: 'string' },
+          participantRole: { type: 'string', enum: ['DOCTOR'] }
+        }
+      }
+    },
+    handler: async (request, reply) => {
       try {
+        if (request.user.role !== 'PATIENT') {
+          throw new Error('Only patients can initiate chats')
+        }
+        if (!request.user.patient || !request.user.patient.id) {
+          throw new Error('Patient data not found')
+        }
+
         const room = await chatService.createOrGetRoom(
-          data.participantId,
-          data.participantRole
-        );
-
-        socket.join(room.id);
-        callback({ success: true, room });
+          request.user.patient.id,
+          request.body.participantId,
+          request.body.participantRole
+        )
+        return room
       } catch (error) {
-        console.error('Error creating/getting room:', error);
-        callback({ success: false, error: error.message });
+        console.error('Error creating/getting room:', error)
+        reply.code(400).send({ error: error.message })
       }
-    });
-
-    // Get user's chat rooms (Removed authentication check)
-    socket.on('getRooms', async (_, callback) => {
+    }
+  })
+  // Get user's chat rooms
+  fastify.get('/rooms', {
+    onRequest: [fastify.authenticate],
+    handler: async (request, reply) => {
       try {
-        const rooms = await chatService.getUserRooms();
-        callback({ success: true, rooms });
+        const rooms = await chatService.getUserRooms(
+          request.user.id,
+          request.user.role
+        )
+        return rooms
       } catch (error) {
-        console.error('Error getting rooms:', error);
-        callback({ success: false, error: error.message });
+        console.error('Error getting rooms:', error)
+        reply.code(400).send({ error: error.message })
       }
-    });
-
-    // Get room messages (Removed authentication and room membership check)
-    socket.on('getRoomMessages', async (roomId, callback) => {
+    }
+  })
+  // Get room messages
+  fastify.get('/room/:roomId/messages', {
+    onRequest: [fastify.authenticate],
+    handler: async (request, reply) => {
       try {
-        const messages = await chatService.getRoomMessages(roomId);
-        callback({ success: true, messages });
+        const messages = await chatService.getRoomMessages(
+          request.params.roomId,
+          request.user.id
+        )
+        return messages
       } catch (error) {
-        console.error('Error getting messages:', error);
-        callback({ success: false, error: error.message });
+        console.error('Error getting messages:', error)
+        reply.code(400).send({ error: error.message })
       }
-    });
-
-    // Send message (Removed authentication and room membership check)
-    socket.on('sendMessage', async (data, callback) => {
+    }
+  })
+  // Send message
+  fastify.post('/room/:roomId/message', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['content'],
+        properties: {
+          content: { type: 'string' }
+        }
+      }
+    },
+    handler: async (request, reply) => {
       try {
         const message = await chatService.sendMessage(
-          data.roomId,
-          data.content
-        );
-
-        fastify.io.to(data.roomId).emit('newMessage', message);
-        callback({ success: true, message });
+          request.params.roomId,
+          request.user.id,
+          request.user.role,
+          request.body.content
+        )
+        return message
       } catch (error) {
-        console.error('Error sending message:', error);
-        callback({ success: false, error: error.message });
+        console.error('Error sending message:', error)
+        reply.code(400).send({ error: error.message })
       }
-    });
-
-    // Mark messages as read (Removed authentication check)
-    socket.on('markMessagesAsRead', async (roomId, callback) => {
-      try {
-        await chatService.markMessagesAsRead(roomId);
-
-        socket.to(roomId).emit('messagesRead', { roomId });
-        callback({ success: true });
-      } catch (error) {
-        console.error('Error marking messages as read:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // Handle disconnection
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
-    });
-  });
-
-  // Health check endpoint
-  fastify.get('/health', {
-    handler: async (request, reply) => {
-      return { status: 'ok', connections: Object.keys(fastify.io.sockets.sockets).length };
     }
-  });
+  })
+  // Mark messages as read
+  fastify.post('/room/:roomId/messages/read', {
+    onRequest: [fastify.authenticate],
+    handler: async (request, reply) => {
+      try {
+        await chatService.markMessagesAsRead(
+          request.params.roomId,
+          request.user.id
+        )
+        return { success: true }
+      } catch (error) {
+        console.error('Error marking messages as read:', error)
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
 }
