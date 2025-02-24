@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import { Server } from "socket.io";
-import { createServer } from "http";
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -15,8 +14,10 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
+import { socketIOPlugin } from "./plugins/socket-io.js";
 import dotenv from "dotenv";
 dotenv.config();
+
 const fastify = Fastify({
   logger: {
     level: process.env.NODE_ENV === "development" ? "debug" : "info",
@@ -34,23 +35,11 @@ const fastify = Fastify({
 
 const prisma = new PrismaClient();
 
-// Create HTTP server
-const httpServer = createServer(fastify.server);
-
 // Create Socket.IO instance
-const io = new Server(fastify.server, {
-  cors: {
-    origin: true,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
-// Make fastify instance available to Socket.IO
-io.fastify = fastify;
+const io = new Server(fastify.server);
 
 // Make io available to routes
-fastify.decorate("io", io);
+
 
 // Register plugins
 await fastify.register(cors, {
@@ -81,6 +70,7 @@ await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
 await fastify.register(doctorPatientRoutes, {
   prefix: `${apiPrefix}/doctor-patient`,
 });
+await fastify.register(socketIOPlugin);
 await fastify.register(nurseServiceRoutes, {
   prefix: `${apiPrefix}/nurse-service`,
 });
@@ -95,7 +85,7 @@ await fastify.register(chatPatientNurseDoctorRoutes, {
   prefix: `${apiPrefix}/chat-patient-nurse-doctor`,
 });
 
-//check route
+// Check route
 fastify.get(
   "/",
   {
@@ -118,6 +108,38 @@ fastify.get(
     };
   }
 );
+
+// WebSocket connection handler
+fastify.decorate("io", io);
+io.on("connection", (socket) => {
+  console.log("A client connected:", socket.id);
+
+  socket.on("authenticate", (token) => {
+    try {
+      const decoded = fastify.jwt.verify(token);
+      socket.user = decoded;
+      console.log(`User ${decoded.id} authenticated`);
+    } catch (err) {
+      console.error("Authentication failed:", err.message);
+      socket.disconnect(true);
+    }
+  });
+
+  socket.on("chat message", (data) => {
+    if (!socket.user) {
+      console.error("Unauthorized chat attempt");
+      return;
+    }
+    io.to(data.recipientId).emit("chat message", {
+      senderId: socket.user.id,
+      message: data.message,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A client disconnected:", socket.id);
+  });
+});
 
 // Error handler
 fastify.setErrorHandler(async (error, request, reply) => {
@@ -159,22 +181,23 @@ fastify.addHook("onClose", async () => {
   await prisma.$disconnect();
 });
 
-// For local development
-
+// Start the server
 const start = async () => {
   try {
     await fastify.listen({
-      port: process.env.PORT || 3000,
+      port: process.env.PORT || 3001,
       host: "0.0.0.0",
     });
-    console.log(`Server running at http://localhost:${process.env.PORT || 3000}`);
-    console.log(`WebSocket connections available on same port`);
+
+    console.log(`Server running at http://localhost:${process.env.PORT || 3001}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
 };
+
 start();
+
 
 // Export for Vercel
 export default async (req, res) => {
