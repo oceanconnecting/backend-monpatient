@@ -4,7 +4,8 @@ export async function chatRoutes(fastify, options) {
   const chatService = new ChatService(fastify)
   
   // Create or get chat room
-  fastify.post('/room', {
+  fastify.post('/room',  {
+ websocket: true,
     onRequest: [fastify.authenticate],
     schema: {
       body: {
@@ -39,6 +40,7 @@ export async function chatRoutes(fastify, options) {
 
   // Get user's chat rooms
   fastify.get('/rooms', {
+    websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -55,7 +57,7 @@ export async function chatRoutes(fastify, options) {
   })
 
   // Get room messages
-  fastify.get('/room/:roomId/messages', {
+  fastify.get('/room/:roomId/messages', {websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -73,6 +75,7 @@ export async function chatRoutes(fastify, options) {
 
   // Send message
   fastify.post('/room/:roomId/message', {
+    websocket: true,
     onRequest: [fastify.authenticate],
     schema: {
       body: {
@@ -107,7 +110,7 @@ export async function chatRoutes(fastify, options) {
   })
 
   // Mark messages as read
-  fastify.post('/room/:roomId/messages/read', {
+  fastify.post('/room/:roomId/messages/read', {websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {

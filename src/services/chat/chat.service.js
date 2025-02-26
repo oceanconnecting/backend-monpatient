@@ -7,105 +7,110 @@ export class ChatService {
     this.connectedUsers = new Map()
     
     // Initialize WebSocket handling if fastify is provided
-    if (fastify) {
-      this.setupWebSocketHandlers()
-    }
+    // if (fastify) {
+    //   this.setupWebSocketHandlers()
+    // }
   }
-  
-  setupWebSocketHandlers() {
-    // Store a reference to this for use in callback functions
-    const self = this
+  handleConnection(connection, req) {
+    connection.socket.on("message", (message) => {
+      console.log("Received:", message);
+      connection.socket.send("Message received");
+    });
+  }
+  // setupWebSocketHandlers() {
+  //   // Store a reference to this for use in callback functions
+  //   const self = this
     
-    // Define the WebSocket route with authentication
-    this.fastify.get('/ws/chat', { websocket: true }, async function wsHandler(connection, request) {
-      try {
-        // Extract token from query parameters
-        const token = request.query.token
-        if (!token) {
-          connection.socket.send(JSON.stringify({
-            event: 'error',
-            message: 'No authentication token provided'
-          }))
-          connection.socket.close()
-          return
-        }
+  //   // Define the WebSocket route with authentication
+  //   this.fastify.get('/ws/chat', { websocket: true }, async function wsHandler(connection, request) {
+  //     try {
+  //       // Extract token from query parameters
+  //       const token = request.query.token
+  //       if (!token) {
+  //         connection.socket.send(JSON.stringify({
+  //           event: 'error',
+  //           message: 'No authentication token provided'
+  //         }))
+  //         connection.socket.close()
+  //         return
+  //       }
         
-        // Verify token
-        let user
-        try {
-          user = self.fastify.jwt.verify(token)
-        } catch (error) {
-          connection.socket.send(JSON.stringify({
-            event: 'error',
-            message: 'Invalid authentication token'
-          }))
-          connection.socket.close()
-          return
-        }
+  //       // Verify token
+  //       let user
+  //       try {
+  //         user = self.fastify.jwt.verify(token)
+  //       } catch (error) {
+  //         connection.socket.send(JSON.stringify({
+  //           event: 'error',
+  //           message: 'Invalid authentication token'
+  //         }))
+  //         connection.socket.close()
+  //         return
+  //       }
         
-        // Store user info with connection
-        const userId = user.id
-        connection.user = user
-        self.connectedUsers.set(userId, connection)
+  //       // Store user info with connection
+  //       const userId = user.id
+  //       connection.user = user
+  //       self.connectedUsers.set(userId, connection)
         
-        console.log('New client connected:', user.email)
+  //       console.log('New client connected:', user.email)
         
-        // Handle messages from client
-        connection.socket.on('message', async (rawMessage) => {
-          try {
-            const message = JSON.parse(rawMessage.toString())
+  //       // Handle messages from client
+  //       connection.socket.on('message', async (rawMessage) => {
+  //         try {
+  //           const message = JSON.parse(rawMessage.toString())
             
-            // Handle different message types
-            switch (message.event) {
-              case 'join-room':
-                await self.handleJoinRoom(connection, message.roomId)
-                break
+  //           // Handle different message types
+  //           switch (message.event) {
+  //             case 'join-room':
+  //               await self.handleJoinRoom(connection, message.roomId)
+  //               break
                 
-              case 'send-message':
-                await self.handleSendMessage(connection, message.data)
-                break
+  //             case 'send-message':
+  //               await self.handleSendMessage(connection, message.data)
+  //               break
                 
-              case 'typing':
-                self.handleTyping(connection, message.roomId)
-                break
+  //             case 'typing':
+  //               self.handleTyping(connection, message.roomId)
+  //               break
                 
-              case 'mark-read':
-                await self.handleMarkRead(connection, message.roomId)
-                break
+  //             case 'mark-read':
+  //               await self.handleMarkRead(connection, message.roomId)
+  //               break
                 
-              default:
-                connection.socket.send(JSON.stringify({
-                  event: 'error',
-                  message: 'Unknown event type'
-                }))
-            }
-          } catch (error) {
-            console.error('Error processing message:', error)
-            connection.socket.send(JSON.stringify({
-              event: 'error',
-              message: 'Error processing message'
-            }))
-          }
-        })
+  //             default:
+  //               connection.socket.send(JSON.stringify({
+  //                 event: 'error',
+  //                 message: 'Unknown event type'
+  //               }))
+  //           }
+  //         } catch (error) {
+  //           console.error('Error processing message:', error)
+  //           connection.socket.send(JSON.stringify({
+  //             event: 'error',
+  //             message: 'Error processing message'
+  //           }))
+  //         }
+  //       })
         
-        // Handle disconnection
-        connection.socket.on('close', () => {
-          console.log('Client disconnected:', user.email)
-          self.connectedUsers.delete(userId)
-        })
+  //       // Handle disconnection
+  //       connection.socket.on('close', () => {
+  //         console.log('Client disconnected:', user.email)
+  //         self.connectedUsers.delete(userId)
+  //       })
         
-        // Send confirmation of successful connection
-        connection.socket.send(JSON.stringify({
-          event: 'connected',
-          userId: userId
-        }))
+  //       // Send confirmation of successful connection
+  //       connection.socket.send(JSON.stringify({
+  //         event: 'connected',
+  //         userId: userId
+  //       }))
         
-      } catch (error) {
-        console.error('WebSocket error:', error)
-        connection.socket.close()
-      }
-    })
-  }
+  //     } catch (error) {
+  //       console.error('WebSocket error:', error)
+  //       connection.socket.close()
+  //     }
+  //   })
+  // }
   
   async handleJoinRoom(connection, roomId) {
     const userId = connection.user.id

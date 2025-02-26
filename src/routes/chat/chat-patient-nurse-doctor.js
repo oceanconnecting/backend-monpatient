@@ -6,6 +6,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
 
   // Create or get chat room between patient, nurse, and doctor
   fastify.post("/room", {
+    websocket: true,
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
       body: {
@@ -43,6 +44,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
   });
   // Get user's chat rooms (patient, nurse, or doctor)
   fastify.get("/rooms", {
+    websocket: true,
     onRequest: [fastify.authenticate, checkRole(["PATIENT", "NURSE"])],
     handler: async (request, reply) => {
       try {
@@ -59,6 +61,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
   });
   // Send message in a room
   fastify.post("/room/:roomId/message", {
+    websocket: true,
     onRequest: [fastify.authenticate],
     schema: {
       body: {
@@ -86,6 +89,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
   });
   // Get room messages
   fastify.get("/room/:roomId/messages", {
+    websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -101,7 +105,8 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
     },
   });
   // Mark messages as read in a room
-  fastify.post("/room/:roomId/messages/read", {
+  fastify.post("/room/:roomId/messages/read", { 
+    websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {

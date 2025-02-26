@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
-import fastifyWebsocket from "@fastify/websocket";
+
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -13,6 +13,7 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
+import { websocketRoutes } from './routes/websocket-routes.js';
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -44,12 +45,12 @@ async function buildApp() {
   });
 
   // Register WebSocket plugin
-  await fastify.register(fastifyWebsocket, {
-    options: {
-      maxPayload: 1048576, // 1MB max payload
-      clientTracking: true,
-    }
-  });
+  // await fastify.register(fastifyWebsocket, {
+  //   options: {
+  //     maxPayload: 1048576, // 1MB max payload
+  //     clientTracking: true,
+  //   }
+  // });
 
   // JWT plugin
   await fastify.register(jwt, {
@@ -71,77 +72,7 @@ async function buildApp() {
       }
     });
   });
-
-  // Main WebSocket connection handler
-  fastify.get("/ws", { websocket: true }, (connection, req) => {
-    const clientId = req.id || Math.random().toString(36).substring(2, 15);
-    console.log("Client connected:", clientId);
-    
-    // Initialize client in our map
-    connectedClients.set(connection, { clientId });
-
-    connection.socket.on("message", (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle authentication
-        if (data.event === "authenticate") {
-          try {
-            const decoded = fastify.jwt.verify(data.token);
-            connectedClients.set(connection, { 
-              clientId,
-              userId: decoded.id,
-              user: decoded
-            });
-            console.log(`User ${decoded.id} authenticated`);
-            
-            // Send acknowledgment back to client
-            connection.socket.send(JSON.stringify({
-              event: "authenticated",
-              success: true
-            }));
-          } catch (err) {
-            console.error("Authentication failed:", err.message);
-            connection.socket.send(JSON.stringify({
-              event: "authenticated",
-              success: false,
-              error: "Invalid token"
-            }));
-          }
-        }
-        
-        // Handle chat messages
-        else if (data.event === "chat message") {
-          const clientInfo = connectedClients.get(connection);
-          if (!clientInfo || !clientInfo.userId) {
-            connection.socket.send(JSON.stringify({
-              event: "error",
-              message: "Unauthorized, please authenticate first"
-            }));
-            return;
-          }
-          
-          // Forward message to recipient
-          fastify.broadcastToUser(data.recipientId, "chat message", {
-            senderId: clientInfo.userId,
-            message: data.message
-          });
-        }
-        
-      } catch (err) {
-        console.error("Error processing message:", err.message);
-        connection.socket.send(JSON.stringify({
-          event: "error",
-          message: "Invalid message format"
-        }));
-      }
-    });
-
-    connection.socket.on("close", () => {
-      console.log("Client disconnected:", clientId);
-      connectedClients.delete(connection);
-    });
-  });
+fastify.register(websocketRoutes);
 
   // Register routes
   const apiPrefix = "/api";
