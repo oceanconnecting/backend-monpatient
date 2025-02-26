@@ -1,7 +1,8 @@
 import { ChatService } from '../../services/chat/chat.service.js'
 
 export async function chatRoutes(fastify, options) {
-  const chatService = new ChatService(fastify.io)
+  const chatService = new ChatService(fastify)
+  
   // Create or get chat room
   fastify.post('/room', {
     onRequest: [fastify.authenticate],
@@ -23,7 +24,6 @@ export async function chatRoutes(fastify, options) {
         if (!request.user.patient || !request.user.patient.id) {
           throw new Error('Patient data not found')
         }
-
         const room = await chatService.createOrGetRoom(
           request.user.patient.id,
           request.body.participantId,
@@ -36,6 +36,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Get user's chat rooms
   fastify.get('/rooms', {
     onRequest: [fastify.authenticate],
@@ -52,6 +53,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Get room messages
   fastify.get('/room/:roomId/messages', {
     onRequest: [fastify.authenticate],
@@ -68,6 +70,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Send message
   fastify.post('/room/:roomId/message', {
     onRequest: [fastify.authenticate],
@@ -88,6 +91,13 @@ export async function chatRoutes(fastify, options) {
           request.user.role,
           request.body.content
         )
+        
+        // Broadcast the message to connected websocket clients
+        chatService.broadcastToRoom(request.params.roomId, {
+          event: 'new-message',
+          message: message
+        })
+        
         return message
       } catch (error) {
         console.error('Error sending message:', error)
@@ -95,6 +105,7 @@ export async function chatRoutes(fastify, options) {
       }
     }
   })
+
   // Mark messages as read
   fastify.post('/room/:roomId/messages/read', {
     onRequest: [fastify.authenticate],
@@ -104,6 +115,14 @@ export async function chatRoutes(fastify, options) {
           request.params.roomId,
           request.user.id
         )
+        
+        // Broadcast read status to connected websocket clients
+        chatService.broadcastToRoom(request.params.roomId, {
+          event: 'messages-read',
+          userId: request.user.id,
+          roomId: request.params.roomId
+        })
+        
         return { success: true }
       } catch (error) {
         console.error('Error marking messages as read:', error)

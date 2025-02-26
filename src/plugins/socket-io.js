@@ -10,7 +10,6 @@ export const socketIOPlugin = fp(async (fastify) => {
   });
 
 
-
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 

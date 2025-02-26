@@ -1,8 +1,7 @@
 import Fastify from "fastify";
-import { PrismaClient } from "@prisma/client";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
-import { Server } from "socket.io";
+import fastifyWebsocket from "@fastify/websocket";
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -14,9 +13,11 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
-// import { socketIOPlugin } from "./plugins/socket-io.js";
 import dotenv from "dotenv";
 dotenv.config();
+
+// Store connected clients and their user info
+const connectedClients = new Map();
 
 async function buildApp() {
   const fastify = Fastify({
@@ -42,17 +43,13 @@ async function buildApp() {
     allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  // Initialize Socket.IO with CORS configuration
-  const io = new Server(fastify.server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
-      credentials: true
+  // Register WebSocket plugin
+  await fastify.register(fastifyWebsocket, {
+    options: {
+      maxPayload: 1048576, // 1MB max payload
+      clientTracking: true,
     }
   });
-
-  // Decorate fastify with io instance
-  fastify.decorate("io", io);
 
   // JWT plugin
   await fastify.register(jwt, {
@@ -66,36 +63,86 @@ async function buildApp() {
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
   fastify.addHook("onRequest", createNotificationMiddleware(fastify));
 
-  // Socket.IO connection handler
-  io.on("connection", (socket) => {
-    console.log("Client connected:", socket.id);
-
-    socket.on("authenticate", (token) => {
-      try {
-        const decoded = fastify.jwt.verify(token);
-        socket.user = decoded;
-        console.log(`User ${decoded.id} authenticated`);
-      } catch (err) {
-        console.error("Authentication failed:", err.message);
-        socket.disconnect(true);
+  // Helper to broadcast messages to specific users
+  fastify.decorate("broadcastToUser", (userId, event, data) => {
+    connectedClients.forEach((client, connection) => {
+      if (client.userId === userId) {
+        connection.socket.send(JSON.stringify({ event, data }));
       }
-    });
-
-    socket.on("chat message", (data) => {
-      if (!socket.user) {
-        console.error("Unauthorized chat attempt");
-        return;
-      }
-      io.to(data.recipientId).emit("chat message", {
-        senderId: socket.user.id,
-        message: data.message,
-      });
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
     });
   });
+
+  // Main WebSocket connection handler
+  fastify.get("/ws", { websocket: true }, (connection, req) => {
+    const clientId = req.id || Math.random().toString(36).substring(2, 15);
+    console.log("Client connected:", clientId);
+    
+    // Initialize client in our map
+    connectedClients.set(connection, { clientId });
+
+    connection.socket.on("message", (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle authentication
+        if (data.event === "authenticate") {
+          try {
+            const decoded = fastify.jwt.verify(data.token);
+            connectedClients.set(connection, { 
+              clientId,
+              userId: decoded.id,
+              user: decoded
+            });
+            console.log(`User ${decoded.id} authenticated`);
+            
+            // Send acknowledgment back to client
+            connection.socket.send(JSON.stringify({
+              event: "authenticated",
+              success: true
+            }));
+          } catch (err) {
+            console.error("Authentication failed:", err.message);
+            connection.socket.send(JSON.stringify({
+              event: "authenticated",
+              success: false,
+              error: "Invalid token"
+            }));
+          }
+        }
+        
+        // Handle chat messages
+        else if (data.event === "chat message") {
+          const clientInfo = connectedClients.get(connection);
+          if (!clientInfo || !clientInfo.userId) {
+            connection.socket.send(JSON.stringify({
+              event: "error",
+              message: "Unauthorized, please authenticate first"
+            }));
+            return;
+          }
+          
+          // Forward message to recipient
+          fastify.broadcastToUser(data.recipientId, "chat message", {
+            senderId: clientInfo.userId,
+            message: data.message
+          });
+        }
+        
+      } catch (err) {
+        console.error("Error processing message:", err.message);
+        connection.socket.send(JSON.stringify({
+          event: "error",
+          message: "Invalid message format"
+        }));
+      }
+    });
+
+    connection.socket.on("close", () => {
+      console.log("Client disconnected:", clientId);
+      connectedClients.delete(connection);
+    });
+  });
+
   // Register routes
   const apiPrefix = "/api";
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
@@ -113,7 +160,7 @@ async function buildApp() {
     return {
       status: "ok",
       timestamp: new Date().toISOString(),
-      connections: io.sockets.sockets.size
+      connections: connectedClients.size
     };
   });
 
@@ -125,10 +172,9 @@ const start = async () => {
   try {
     const fastify = await buildApp();
     await fastify.listen({
-      port: process.env.PORT || 3001,
-      host: "0.0.0.0",
+      port: process.env.PORT
     });
-    console.log(`Server running at http://localhost:${process.env.PORT || 3001}`);
+    console.log(`Server running at http://localhost:${process.env.PORT}`);
   } catch (err) {
     console.error("Error starting server:", err);
     process.exit(1);

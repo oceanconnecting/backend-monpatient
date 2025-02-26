@@ -1,87 +1,201 @@
 import { PrismaClient } from '@prisma/client'
 
 export class ChatService {
-  constructor(io) {
-    this.io = io
+  constructor(fastify) {
+    this.fastify = fastify
     this.prisma = new PrismaClient()
     this.connectedUsers = new Map()
-
-    if (io) {
-      this.fastify = io.fastify // Get fastify instance from Socket.IO
-      io.use(this.authenticateSocket.bind(this))
-      io.on('connection', this.handleConnection.bind(this))
+    
+    // Initialize WebSocket handling if fastify is provided
+    if (fastify) {
+      this.setupWebSocketHandlers()
     }
   }
   
-  async authenticateSocket(socket, next) {
-    try {
-      const token = socket.handshake.auth.token
-      if (!token) throw new Error('No token provided')
-
-      const decoded = this.fastify.jwt.verify(token)
-      socket.user = decoded
-      next()
-    } catch (error) {
-      next(new Error('Authentication failed'))
+  setupWebSocketHandlers() {
+    // Store a reference to this for use in callback functions
+    const self = this
+    
+    // Define the WebSocket route with authentication
+    this.fastify.get('/ws/chat', { websocket: true }, async function wsHandler(connection, request) {
+      try {
+        // Extract token from query parameters
+        const token = request.query.token
+        if (!token) {
+          connection.socket.send(JSON.stringify({
+            event: 'error',
+            message: 'No authentication token provided'
+          }))
+          connection.socket.close()
+          return
+        }
+        
+        // Verify token
+        let user
+        try {
+          user = self.fastify.jwt.verify(token)
+        } catch (error) {
+          connection.socket.send(JSON.stringify({
+            event: 'error',
+            message: 'Invalid authentication token'
+          }))
+          connection.socket.close()
+          return
+        }
+        
+        // Store user info with connection
+        const userId = user.id
+        connection.user = user
+        self.connectedUsers.set(userId, connection)
+        
+        console.log('New client connected:', user.email)
+        
+        // Handle messages from client
+        connection.socket.on('message', async (rawMessage) => {
+          try {
+            const message = JSON.parse(rawMessage.toString())
+            
+            // Handle different message types
+            switch (message.event) {
+              case 'join-room':
+                await self.handleJoinRoom(connection, message.roomId)
+                break
+                
+              case 'send-message':
+                await self.handleSendMessage(connection, message.data)
+                break
+                
+              case 'typing':
+                self.handleTyping(connection, message.roomId)
+                break
+                
+              case 'mark-read':
+                await self.handleMarkRead(connection, message.roomId)
+                break
+                
+              default:
+                connection.socket.send(JSON.stringify({
+                  event: 'error',
+                  message: 'Unknown event type'
+                }))
+            }
+          } catch (error) {
+            console.error('Error processing message:', error)
+            connection.socket.send(JSON.stringify({
+              event: 'error',
+              message: 'Error processing message'
+            }))
+          }
+        })
+        
+        // Handle disconnection
+        connection.socket.on('close', () => {
+          console.log('Client disconnected:', user.email)
+          self.connectedUsers.delete(userId)
+        })
+        
+        // Send confirmation of successful connection
+        connection.socket.send(JSON.stringify({
+          event: 'connected',
+          userId: userId
+        }))
+        
+      } catch (error) {
+        console.error('WebSocket error:', error)
+        connection.socket.close()
+      }
+    })
+  }
+  
+  async handleJoinRoom(connection, roomId) {
+    const userId = connection.user.id
+    console.log(`User ${userId} joining room ${roomId}`)
+    
+    const canJoin = await this.canUserJoinRoom(userId, roomId)
+    if (canJoin) {
+      // Store room information with the connection
+      if (!connection.rooms) connection.rooms = new Set()
+      connection.rooms.add(`room:${roomId}`)
+      
+      console.log(`User ${userId} joined room ${roomId}`)
+      connection.socket.send(JSON.stringify({
+        event: 'room-joined',
+        roomId: roomId
+      }))
+    } else {
+      connection.socket.send(JSON.stringify({
+        event: 'error',
+        message: 'Cannot join room: not authorized'
+      }))
     }
   }
-   handleConnection(socket) {
-    console.log('New client connected:', socket.user.email)
-    const userId = socket.user.id
-    this.connectedUsers.set(userId, socket.id)
-
-    // Join user-specific room
-    socket.join(`user:${userId}`)
-
-    // Handle joining chat rooms
-    socket.on('join-room', async (roomId) => {
-      console.log(`User ${userId} joining room ${roomId}`)
-      const canJoin = await this.canUserJoinRoom(userId, roomId)
-      if (canJoin) {
-        socket.join(`room:${roomId}`)
-        console.log(`User ${userId} joined room ${roomId}`)
-      }
-    })
-
-    // Handle new messages
-    socket.on('send-message', async (data) => {
-      console.log(`New message from ${userId} in room ${data.roomId}:`, data.content)
-      try {
-        const message = await this.sendMessage(
-          data.roomId,
-          userId,
-          socket.user.role,
-          data.content
-        )
-        this.io.to(`room:${data.roomId}`).emit('new-message', message)
-      } catch (error) {
-        console.error('Error sending message:', error)
-        socket.emit('error', { message: 'Failed to send message' })
-      }
-    })
-
-    // Handle typing status
-    socket.on('typing', (roomId) => {
-      socket.to(`room:${roomId}`).emit('user-typing', {
+  
+  async handleSendMessage(connection, data) {
+    const userId = connection.user.id
+    console.log(`New message from ${userId} in room ${data.roomId}:`, data.content)
+    
+    try {
+      const message = await this.sendMessage(
+        data.roomId,
         userId,
-        roomId
+        connection.user.role,
+        data.content
+      )
+      
+      // Broadcast to all users in the room
+      this.broadcastToRoom(data.roomId, {
+        event: 'new-message',
+        message: message
       })
-    })
-
-    // Handle read receipts
-    socket.on('mark-read', async (roomId) => {
-      try {
-        await this.markMessagesAsRead(roomId, userId)
-        this.io.to(`room:${roomId}`).emit('messages-read', { userId, roomId })
-      } catch (error) {
-        socket.emit('error', { message: error.message })
+    } catch (error) {
+      console.error('Error sending message:', error)
+      connection.socket.send(JSON.stringify({
+        event: 'error',
+        message: 'Failed to send message: ' + error.message
+      }))
+    }
+  }
+  
+  handleTyping(connection, roomId) {
+    const userId = connection.user.id
+    
+    // Broadcast typing status to other users in the room
+    this.broadcastToRoom(roomId, {
+      event: 'user-typing',
+      userId: userId,
+      roomId: roomId
+    }, userId) // Exclude the sender
+  }
+  
+  async handleMarkRead(connection, roomId) {
+    const userId = connection.user.id
+    
+    try {
+      await this.markMessagesAsRead(roomId, userId)
+      
+      // Broadcast read status to all users in the room
+      this.broadcastToRoom(roomId, {
+        event: 'messages-read',
+        userId: userId,
+        roomId: roomId
+      })
+    } catch (error) {
+      connection.socket.send(JSON.stringify({
+        event: 'error',
+        message: error.message
+      }))
+    }
+  }
+  
+  // Broadcast a message to all users in a room
+  broadcastToRoom(roomId, data, excludeUserId = null) {
+    const roomKey = `room:${roomId}`
+    
+    this.connectedUsers.forEach((connection, userId) => {
+      if (excludeUserId && userId === excludeUserId) return
+      if (connection.rooms && connection.rooms.has(roomKey)) {
+        connection.socket.send(JSON.stringify(data))
       }
-    })
-
-    // Handle disconnection
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.user.email)
-      this.connectedUsers.delete(userId)
     })
   }
 

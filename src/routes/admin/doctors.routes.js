@@ -3,7 +3,7 @@ import { checkRole } from '../../middleware/auth.middleware.js';
 
 export async function doctorRoutes(fastify) {
   fastify.get('/', {
-    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    // onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {
       try {
         const doctors = await DoctorService.getAllDoctors();
