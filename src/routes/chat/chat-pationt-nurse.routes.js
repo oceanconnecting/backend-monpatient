@@ -23,7 +23,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         }
 
         // Ensure the patient profile exists
-        if (!request.user.patient || !request.user.patient.id) {
+        if (!request.user.patient?.id) {
           throw new Error("Patient data not found");
         }
 

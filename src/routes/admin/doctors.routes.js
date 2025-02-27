@@ -13,7 +13,7 @@ export async function doctorRoutes(fastify) {
       }
     }
   });
-
+  // Get a single doctor by ID
   fastify.get('/:id', {
     onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
     handler: async (request, reply) => {

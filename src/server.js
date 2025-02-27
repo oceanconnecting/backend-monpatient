@@ -1,7 +1,6 @@
 import Fastify from "fastify";
-import cors from "@fastify/cors";
+import fastifyCors from "@fastify/cors";
 import jwt from "@fastify/jwt";
-
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -13,7 +12,7 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
-import { websocketRoutes } from './routes/websocket-routes.js';
+import { websocketRoutes } from "./routes/websocket-routes.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -37,11 +36,14 @@ async function buildApp() {
   });
 
   // Register CORS first
-  await fastify.register(cors, {
-    origin: true,
+  await fastify.register(fastifyCors, {
+    origin: true, // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ['Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   });
 
   // Register WebSocket plugin
@@ -73,7 +75,7 @@ async function buildApp() {
     });
   });
 fastify.register(websocketRoutes);
-
+console.log('WebSocket routes registered')
   // Register routes
   const apiPrefix = "/api";
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
@@ -103,7 +105,7 @@ const start = async () => {
   try {
     const fastify = await buildApp();
     await fastify.listen({
-      port: process.env.PORT
+      port: 3000
     });
     console.log(`Server running at http://localhost:${process.env.PORT}`);
   } catch (err) {

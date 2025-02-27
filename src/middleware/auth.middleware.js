@@ -6,7 +6,7 @@ export function createAuthMiddleware(fastify, prismaClient = defaultPrisma) {
   return async function authenticate(request, reply) {
     try {
       const authHeader = request.headers.authorization
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (!authHeader?.startsWith('Bearer')) {
         reply.code(401).send({ error: 'No token provided' })
         return
       }

@@ -111,7 +111,12 @@ export class ChatService {
   //     }
   //   })
   // }
-  
+  getAllConnectedClients() {
+    if (!this.fastify || !this.fastify.websocketServer) {
+      throw new Error('WebSocket server not initialized')
+    }
+    return this.fastify.websocketServer.clients
+  }
   async handleJoinRoom(connection, roomId) {
     const userId = connection.user.id
     console.log(`User ${userId} joining room ${roomId}`)
@@ -424,6 +429,14 @@ export class ChatService {
             createdAt: 'asc'
           }
         }
+      }
+    })
+  }
+  broadcastToAllClients(data) {
+    const clients = this.getAllConnectedClients()
+    clients.forEach((client) => {
+      if (client.readyState === client.OPEN) {
+        client.send(JSON.stringify(data))
       }
     })
   }

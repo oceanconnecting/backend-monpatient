@@ -26,7 +26,7 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
             .send({ error: "Only patients can initiate chats" });
         }
 
-        if (!request.user.patient || !request.user.patient.id) {
+        if (!request.user.patient?.id) {
           return reply.code(400).send({ error: "Patient data not found" });
         }
         const room = await chatService.createOrGetRoom(
