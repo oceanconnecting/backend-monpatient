@@ -1,12 +1,25 @@
 import { ChatServicePatientNurse } from "../../services/chat/chat-pation-nurse.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
+
 export async function chatPatientNurseRoutes(fastify, options) {
   const chatService = new ChatServicePatientNurse(fastify.io);
+
+  // Helper function to handle errors
+  const handleError = (reply, error) => {
+    console.error(error);
+    reply.code(400).send({ error: error.message });
+  };
+
+  // Helper function to authenticate and check roles
+  const authenticateAndCheckRole = (roles) => [
+    fastify.authenticate,
+    checkRole(roles),
+  ];
 
   // Create or get chat room between patient and nurse
   fastify.post("/room", {
     websocket: true,
-    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    onRequest: authenticateAndCheckRole(["PATIENT"]),
     schema: {
       body: {
         type: "object",
@@ -36,15 +49,15 @@ export async function chatPatientNurseRoutes(fastify, options) {
 
         return room;
       } catch (error) {
-        console.error("Error creating/getting room:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Get user's chat rooms (patient or nurse)
   fastify.get("/rooms", {
     websocket: true,
-    // onRequest: [fastify.authenticate, checkRole(["PATIENT", "NURSE"])],
+    onRequest: authenticateAndCheckRole(["PATIENT", "NURSE"]),
     handler: async (request, reply) => {
       try {
         const rooms = await chatService.getUserRooms(
@@ -53,15 +66,15 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return rooms;
       } catch (error) {
-        console.error("Error getting rooms:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Send message in a room
   fastify.post("/room/:roomId/message", {
     websocket: true,
-    onRequest: [fastify.authenticate],
+    onRequest: fastify.authenticate,
     schema: {
       body: {
         type: "object",
@@ -81,15 +94,15 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return message;
       } catch (error) {
-        console.error("Error sending message:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Get room messages
   fastify.get("/room/:roomId/messages", {
     websocket: true,
-    onRequest: [fastify.authenticate],
+    onRequest: fastify.authenticate,
     handler: async (request, reply) => {
       try {
         const messages = await chatService.getRoomMessages(
@@ -98,15 +111,15 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return messages;
       } catch (error) {
-        console.error("Error getting messages:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Mark messages as read in a room
   fastify.post("/room/:roomId/messages/read", {
     websocket: true,
-    onRequest: [fastify.authenticate],
+    onRequest: fastify.authenticate,
     handler: async (request, reply) => {
       try {
         await chatService.markMessagesAsRead(
@@ -115,8 +128,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return { success: true };
       } catch (error) {
-        console.error("Error marking messages as read:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });

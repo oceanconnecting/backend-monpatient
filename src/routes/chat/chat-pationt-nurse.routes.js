@@ -1,7 +1,24 @@
 import { ChatServicePatientNurse } from "../../services/chat/chat-pation-nurse.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
+
 export async function chatPatientNurseRoutes(fastify, options) {
   const chatService = new ChatServicePatientNurse(fastify.io);
+
+  // Utility function to handle errors
+  const handleError = (reply, error) => {
+    console.error(error);
+    reply.code(400).send({ error: error.message });
+  };
+
+  // Middleware to validate patient data
+  const validatePatientData = (request) => {
+    if (request.user.role !== "PATIENT") {
+      throw new Error("Only patients can initiate chats with nurses");
+    }
+    if (!request.user.patient?.id) {
+      throw new Error("Patient data not found");
+    }
+  };
 
   // Create or get chat room between patient and nurse
   fastify.post("/room", {
@@ -17,17 +34,8 @@ export async function chatPatientNurseRoutes(fastify, options) {
     },
     handler: async (request, reply) => {
       try {
-        // Only patients can initiate chats with nurses
-        if (request.user.role !== "PATIENT") {
-          throw new Error("Only patients can initiate chats with nurses");
-        }
+        validatePatientData(request);
 
-        // Ensure the patient profile exists
-        if (!request.user.patient?.id) {
-          throw new Error("Patient data not found");
-        }
-
-        // Create or get the chat room
         const room = await chatService.createOrGetRoom(
           request.user.patient.id, // Patient ID
           request.body.nurseId // Nurse ID
@@ -35,11 +43,11 @@ export async function chatPatientNurseRoutes(fastify, options) {
 
         return room;
       } catch (error) {
-        console.error("Error creating/getting room:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Get user's chat rooms (patient or nurse)
   fastify.get("/rooms", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT", "NURSE"])],
@@ -51,11 +59,11 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return rooms;
       } catch (error) {
-        console.error("Error getting rooms:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
+
   // Send message in a room
   fastify.post("/room/:roomId/message", {
     onRequest: [fastify.authenticate],
@@ -78,8 +86,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return message;
       } catch (error) {
-        console.error("Error sending message:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
@@ -95,8 +102,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return messages;
       } catch (error) {
-        console.error("Error getting messages:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
@@ -112,8 +118,7 @@ export async function chatPatientNurseRoutes(fastify, options) {
         );
         return { success: true };
       } catch (error) {
-        console.error("Error marking messages as read:", error);
-        reply.code(400).send({ error: error.message });
+        handleError(reply, error);
       }
     },
   });
