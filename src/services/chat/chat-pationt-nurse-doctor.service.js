@@ -32,7 +32,7 @@ export class ChatServicePatientNurseDoctor {
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
 
-      console.log("New client connected:", decoded.email,decoded.role);
+      console.log("New client connected:", decoded.email, decoded.role);
 
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
@@ -42,12 +42,7 @@ export class ChatServicePatientNurseDoctor {
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await connection.close();
-          this.sendJson(connection, {
-            type: "success",
-            message: "Message processed successfully",
-            data,
-          });
+          await this.handleMessage(connection, data);
         } catch (error) {
           console.error("Error handling message:", error);
           this.sendJson(connection, {
@@ -119,11 +114,7 @@ export class ChatServicePatientNurseDoctor {
       const canJoin = await this.canUserJoinRoom(userId, roomId);
 
       if (canJoin) {
-        if (!this.rooms.has(roomId)) {
-          this.rooms.set(roomId, new Set());
-        }
-        this.rooms.get(roomId).add(userId);
-
+        this.joinRoom(userId, roomId);
         this.sendRoomMessage(connection, "room-joined", roomId);
 
         const messages = await this.getRoomMessages(roomId, userId);
@@ -138,6 +129,13 @@ export class ChatServicePatientNurseDoctor {
         message: "Failed to join room",
       });
     }
+  }
+
+  joinRoom(userId, roomId) {
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, new Set());
+    }
+    this.rooms.get(roomId).add(userId);
   }
 
   async handleSendMessage(connection, roomId, userId, userRole, content) {

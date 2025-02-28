@@ -44,9 +44,9 @@ export class ChatService {
     });
   }
 
+  // Helper method to handle user connection
   async handleConnection(connection, req) {
     try {
-      // Extract token from query parameter
       const token = req.query.token;
       if (!token) {
         this.handleError(connection, "No token provided");
@@ -54,36 +54,26 @@ export class ChatService {
         return;
       }
 
-      // Verify token
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
 
       console.log("New client connected:", decoded.email, decoded.role);
 
-      // Store user connection
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
 
-      // Send confirmation
       this.sendJson(connection, { type: "connected", userId });
 
-      // Handle messages
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await connection.close();
-          this.sendJson(connection, {
-            type: "success",
-            message: "Message processed successfully",
-            data,
-          });
+          await this.handleMessage(connection, data);
         } catch (error) {
           console.error("Error handling message:", error);
           this.handleError(connection, "Failed to process message");
         }
       });
 
-      // Handle disconnection
       connection.on("close", () => {
         console.log("Client disconnected:", decoded.email);
         this.connectedUsers.delete(userId);
@@ -95,6 +85,33 @@ export class ChatService {
     }
   }
 
+  // Helper method to handle incoming messages
+  async handleMessage(connection, data) {
+    const userId = connection.user.id;
+
+    switch (data.type) {
+      case "join-room":
+        await this.handleJoinRoom(connection, data.roomId);
+        break;
+
+      case "send-message":
+        await this.handleSendMessage(connection, data);
+        break;
+
+      case "typing":
+        this.handleTyping(connection, data.roomId);
+        break;
+
+      case "mark-read":
+        await this.handleMarkRead(connection, data.roomId);
+        break;
+
+      default:
+        this.handleError(connection, "Unknown message type");
+    }
+  }
+
+  // Helper method to handle joining a room
   async handleJoinRoom(connection, roomId) {
     const userId = connection.user.id;
     console.log(`User ${userId} joining room ${roomId}`);
@@ -102,20 +119,17 @@ export class ChatService {
     try {
       await this.validateRoomAccess(userId, roomId);
 
-      // Store room information with the connection
       if (!connection.rooms) connection.rooms = new Set();
       connection.rooms.add(`room:${roomId}`);
 
       console.log(`User ${userId} joined room ${roomId}`);
-      this.sendJson(connection.socket, {
-        event: "room-joined",
-        roomId: roomId,
-      });
+      this.sendJson(connection.socket, { event: "room-joined", roomId });
     } catch (error) {
       this.handleError(connection.socket, "Cannot join room: not authorized");
     }
   }
 
+  // Helper method to handle sending a message
   async handleSendMessage(connection, data) {
     const userId = connection.user.id;
     console.log(`New message from ${userId} in room ${data.roomId}:`, data.content);
@@ -128,49 +142,36 @@ export class ChatService {
         data.content
       );
 
-      // Broadcast to all users in the room
-      this.broadcastToRoom(data.roomId, {
-        event: "new-message",
-        message: message,
-      });
+      this.broadcastToRoom(data.roomId, { event: "new-message", message });
     } catch (error) {
       console.error("Error sending message:", error);
       this.handleError(connection.socket, "Failed to send message: " + error.message);
     }
   }
 
+  // Helper method to handle typing status
   handleTyping(connection, roomId) {
     const userId = connection.user.id;
-
-    // Broadcast typing status to other users in the room
     this.broadcastToRoom(
       roomId,
-      {
-        event: "user-typing",
-        userId: userId,
-        roomId: roomId,
-      },
+      { event: "user-typing", userId, roomId },
       userId
-    ); // Exclude the sender
+    );
   }
 
+  // Helper method to handle marking messages as read
   async handleMarkRead(connection, roomId) {
     const userId = connection.user.id;
 
     try {
       await this.markMessagesAsRead(roomId, userId);
-
-      // Broadcast read status to all users in the room
-      this.broadcastToRoom(roomId, {
-        event: "messages-read",
-        userId: userId,
-        roomId: roomId,
-      });
+      this.broadcastToRoom(roomId, { event: "messages-read", userId, roomId });
     } catch (error) {
       this.handleError(connection.socket, error.message);
     }
   }
 
+  // Helper method to broadcast to a specific room
   broadcastToRoom(roomId, data, excludeUserId = null) {
     const roomKey = `room:${roomId}`;
     const clients = Array.from(this.connectedUsers).filter(([_, connection]) =>
@@ -179,183 +180,88 @@ export class ChatService {
     this.broadcast(clients, data, excludeUserId);
   }
 
-  broadcastToAllClients(data) {
-    this.broadcast(Array.from(this.connectedUsers), data);
-  }
-
-  async canUserJoinRoom(userId, roomId) {
-    try {
-      await this.validateRoomAccess(userId, roomId);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
+  // Helper method to create or get a room
   async createOrGetRoom(patientId, participantId, participantRole) {
-    // Get the participant's profile ID
     const participant = await this.prisma.user.findUnique({
       where: { id: participantId },
-      include: {
-        doctor: participantRole === "DOCTOR",
-      },
+      include: { doctor: participantRole === "DOCTOR" },
     });
 
-    if (!participant) {
-      throw new Error("Participant not found");
-    }
+    if (!participant) throw new Error("Participant not found");
 
     const profileId = participant.doctor?.id;
-    if (!profileId) {
-      throw new Error(`Participant is not a ${participantRole}`);
-    }
+    if (!profileId) throw new Error(`Participant is not a ${participantRole}`);
 
-    const where = {
-      patientId: patientId,
-      doctorId: profileId,
-    };
+    const where = { patientId, doctorId: profileId };
     let room = await this.prisma.chatRoom.findFirst({ where });
 
     if (!room) {
       room = await this.prisma.chatRoom.create({
-        data: {
-          ...where,
-          status: "ACTIVE",
-        },
-        include: {
-          patient: true,
-          doctor: true,
-        },
+        data: { ...where, status: "ACTIVE" },
+        include: { patient: true, doctor: true },
       });
     }
     return room;
   }
 
+  // Helper method to send a message
   async sendMessage(roomId, senderId, senderRole, content) {
-    // Get the sender's profile ID
     const sender = await this.prisma.user.findUnique({
       where: { id: senderId },
-      include: {
-        patient: true,
-        doctor: true,
-      },
+      include: { patient: true, doctor: true },
     });
 
-    if (!sender) {
-      throw new Error("Sender not found");
-    }
+    if (!sender) throw new Error("Sender not found");
 
     const profileId =
       senderRole === "PATIENT" ? sender.patient?.id : sender.doctor?.id;
-    if (!profileId) {
-      throw new Error(`Sender is not a ${senderRole}`);
-    }
+    if (!profileId) throw new Error(`Sender is not a ${senderRole}`);
 
-    const room = await this.validateRoomAccess(senderId, roomId);
+    await this.validateRoomAccess(senderId, roomId);
 
-    const message = await this.prisma.message.create({
+    return this.prisma.message.create({
       data: {
         content,
         isRead: false,
         senderRole,
-        senderId: senderId,
-        chatRoom: {
-          connect: {
-            id: roomId,
-          },
-        },
+        senderId,
+        chatRoom: { connect: { id: roomId } },
       },
-      include: {
-        chatRoom: true,
-      },
+      include: { chatRoom: true },
     });
-
-    return message;
   }
 
+  // Helper method to mark messages as read
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
-      where: {
-        roomId: roomId,
-        senderId: { not: userId },
-        isRead: false,
-      },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-      },
+      where: { roomId, senderId: { not: userId }, isRead: false },
+      data: { isRead: true, readAt: new Date() },
     });
   }
 
+  // Helper method to get room messages
   async getRoomMessages(roomId, userId) {
     await this.validateRoomAccess(userId, roomId);
-
-    // Get messages
-    const messages = await this.prisma.message.findMany({
-      where: {
-        chatRoomId: roomId,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+    return this.prisma.message.findMany({
+      where: { chatRoomId: roomId },
+      orderBy: { createdAt: "asc" },
     });
-
-    return messages;
   }
 
+  // Helper method to get user rooms
   async getUserRooms(userId, userRole) {
     const query = {
-      where: {},
+      where: {
+        [userRole.toLowerCase()]: { user: { id: userId } },
+      },
     };
-
-    if (userRole === "PATIENT") {
-      query.where.patient = {
-        user: {
-          id: userId,
-        },
-      };
-    } else if (userRole === "DOCTOR") {
-      query.where.doctor = {
-        user: {
-          id: userId,
-        },
-      };
-    }
 
     return this.prisma.chatRoom.findMany({
       ...query,
       include: {
-        patient: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                role: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
-          },
-        },
-        doctor: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                role: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
-          },
-        },
-        messages: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
+        patient: { include: { user: true } },
+        doctor: { include: { user: true } },
+        messages: { orderBy: { createdAt: "asc" } },
       },
     });
   }
