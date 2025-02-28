@@ -27,7 +27,7 @@ export class ChatService {
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
 
-      console.log("New client connected:", decoded.email,decoded.role);
+      console.log("New client connected:", decoded.email, decoded.role);
 
       // Store user connection
       connection.user = decoded;
@@ -45,8 +45,16 @@ export class ChatService {
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await await connection.close();
-          connection, data;
+          await connection.close(); // Only one 'await' is needed
+          // Do something with `data` and `connection` here
+          // For example, send a response back to the client
+          connection.send(
+            JSON.stringify({
+              type: "success",
+              message: "Message processed successfully",
+              data: data, // Include the parsed data in the response
+            })
+          );
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(
@@ -72,7 +80,7 @@ export class ChatService {
     }
   }
   getAllConnectedClients() {
-    if (!this.fastify || !this.fastify.websocketServer) {
+    if (!this.fastify?.websocketServer) {
       throw new Error("WebSocket server not initialized");
     }
     return this.fastify.websocketServer.clients;
@@ -207,7 +215,7 @@ export class ChatService {
     const participant = await this.prisma.user.findUnique({
       where: { id: participantId },
       include: {
-        doctor: participantRole === "DOCTOR" ? true : false,
+        doctor: participantRole === "DOCTOR",
       },
     });
 

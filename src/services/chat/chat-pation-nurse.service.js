@@ -42,8 +42,16 @@ export class ChatServicePatientNurse {
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await connection.close();
-          connection, data; 
+          await connection.close(); // Only one 'await' is needed
+          // Do something with `data` and `connection` here
+          // For example, send a response back to the client
+          connection.send(
+            JSON.stringify({
+              type: "success",
+              message: "Message processed successfully",
+              data: data, // Include the parsed data in the response
+            })
+          );
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(

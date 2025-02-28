@@ -1,15 +1,9 @@
-import websocket from "@fastify/websocket";
 import { ChatServicePatientNurseDoctor } from "../services/chat/chat-pationt-nurse-doctor.service.js";
 import { ChatService } from "../services/chat/chat.service.js";
 import { ChatServicePatientNurse } from "../services/chat/chat-pation-nurse.service.js";
 
 export async function websocketRoutes(fastify, options) {
-  // Register WebSocket plugin
-  // await fastify.register(websocket, {
-  //   options: { maxPayload: 1048576 } // 1MB max payload
-  // });
 
-  // Create chat service instances
   const chatServicePatientNurseDoctor = new ChatServicePatientNurseDoctor(fastify);
   const chatService = new ChatService(fastify);
   const chatServicePatientNurse = new ChatServicePatientNurse(fastify);
