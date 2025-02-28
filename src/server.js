@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import websocket from '@fastify/websocket';
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -12,7 +13,7 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
-import { websocketRoutes } from "./routes/websocket-routes.js";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -61,7 +62,7 @@ async function buildApp() {
       expiresIn: "20d",
     },
   });
-
+  await fastify.register(websocket);
   // Auth middleware
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
   fastify.addHook("onRequest", createNotificationMiddleware(fastify));
@@ -74,7 +75,27 @@ async function buildApp() {
       }
     });
   });
-fastify.register(websocketRoutes);
+// fastify.register(websocketRoutes);
+
+
+fastify.get('/ws', { websocket: true }, (connection, req) => {
+  // Listen for messages from the client
+  connection.on('message', (data) => {
+    try {
+      // Broadcast the message to all connected clients
+      fastify.websocketServer.clients.forEach((client) => {
+        if (client.readyState === 1) { // 1 means OPEN
+          client.send(data);
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  });
+});
+
+
+
 console.log('WebSocket routes registered')
   // Register routes
   const apiPrefix = "/api";

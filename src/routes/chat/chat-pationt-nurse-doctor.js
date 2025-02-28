@@ -3,10 +3,9 @@ import { checkRole } from "../../middleware/auth.middleware.js";
 
 export async function chatPatientNurseDoctorRoutes(fastify, options) {
   const chatService = new ChatServicePatientNurseDoctor(fastify.io);
-
+  
   // Create or get chat room between patient, nurse, and doctor
   fastify.post("/room", {
-    websocket: true,
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
       body: {
@@ -25,7 +24,6 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
             .code(403)
             .send({ error: "Only patients can initiate chats" });
         }
-
         if (!request.user.patient?.id) {
           return reply.code(400).send({ error: "Patient data not found" });
         }
@@ -34,7 +32,6 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
           request.body.nurseId,
           request.body.doctorId
         );
-
         return room;
       } catch (error) {
         console.error("Error creating/getting room:", error);
@@ -42,9 +39,9 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
+  
   // Get user's chat rooms (patient, nurse, or doctor)
   fastify.get("/rooms", {
-    websocket: true,
     onRequest: [fastify.authenticate, checkRole(["PATIENT", "NURSE"])],
     handler: async (request, reply) => {
       try {
@@ -59,9 +56,9 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
+  
   // Send message in a room
   fastify.post("/room/:roomId/message", {
-    websocket: true,
     onRequest: [fastify.authenticate],
     schema: {
       body: {
@@ -87,9 +84,9 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
+  
   // Get room messages
   fastify.get("/room/:roomId/messages", {
-    websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -104,9 +101,9 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
       }
     },
   });
+  
   // Mark messages as read in a room
   fastify.post("/room/:roomId/messages/read", {
-    websocket: true,
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       try {
@@ -120,5 +117,118 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
         reply.code(500).send({ error: error.message });
       }
     },
+  });
+  
+  // WebSocket route for patient-nurse-doctor chats
+  fastify.get("/ws", {
+    websocket: true
+  }, (connection, req) => {
+    // Parse token from URL or headers
+    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+    
+    if (!token) {
+      connection.socket.send(JSON.stringify({ 
+        error: 'Authentication required' 
+      }));
+      connection.socket.close();
+      return;
+    }
+    
+    // Verify token and get user
+    try {
+      const decoded = fastify.jwt.verify(token);
+      const userId = decoded.id;
+      const userRole = decoded.role;
+      
+      console.log(`Patient-Nurse-Doctor WebSocket connected: User ${userId} (${userRole})`);
+      
+      // Handle incoming messages
+      connection.socket.on('message', async (message) => {
+        try {
+          const data = JSON.parse(message.toString());
+          
+          // Handle different message types
+          switch(data.type) {
+            case 'join-room':
+              // Join a specific chat room
+              console.log(`User ${userId} joined room ${data.roomId}`);
+              // Your room joining logic here
+              
+              // Send back room messages
+              if (data.roomId) {
+                const messages = await chatService.getRoomMessages(data.roomId, userId);
+                connection.socket.send(JSON.stringify({
+                  event: 'room-messages',
+                  roomId: data.roomId,
+                  messages: messages
+                }));
+              }
+              break;
+              
+            case 'send-message':
+              // Handle sending a new message
+              if (data.roomId && data.content) {
+                const message = await chatService.sendMessage(
+                  data.roomId,
+                  userId,
+                  userRole,
+                  data.content
+                );
+                
+                // Confirm to sender
+                connection.socket.send(JSON.stringify({
+                  event: 'message-sent',
+                  message: message
+                }));
+              }
+              break;
+              
+            case 'mark-read':
+              // Mark messages as read
+              if (data.roomId) {
+                await chatService.markMessagesAsRead(data.roomId, userId);
+                
+                connection.socket.send(JSON.stringify({
+                  event: 'messages-read-confirmation',
+                  roomId: data.roomId
+                }));
+              }
+              break;
+              
+            case 'list-rooms':
+              // Get user's rooms
+              const rooms = await chatService.getUserRooms(userId, userRole);
+              connection.socket.send(JSON.stringify({
+                event: 'rooms-list',
+                rooms: rooms
+              }));
+              break;
+              
+            default:
+              connection.socket.send(JSON.stringify({
+                error: 'Unknown message type'
+              }));
+          }
+        } catch (err) {
+          console.error('WebSocket message error:', err);
+          connection.socket.send(JSON.stringify({
+            error: 'Error processing message: ' + err.message
+          }));
+        }
+      });
+      
+      // Handle disconnection
+      connection.socket.on('close', () => {
+        console.log(`WebSocket disconnected: User ${userId}`);
+        // Clean up any resources
+      });
+      
+    } catch (err) {
+      console.error('WebSocket authentication error:', err);
+      connection.socket.send(JSON.stringify({ 
+        error: 'Invalid authentication' 
+      }));
+      connection.socket.close();
+    }
   });
 }
