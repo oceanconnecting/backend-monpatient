@@ -18,13 +18,13 @@ export class AuthService {
     return bcryptjs.compare(password, hash)
   }
   static async formatUserResponse(user) {
-    const { password: _, ...userBase } = user
-    const roleData = user[user.role.toLowerCase()]
-    
+    const { password, ...userBase } = user; // Exclude 'password' without assigning it
+    const roleData = user[user.role.toLowerCase()];
+  
     return {
       ...userBase,
       profile: roleData
-    }
+    };
   }
   static validateUserInput(userData) {
     // Required fields validation

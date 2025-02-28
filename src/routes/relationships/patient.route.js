@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import { checkRole } from "../../middleware/auth.middleware.js";
 import { PatientService } from "../../services/users/patients.service.js";
 

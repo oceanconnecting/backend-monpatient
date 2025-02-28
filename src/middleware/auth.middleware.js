@@ -64,8 +64,7 @@ export function checkRole(roles) {
     }
 
     if (!roles.includes(request.user.role)) {
-      reply.code(403).send({ error: 'Forbidden' })
-      return
+      reply.code(403).send({ error: 'Forbidden' });
     }
   }
 }

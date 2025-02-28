@@ -2,7 +2,6 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient()
 
 export class DoctorNurseService {
-    constructor() {}
   
     static async getNurses(doctorId) {
       return await prisma.doctorNurse.findMany({
