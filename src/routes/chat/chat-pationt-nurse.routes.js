@@ -20,6 +20,27 @@ export async function chatPatientNurseRoutes(fastify, options) {
     }
   };
 
+  // Common handler for chat operations
+  const handleChatOperation = async (operation, request, reply) => {
+    try {
+      if (operation === "createOrGetRoom") {
+        validatePatientData(request);
+        return await chatService[operation](request.user.patient.id, request.body.nurseId);
+      } else if (operation === "getUserRooms") {
+        return await chatService[operation](request.user.id, request.user.role);
+      } else if (operation === "sendMessage") {
+        return await chatService[operation](request.params.roomId, request.user.id, request.user.role, request.body.content);
+      } else if (operation === "getRoomMessages") {
+        return await chatService[operation](request.params.roomId, request.user.id);
+      } else if (operation === "markMessagesAsRead") {
+        await chatService[operation](request.params.roomId, request.user.id);
+        return { success: true };
+      }
+    } catch (error) {
+      handleError(reply, error);
+    }
+  };
+
   // Create or get chat room between patient and nurse
   fastify.post("/room", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
@@ -28,40 +49,17 @@ export async function chatPatientNurseRoutes(fastify, options) {
         type: "object",
         required: ["nurseId"],
         properties: {
-          nurseId: { type: "string" }, // Nurse ID to start a chat with
+          nurseId: { type: "string" },
         },
       },
     },
-    handler: async (request, reply) => {
-      try {
-        validatePatientData(request);
-
-        const room = await chatService.createOrGetRoom(
-          request.user.patient.id, // Patient ID
-          request.body.nurseId // Nurse ID
-        );
-
-        return room;
-      } catch (error) {
-        handleError(reply, error);
-      }
-    },
+    handler: async (request, reply) => handleChatOperation("createOrGetRoom", request, reply),
   });
 
   // Get user's chat rooms (patient or nurse)
   fastify.get("/rooms", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT", "NURSE"])],
-    handler: async (request, reply) => {
-      try {
-        const rooms = await chatService.getUserRooms(
-          request.user.id, // User ID
-          request.user.role // User role (PATIENT or NURSE)
-        );
-        return rooms;
-      } catch (error) {
-        handleError(reply, error);
-      }
-    },
+    handler: async (request, reply) => handleChatOperation("getUserRooms", request, reply),
   });
 
   // Send message in a room
@@ -76,50 +74,18 @@ export async function chatPatientNurseRoutes(fastify, options) {
         },
       },
     },
-    handler: async (request, reply) => {
-      try {
-        const message = await chatService.sendMessage(
-          request.params.roomId,
-          request.user.id,
-          request.user.role,
-          request.body.content
-        );
-        return message;
-      } catch (error) {
-        handleError(reply, error);
-      }
-    },
+    handler: async (request, reply) => handleChatOperation("sendMessage", request, reply),
   });
 
   // Get room messages
   fastify.get("/room/:roomId/messages", {
     onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
-      try {
-        const messages = await chatService.getRoomMessages(
-          request.params.roomId, // Room ID
-          request.user.id // User ID (to verify access)
-        );
-        return messages;
-      } catch (error) {
-        handleError(reply, error);
-      }
-    },
+    handler: async (request, reply) => handleChatOperation("getRoomMessages", request, reply),
   });
 
   // Mark messages as read in a room
   fastify.post("/room/:roomId/messages/read", {
     onRequest: [fastify.authenticate],
-    handler: async (request, reply) => {
-      try {
-        await chatService.markMessagesAsRead(
-          request.params.roomId, // Room ID
-          request.user.id // User ID (to mark messages as read)
-        );
-        return { success: true };
-      } catch (error) {
-        handleError(reply, error);
-      }
-    },
+    handler: async (request, reply) => handleChatOperation("markMessagesAsRead", request, reply),
   });
 }
