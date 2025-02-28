@@ -47,7 +47,6 @@ export class ChatService {
           const data = JSON.parse(message.toString());
           await await connection.close();
           connection, data;
-          connection, data;
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(

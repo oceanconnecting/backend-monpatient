@@ -5,12 +5,6 @@ export class ChatServicePatientNurse {
     this.fastify = fastify;
     this.prisma = new PrismaClient();
     this.connectedUsers = new Map();
-
-    // this.fastify.register(require('@fastify/websocket'));
-
-    // this.fastify.get('/ws/patient-nurse', { websocket: true }, (connection, req) => {
-    //   this.handleConnection(connection, req);
-    // });
   }
 
   async handleConnection(connection, req) {
@@ -49,7 +43,7 @@ export class ChatServicePatientNurse {
         try {
           const data = JSON.parse(message.toString());
           await connection.close();
-(connection, data); 
+          connection, data; 
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(

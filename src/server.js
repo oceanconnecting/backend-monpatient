@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import jwt from "@fastify/jwt";
-import websocket from '@fastify/websocket';
+import websocket from "@fastify/websocket";
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
