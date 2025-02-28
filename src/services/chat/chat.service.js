@@ -5,20 +5,51 @@ export class ChatService {
     this.fastify = fastify;
     this.prisma = new PrismaClient();
     this.connectedUsers = new Map();
-
-    // Initialize WebSocket handling if fastify is provided
-    // if (fastify) {
-    //   this.setupWebSocketHandlers()
-    // }
   }
+
+  // Helper method to send JSON messages
+  sendJson(connection, data) {
+    connection.send(JSON.stringify(data));
+  }
+
+  // Helper method to handle errors
+  handleError(connection, message) {
+    this.sendJson(connection, { event: "error", message });
+  }
+
+  // Helper method to validate room access
+  async validateRoomAccess(userId, roomId) {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        patient: { include: { user: true } },
+        doctor: { include: { user: true } },
+      },
+    });
+
+    if (!room) throw new Error("Room not found");
+    if (room.patient.user.id !== userId && room.doctor.user.id !== userId) {
+      throw new Error("User not authorized to access this room");
+    }
+    return room;
+  }
+
+  // Helper method to broadcast messages
+  broadcast(clients, data, excludeUserId = null) {
+    clients.forEach((connection, userId) => {
+      if (excludeUserId && userId === excludeUserId) return;
+      if (connection.socket.readyState === connection.socket.OPEN) {
+        this.sendJson(connection.socket, data);
+      }
+    });
+  }
+
   async handleConnection(connection, req) {
     try {
       // Extract token from query parameter
       const token = req.query.token;
       if (!token) {
-        connection.send(
-          JSON.stringify({ type: "error", message: "No token provided" })
-        );
+        this.handleError(connection, "No token provided");
         connection.close();
         return;
       }
@@ -34,35 +65,21 @@ export class ChatService {
       this.connectedUsers.set(userId, connection);
 
       // Send confirmation
-      connection.send(
-        JSON.stringify({
-          type: "connected",
-          userId,
-        })
-      );
+      this.sendJson(connection, { type: "connected", userId });
 
       // Handle messages
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await connection.close(); // Only one 'await' is needed
-          // Do something with `data` and `connection` here
-          // For example, send a response back to the client
-          connection.send(
-            JSON.stringify({
-              type: "success",
-              message: "Message processed successfully",
-              data: data, // Include the parsed data in the response
-            })
-          );
+          await connection.close();
+          this.sendJson(connection, {
+            type: "success",
+            message: "Message processed successfully",
+            data,
+          });
         } catch (error) {
           console.error("Error handling message:", error);
-          connection.send(
-            JSON.stringify({
-              type: "error",
-              message: "Failed to process message",
-            })
-          );
+          this.handleError(connection, "Failed to process message");
         }
       });
 
@@ -73,51 +90,35 @@ export class ChatService {
       });
     } catch (error) {
       console.error("Authentication error:", error);
-      connection.send(
-        JSON.stringify({ type: "error", message: "Authentication failed" })
-      );
+      this.handleError(connection, "Authentication failed");
       connection.close();
     }
   }
-  getAllConnectedClients() {
-    if (!this.fastify?.websocketServer) {
-      throw new Error("WebSocket server not initialized");
-    }
-    return this.fastify.websocketServer.clients;
-  }
+
   async handleJoinRoom(connection, roomId) {
     const userId = connection.user.id;
     console.log(`User ${userId} joining room ${roomId}`);
 
-    const canJoin = await this.canUserJoinRoom(userId, roomId);
-    if (canJoin) {
+    try {
+      await this.validateRoomAccess(userId, roomId);
+
       // Store room information with the connection
       if (!connection.rooms) connection.rooms = new Set();
       connection.rooms.add(`room:${roomId}`);
 
       console.log(`User ${userId} joined room ${roomId}`);
-      connection.socket.send(
-        JSON.stringify({
-          event: "room-joined",
-          roomId: roomId,
-        })
-      );
-    } else {
-      connection.socket.send(
-        JSON.stringify({
-          event: "error",
-          message: "Cannot join room: not authorized",
-        })
-      );
+      this.sendJson(connection.socket, {
+        event: "room-joined",
+        roomId: roomId,
+      });
+    } catch (error) {
+      this.handleError(connection.socket, "Cannot join room: not authorized");
     }
   }
 
   async handleSendMessage(connection, data) {
     const userId = connection.user.id;
-    console.log(
-      `New message from ${userId} in room ${data.roomId}:`,
-      data.content
-    );
+    console.log(`New message from ${userId} in room ${data.roomId}:`, data.content);
 
     try {
       const message = await this.sendMessage(
@@ -134,12 +135,7 @@ export class ChatService {
       });
     } catch (error) {
       console.error("Error sending message:", error);
-      connection.socket.send(
-        JSON.stringify({
-          event: "error",
-          message: "Failed to send message: " + error.message,
-        })
-      );
+      this.handleError(connection.socket, "Failed to send message: " + error.message);
     }
   }
 
@@ -171,43 +167,29 @@ export class ChatService {
         roomId: roomId,
       });
     } catch (error) {
-      connection.socket.send(
-        JSON.stringify({
-          event: "error",
-          message: error.message,
-        })
-      );
+      this.handleError(connection.socket, error.message);
     }
   }
 
-  // Broadcast a message to all users in a room
   broadcastToRoom(roomId, data, excludeUserId = null) {
     const roomKey = `room:${roomId}`;
+    const clients = Array.from(this.connectedUsers).filter(([_, connection]) =>
+      connection.rooms?.has(roomKey)
+    );
+    this.broadcast(clients, data, excludeUserId);
+  }
 
-    this.connectedUsers.forEach((connection, userId) => {
-      if (excludeUserId && userId === excludeUserId) return;
-      if (connection.rooms?.has(roomKey)) {
-        connection.socket.send(JSON.stringify(data));
-      }
-    });
+  broadcastToAllClients(data) {
+    this.broadcast(Array.from(this.connectedUsers), data);
   }
 
   async canUserJoinRoom(userId, roomId) {
-    const room = await this.prisma.chatRoom.findUnique({
-      where: { id: roomId },
-      include: {
-        patient: {
-          include: { user: true },
-        },
-        doctor: {
-          include: { user: true },
-        },
-      },
-    });
-
-    if (!room) return false;
-
-    return room.patient.user.id === userId || room.doctor.user.id === userId;
+    try {
+      await this.validateRoomAccess(userId, roomId);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async createOrGetRoom(patientId, participantId, participantRole) {
@@ -269,16 +251,7 @@ export class ChatService {
       throw new Error(`Sender is not a ${senderRole}`);
     }
 
-    const room = await this.prisma.chatRoom.findFirst({
-      where: {
-        id: roomId,
-        OR: [{ patientId: profileId }, { doctorId: profileId }],
-      },
-    });
-
-    if (!room) {
-      throw new Error("Chat room not found or user not authorized");
-    }
+    const room = await this.validateRoomAccess(senderId, roomId);
 
     const message = await this.prisma.message.create({
       data: {
@@ -315,35 +288,7 @@ export class ChatService {
   }
 
   async getRoomMessages(roomId, userId) {
-    // Get the user's profile
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        patient: true,
-        doctor: true,
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const profileId = user.patient?.id || user.doctor?.id;
-    if (!profileId) {
-      throw new Error("User profile not found");
-    }
-
-    // Check if user has access to the room
-    const room = await this.prisma.chatRoom.findFirst({
-      where: {
-        id: roomId,
-        OR: [{ patientId: profileId }, { doctorId: profileId }],
-      },
-    });
-
-    if (!room) {
-      throw new Error("Chat room not found or user not authorized");
-    }
+    await this.validateRoomAccess(userId, roomId);
 
     // Get messages
     const messages = await this.prisma.message.findMany({
@@ -412,14 +357,6 @@ export class ChatService {
           },
         },
       },
-    });
-  }
-  broadcastToAllClients(data) {
-    const clients = this.getAllConnectedClients();
-    clients.forEach((client) => {
-      if (client.readyState === client.OPEN) {
-        client.send(JSON.stringify(data));
-      }
     });
   }
 }

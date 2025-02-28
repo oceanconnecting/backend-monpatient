@@ -7,62 +7,67 @@ export class ChatServicePatientNurse {
     this.connectedUsers = new Map();
   }
 
+  // Helper method to send JSON messages
+  sendJson(connection, data) {
+    connection.send(JSON.stringify(data));
+  }
+
+  // Helper method to handle errors
+  handleError(connection, message) {
+    this.sendJson(connection, { type: "error", message });
+    connection.close();
+  }
+
+  // Helper method to parse incoming messages
+  parseMessage(message) {
+    try {
+      return JSON.parse(message.toString());
+    } catch (error) {
+      throw new Error("Invalid message format");
+    }
+  }
+
   async handleConnection(connection, req) {
     try {
       // Extract token from query parameter
       const token = req.query.token;
       if (!token) {
-        connection.send(
-          JSON.stringify({ type: "error", message: "No token provided" })
-        );
-        connection.close();
+        this.handleError(connection, "No token provided");
         return;
       }
-  
+
       // Verify token
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
-  
-      console.log("New client connected:", decoded.email);
 
-  
+      console.log("New client connected:", decoded.email,decoded.role);
+
       // Store user connection
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
-  
+
       // Send confirmation
-      connection.send(
-        JSON.stringify({
-          type: "connected",
-          userId,
-        })
-      );
-  
+      this.sendJson(connection, { type: "connected", userId });
+
       // Handle messages
       connection.on("message", async (message) => {
         try {
-          const data = JSON.parse(message.toString());
-          await connection.close(); // Only one 'await' is needed
-          // Do something with `data` and `connection` here
-          // For example, send a response back to the client
-          connection.send(
-            JSON.stringify({
-              type: "success",
-              message: "Message processed successfully",
-              data: data, // Include the parsed data in the response
-            })
-          );
+          const data = this.parseMessage(message);
+          await connection.close();
+          this.sendJson(connection, {
+            type: "success",
+            message: "Message processed successfully",
+            data,
+          });
         } catch (error) {
           console.error("Error handling message:", error);
-          connection.send(
-            JSON.stringify({
-              type: "error",
-              message: "Failed to process message",
-            })
-          );
+          this.sendJson(connection, {
+            type: "error",
+            message: "Failed to process message",
+          });
         }
       });
-  
+
       // Handle disconnection
       connection.on("close", () => {
         console.log("Client disconnected:", decoded.email);
@@ -70,13 +75,10 @@ export class ChatServicePatientNurse {
       });
     } catch (error) {
       console.error("Authentication error:", error);
-      connection.send(
-        JSON.stringify({ type: "error", message: "Authentication failed" })
-      );
-      connection.close();
+      this.handleError(connection, "Authentication failed");
     }
   }
-  
+
   async joinRoom(connection, roomId) {
     const userId = connection.user.id;
     const canJoin = await this.canUserJoinRoom(userId, roomId);
@@ -131,8 +133,11 @@ export class ChatServicePatientNurse {
   }
 
   broadcastToRoom(roomId, event, data) {
+    const message = JSON.stringify({ event, data });
     this.connectedUsers.forEach((connection) => {
-      connection.socket.send(JSON.stringify({ event, data }));
+      if (connection.socket.readyState === 1) {
+        connection.socket.send(message);
+      }
     });
   }
 }
