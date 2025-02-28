@@ -87,7 +87,6 @@ export class ChatService {
 
   // Helper method to handle incoming messages
   async handleMessage(connection, data) {
-    const userId = connection.user.id;
 
     switch (data.type) {
       case "join-room":
