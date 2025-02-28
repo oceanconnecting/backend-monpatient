@@ -149,8 +149,8 @@ export async function chatRoutes(fastify, options) {
       const decoded = fastify.jwt.verify(token);
       const userId = decoded.id;
       
-      // Store client connection with user info
-      const clientInfo = { userId, connection };
+  
+
       
       console.log(`WebSocket connected: User ${userId}`);
       

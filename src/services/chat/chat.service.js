@@ -186,7 +186,7 @@ export class ChatService {
 
     this.connectedUsers.forEach((connection, userId) => {
       if (excludeUserId && userId === excludeUserId) return;
-      if (connection.rooms && connection.rooms.has(roomKey)) {
+      if (connection.rooms?.has(roomKey)) {
         connection.socket.send(JSON.stringify(data));
       }
     });

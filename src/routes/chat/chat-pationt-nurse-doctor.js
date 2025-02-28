@@ -195,14 +195,15 @@ export async function chatPatientNurseDoctorRoutes(fastify, options) {
               }
               break;
               
-            case 'list-rooms':
-              // Get user's rooms
-              const rooms = await chatService.getUserRooms(userId, userRole);
-              connection.socket.send(JSON.stringify({
-                event: 'rooms-list',
-                rooms: rooms
-              }));
-              break;
+              case 'list-rooms': {
+                // Get user's rooms
+                const rooms = await chatService.getUserRooms(userId, userRole);
+                connection.socket.send(JSON.stringify({
+                  event: 'rooms-list',
+                  rooms: rooms
+                }));
+                break;
+              }
               
             default:
               connection.socket.send(JSON.stringify({

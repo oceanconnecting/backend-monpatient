@@ -82,7 +82,7 @@ fastify.addHook("onRequest", (request, reply, done) => {
       }
     });
   });
-// fastify.register(websocketRoutes);
+
 
 
 fastify.get('/ws', { websocket: true }, (connection, req) => {
