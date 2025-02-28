@@ -46,7 +46,14 @@ async function buildApp() {
     preflightContinue: false,
     optionsSuccessStatus: 204
   });
-
+ // In your buildApp() function, modify the onRequest hook:
+fastify.addHook("onRequest", (request, reply, done) => {
+  reply.header(
+    "Content-Security-Policy",
+    "connect-src 'self' http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000;"
+  );
+  done();
+});
   // Register WebSocket plugin
   // await fastify.register(fastifyWebsocket, {
   //   options: {

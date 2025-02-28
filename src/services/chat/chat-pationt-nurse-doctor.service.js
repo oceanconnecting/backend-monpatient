@@ -19,17 +19,17 @@ export class ChatServicePatientNurseDoctor {
         connection.close(); // Use connection.close() directly
         return;
       }
-  
+
       // Verify token
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
-  
+
       console.log("New client connected:", decoded.email);
-  
+
       // Store user connection
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
-  
+
       // Send confirmation
       connection.send(
         JSON.stringify({
@@ -37,12 +37,14 @@ export class ChatServicePatientNurseDoctor {
           userId,
         })
       );
-  
+
       // Handle messages
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await this.handleMessage(connection, data);
+          await await connection.close();
+          connection, data;
+          connection, data;
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(
@@ -53,7 +55,7 @@ export class ChatServicePatientNurseDoctor {
           );
         }
       });
-  
+
       // Handle disconnection
       connection.on("close", () => {
         console.log("Client disconnected:", decoded.email);

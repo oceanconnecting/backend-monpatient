@@ -1,223 +1,188 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
 export class ChatService {
   constructor(fastify) {
-    this.fastify = fastify
-    this.prisma = new PrismaClient()
-    this.connectedUsers = new Map()
-    
+    this.fastify = fastify;
+    this.prisma = new PrismaClient();
+    this.connectedUsers = new Map();
+
     // Initialize WebSocket handling if fastify is provided
     // if (fastify) {
     //   this.setupWebSocketHandlers()
     // }
   }
-  handleConnection(connection, req) {
-    // Listen for messages using connection.on (not connection.socket.on)
-    connection.on("message", (message) => {
-      console.log("Received:", message);
-      connection.send("Message received"); // Use connection.send instead of connection.socket.send
-    });
-  
-    // Handle connection close
-    connection.on("close", () => {
-      console.log("Connection closed");
-    });
-  
-    // Handle errors
-    connection.on("error", (error) => {
-      console.error("WebSocket error:", error);
-    });
+  async handleConnection(connection, req) {
+    try {
+      // Extract token from query parameter
+      const token = req.query.token;
+      if (!token) {
+        connection.send(
+          JSON.stringify({ type: "error", message: "No token provided" })
+        );
+        connection.close();
+        return;
+      }
+
+      // Verify token
+      const decoded = this.fastify.jwt.verify(token);
+      const userId = decoded.id;
+
+      console.log("New client connected:", decoded.email,decoded.role);
+
+      // Store user connection
+      connection.user = decoded;
+      this.connectedUsers.set(userId, connection);
+
+      // Send confirmation
+      connection.send(
+        JSON.stringify({
+          type: "connected",
+          userId,
+        })
+      );
+
+      // Handle messages
+      connection.on("message", async (message) => {
+        try {
+          const data = JSON.parse(message.toString());
+          await await connection.close();
+          connection, data;
+          connection, data;
+        } catch (error) {
+          console.error("Error handling message:", error);
+          connection.send(
+            JSON.stringify({
+              type: "error",
+              message: "Failed to process message",
+            })
+          );
+        }
+      });
+
+      // Handle disconnection
+      connection.on("close", () => {
+        console.log("Client disconnected:", decoded.email);
+        this.connectedUsers.delete(userId);
+      });
+    } catch (error) {
+      console.error("Authentication error:", error);
+      connection.send(
+        JSON.stringify({ type: "error", message: "Authentication failed" })
+      );
+      connection.close();
+    }
   }
-  // setupWebSocketHandlers() {
-  //   // Store a reference to this for use in callback functions
-  //   const self = this
-    
-  //   // Define the WebSocket route with authentication
-  //   this.fastify.get('/ws/chat', { websocket: true }, async function wsHandler(connection, request) {
-  //     try {
-  //       // Extract token from query parameters
-  //       const token = request.query.token
-  //       if (!token) {
-  //         connection.socket.send(JSON.stringify({
-  //           event: 'error',
-  //           message: 'No authentication token provided'
-  //         }))
-  //         connection.socket.close()
-  //         return
-  //       }
-        
-  //       // Verify token
-  //       let user
-  //       try {
-  //         user = self.fastify.jwt.verify(token)
-  //       } catch (error) {
-  //         connection.socket.send(JSON.stringify({
-  //           event: 'error',
-  //           message: 'Invalid authentication token'
-  //         }))
-  //         connection.socket.close()
-  //         return
-  //       }
-        
-  //       // Store user info with connection
-  //       const userId = user.id
-  //       connection.user = user
-  //       self.connectedUsers.set(userId, connection)
-        
-  //       console.log('New client connected:', user.email)
-        
-  //       // Handle messages from client
-  //       connection.socket.on('message', async (rawMessage) => {
-  //         try {
-  //           const message = JSON.parse(rawMessage.toString())
-            
-  //           // Handle different message types
-  //           switch (message.event) {
-  //             case 'join-room':
-  //               await self.handleJoinRoom(connection, message.roomId)
-  //               break
-                
-  //             case 'send-message':
-  //               await self.handleSendMessage(connection, message.data)
-  //               break
-                
-  //             case 'typing':
-  //               self.handleTyping(connection, message.roomId)
-  //               break
-                
-  //             case 'mark-read':
-  //               await self.handleMarkRead(connection, message.roomId)
-  //               break
-                
-  //             default:
-  //               connection.socket.send(JSON.stringify({
-  //                 event: 'error',
-  //                 message: 'Unknown event type'
-  //               }))
-  //           }
-  //         } catch (error) {
-  //           console.error('Error processing message:', error)
-  //           connection.socket.send(JSON.stringify({
-  //             event: 'error',
-  //             message: 'Error processing message'
-  //           }))
-  //         }
-  //       })
-        
-  //       // Handle disconnection
-  //       connection.socket.on('close', () => {
-  //         console.log('Client disconnected:', user.email)
-  //         self.connectedUsers.delete(userId)
-  //       })
-        
-  //       // Send confirmation of successful connection
-  //       connection.socket.send(JSON.stringify({
-  //         event: 'connected',
-  //         userId: userId
-  //       }))
-        
-  //     } catch (error) {
-  //       console.error('WebSocket error:', error)
-  //       connection.socket.close()
-  //     }
-  //   })
-  // }
   getAllConnectedClients() {
     if (!this.fastify || !this.fastify.websocketServer) {
-      throw new Error('WebSocket server not initialized')
+      throw new Error("WebSocket server not initialized");
     }
-    return this.fastify.websocketServer.clients
+    return this.fastify.websocketServer.clients;
   }
   async handleJoinRoom(connection, roomId) {
-    const userId = connection.user.id
-    console.log(`User ${userId} joining room ${roomId}`)
-    
-    const canJoin = await this.canUserJoinRoom(userId, roomId)
+    const userId = connection.user.id;
+    console.log(`User ${userId} joining room ${roomId}`);
+
+    const canJoin = await this.canUserJoinRoom(userId, roomId);
     if (canJoin) {
       // Store room information with the connection
-      if (!connection.rooms) connection.rooms = new Set()
-      connection.rooms.add(`room:${roomId}`)
-      
-      console.log(`User ${userId} joined room ${roomId}`)
-      connection.socket.send(JSON.stringify({
-        event: 'room-joined',
-        roomId: roomId
-      }))
+      if (!connection.rooms) connection.rooms = new Set();
+      connection.rooms.add(`room:${roomId}`);
+
+      console.log(`User ${userId} joined room ${roomId}`);
+      connection.socket.send(
+        JSON.stringify({
+          event: "room-joined",
+          roomId: roomId,
+        })
+      );
     } else {
-      connection.socket.send(JSON.stringify({
-        event: 'error',
-        message: 'Cannot join room: not authorized'
-      }))
+      connection.socket.send(
+        JSON.stringify({
+          event: "error",
+          message: "Cannot join room: not authorized",
+        })
+      );
     }
   }
-  
+
   async handleSendMessage(connection, data) {
-    const userId = connection.user.id
-    console.log(`New message from ${userId} in room ${data.roomId}:`, data.content)
-    
+    const userId = connection.user.id;
+    console.log(
+      `New message from ${userId} in room ${data.roomId}:`,
+      data.content
+    );
+
     try {
       const message = await this.sendMessage(
         data.roomId,
         userId,
         connection.user.role,
         data.content
-      )
-      
+      );
+
       // Broadcast to all users in the room
       this.broadcastToRoom(data.roomId, {
-        event: 'new-message',
-        message: message
-      })
+        event: "new-message",
+        message: message,
+      });
     } catch (error) {
-      console.error('Error sending message:', error)
-      connection.socket.send(JSON.stringify({
-        event: 'error',
-        message: 'Failed to send message: ' + error.message
-      }))
+      console.error("Error sending message:", error);
+      connection.socket.send(
+        JSON.stringify({
+          event: "error",
+          message: "Failed to send message: " + error.message,
+        })
+      );
     }
   }
-  
+
   handleTyping(connection, roomId) {
-    const userId = connection.user.id
-    
+    const userId = connection.user.id;
+
     // Broadcast typing status to other users in the room
-    this.broadcastToRoom(roomId, {
-      event: 'user-typing',
-      userId: userId,
-      roomId: roomId
-    }, userId) // Exclude the sender
+    this.broadcastToRoom(
+      roomId,
+      {
+        event: "user-typing",
+        userId: userId,
+        roomId: roomId,
+      },
+      userId
+    ); // Exclude the sender
   }
-  
+
   async handleMarkRead(connection, roomId) {
-    const userId = connection.user.id
-    
+    const userId = connection.user.id;
+
     try {
-      await this.markMessagesAsRead(roomId, userId)
-      
+      await this.markMessagesAsRead(roomId, userId);
+
       // Broadcast read status to all users in the room
       this.broadcastToRoom(roomId, {
-        event: 'messages-read',
+        event: "messages-read",
         userId: userId,
-        roomId: roomId
-      })
+        roomId: roomId,
+      });
     } catch (error) {
-      connection.socket.send(JSON.stringify({
-        event: 'error',
-        message: error.message
-      }))
+      connection.socket.send(
+        JSON.stringify({
+          event: "error",
+          message: error.message,
+        })
+      );
     }
   }
-  
+
   // Broadcast a message to all users in a room
   broadcastToRoom(roomId, data, excludeUserId = null) {
-    const roomKey = `room:${roomId}`
-    
+    const roomKey = `room:${roomId}`;
+
     this.connectedUsers.forEach((connection, userId) => {
-      if (excludeUserId && userId === excludeUserId) return
+      if (excludeUserId && userId === excludeUserId) return;
       if (connection.rooms && connection.rooms.has(roomKey)) {
-        connection.socket.send(JSON.stringify(data))
+        connection.socket.send(JSON.stringify(data));
       }
-    })
+    });
   }
 
   async canUserJoinRoom(userId, roomId) {
@@ -225,17 +190,17 @@ export class ChatService {
       where: { id: roomId },
       include: {
         patient: {
-          include: { user: true }
+          include: { user: true },
         },
         doctor: {
-          include: { user: true }
-        }
-      }
-    })
+          include: { user: true },
+        },
+      },
+    });
 
-    if (!room) return false
+    if (!room) return false;
 
-    return room.patient.user.id === userId || room.doctor.user.id === userId
+    return room.patient.user.id === userId || room.doctor.user.id === userId;
   }
 
   async createOrGetRoom(patientId, participantId, participantRole) {
@@ -243,12 +208,12 @@ export class ChatService {
     const participant = await this.prisma.user.findUnique({
       where: { id: participantId },
       include: {
-        doctor: participantRole === 'DOCTOR' ? true : false
-      }
+        doctor: participantRole === "DOCTOR" ? true : false,
+      },
     });
 
     if (!participant) {
-      throw new Error('Participant not found');
+      throw new Error("Participant not found");
     }
 
     const profileId = participant.doctor?.id;
@@ -258,23 +223,23 @@ export class ChatService {
 
     const where = {
       patientId: patientId,
-      doctorId: profileId
-    }
-    let room = await this.prisma.chatRoom.findFirst({ where })
+      doctorId: profileId,
+    };
+    let room = await this.prisma.chatRoom.findFirst({ where });
 
     if (!room) {
       room = await this.prisma.chatRoom.create({
         data: {
           ...where,
-          status: 'ACTIVE'
+          status: "ACTIVE",
         },
         include: {
           patient: true,
-          doctor: true
-        }
-      })
+          doctor: true,
+        },
+      });
     }
-    return room
+    return room;
   }
 
   async sendMessage(roomId, senderId, senderRole, content) {
@@ -283,15 +248,16 @@ export class ChatService {
       where: { id: senderId },
       include: {
         patient: true,
-        doctor: true
-      }
+        doctor: true,
+      },
     });
 
     if (!sender) {
-      throw new Error('Sender not found');
+      throw new Error("Sender not found");
     }
 
-    const profileId = senderRole === 'PATIENT' ? sender.patient?.id : sender.doctor?.id;
+    const profileId =
+      senderRole === "PATIENT" ? sender.patient?.id : sender.doctor?.id;
     if (!profileId) {
       throw new Error(`Sender is not a ${senderRole}`);
     }
@@ -299,15 +265,12 @@ export class ChatService {
     const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: roomId,
-        OR: [
-          { patientId: profileId },
-          { doctorId: profileId }
-        ]
-      }
-    })
+        OR: [{ patientId: profileId }, { doctorId: profileId }],
+      },
+    });
 
     if (!room) {
-      throw new Error('Chat room not found or user not authorized')
+      throw new Error("Chat room not found or user not authorized");
     }
 
     const message = await this.prisma.message.create({
@@ -318,16 +281,16 @@ export class ChatService {
         senderId: senderId,
         chatRoom: {
           connect: {
-            id: roomId
-          }
-        }
+            id: roomId,
+          },
+        },
       },
       include: {
-        chatRoom: true
-      }
-    })
+        chatRoom: true,
+      },
+    });
 
-    return message
+    return message;
   }
 
   async markMessagesAsRead(roomId, userId) {
@@ -339,9 +302,9 @@ export class ChatService {
       },
       data: {
         isRead: true,
-        readAt: new Date()
-      }
-    })
+        readAt: new Date(),
+      },
+    });
   }
 
   async getRoomMessages(roomId, userId) {
@@ -350,42 +313,39 @@ export class ChatService {
       where: { id: userId },
       include: {
         patient: true,
-        doctor: true
-      }
+        doctor: true,
+      },
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     const profileId = user.patient?.id || user.doctor?.id;
     if (!profileId) {
-      throw new Error('User profile not found');
+      throw new Error("User profile not found");
     }
 
     // Check if user has access to the room
     const room = await this.prisma.chatRoom.findFirst({
       where: {
         id: roomId,
-        OR: [
-          { patientId: profileId },
-          { doctorId: profileId }
-        ]
-      }
+        OR: [{ patientId: profileId }, { doctorId: profileId }],
+      },
     });
 
     if (!room) {
-      throw new Error('Chat room not found or user not authorized');
+      throw new Error("Chat room not found or user not authorized");
     }
 
     // Get messages
     const messages = await this.prisma.message.findMany({
       where: {
-        chatRoomId: roomId
+        chatRoomId: roomId,
       },
       orderBy: {
-        createdAt: 'asc'
-      }
+        createdAt: "asc",
+      },
     });
 
     return messages;
@@ -393,62 +353,66 @@ export class ChatService {
 
   async getUserRooms(userId, userRole) {
     const query = {
-      where: {}
-    }
+      where: {},
+    };
 
-    if (userRole === 'PATIENT') {
+    if (userRole === "PATIENT") {
       query.where.patient = {
         user: {
-          id: userId
-        }
-      }
-    } else if (userRole === 'DOCTOR') {
+          id: userId,
+        },
+      };
+    } else if (userRole === "DOCTOR") {
       query.where.doctor = {
         user: {
-          id: userId
-        }
-      }
+          id: userId,
+        },
+      };
     }
 
     return this.prisma.chatRoom.findMany({
       ...query,
       include: {
         patient: {
-          include: { user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true
-            }
-          } }
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
         },
         doctor: {
-          include: { user:{
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true
-            }
-          }}
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
         },
         messages: {
           orderBy: {
-            createdAt: 'asc'
-          }
-        }
-      }
-    })
+            createdAt: "asc",
+          },
+        },
+      },
+    });
   }
   broadcastToAllClients(data) {
-    const clients = this.getAllConnectedClients()
+    const clients = this.getAllConnectedClients();
     clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
-        client.send(JSON.stringify(data))
+        client.send(JSON.stringify(data));
       }
-    })
+    });
   }
 }

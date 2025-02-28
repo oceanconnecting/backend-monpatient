@@ -92,7 +92,6 @@ export async function websocketRoutes(fastify, options) {
         message: 'Invalid message format',
         timestamp: new Date().toISOString()
       });
-
       connection.send(errorMsg);
     }
   }

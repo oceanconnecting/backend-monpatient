@@ -30,6 +30,7 @@ export class ChatServicePatientNurse {
       const userId = decoded.id;
   
       console.log("New client connected:", decoded.email);
+
   
       // Store user connection
       connection.user = decoded;
@@ -47,7 +48,8 @@ export class ChatServicePatientNurse {
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await this.handleMessage(connection, data);
+          await connection.close();
+(connection, data); 
         } catch (error) {
           console.error("Error handling message:", error);
           connection.send(
@@ -73,7 +75,6 @@ export class ChatServicePatientNurse {
     }
   }
   
-
   async joinRoom(connection, roomId) {
     const userId = connection.user.id;
     const canJoin = await this.canUserJoinRoom(userId, roomId);
