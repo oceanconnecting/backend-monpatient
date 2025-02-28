@@ -123,6 +123,9 @@ export class AuthService {
       // Create a transporter using SMTP settings (Gmail example)
       const transporter = nodemailer.createTransport({
         service: 'gmail',
+        secure: true,
+        port: 465,
+        host: 'smtp.gmail.com',
         auth: {
           user: process.env.SMTP_USER,   // Your Gmail address
           pass: process.env.SMTP_PASSWORD // Your Gmail password (or app password)

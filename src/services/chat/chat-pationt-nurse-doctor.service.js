@@ -8,74 +8,65 @@ export class ChatServicePatientNurseDoctor {
     this.rooms = new Map();
   }
 
+  sendErrorAndClose(connection, message) {
+    this.sendJson(connection, { type: "error", message });
+    connection.close();
+  }
+
+  sendJson(connection, data) {
+    connection.send(JSON.stringify(data));
+  }
+
+  sendRoomMessage(connection, type, roomId, additionalData = {}) {
+    this.sendJson(connection, { type, roomId, ...additionalData });
+  }
+
   async handleConnection(connection, req) {
     try {
-      // Extract token from query parameter
       const token = req.query.token;
       if (!token) {
-        connection.send(
-          JSON.stringify({ type: "error", message: "No token provided" })
-        );
-        connection.close(); // Use connection.close() directly
+        this.sendErrorAndClose(connection, "No token provided");
         return;
       }
 
-      // Verify token
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
 
-      console.log("New client connected:", decoded.email);
+      console.log("New client connected:", decoded.email,decoded.role);
 
-      // Store user connection
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
 
-      // Send confirmation
-      connection.send(
-        JSON.stringify({
-          type: "connected",
-          userId,
-        })
-      );
+      this.sendJson(connection, { type: "connected", userId });
 
-      // Handle messages
       connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
-          await connection.close(); // Only one 'await' is needed
-          // Do something with `data` and `connection` here
-          // For example, send a response back to the client
-          connection.send(
-            JSON.stringify({
-              type: "success",
-              message: "Message processed successfully",
-              data: data, // Include the parsed data in the response
-            })
-          );
+          await connection.close();
+          this.sendJson(connection, {
+            type: "success",
+            message: "Message processed successfully",
+            data,
+          });
         } catch (error) {
           console.error("Error handling message:", error);
-          connection.send(
-            JSON.stringify({
-              type: "error",
-              message: "Failed to process message",
-            })
-          );
+          this.sendJson(connection, {
+            type: "error",
+            message: "Failed to process message",
+          });
         }
       });
 
-      // Handle disconnection
       connection.on("close", () => {
         console.log("Client disconnected:", decoded.email);
         this.connectedUsers.delete(userId);
       });
     } catch (error) {
       console.error("Authentication error:", error);
-      connection.send(
-        JSON.stringify({ type: "error", message: "Authentication failed" })
-      );
-      connection.close(); // Use connection.close() directly
+      this.sendErrorAndClose(connection, "Authentication failed");
     }
   }
+
   async handleMessage(connection, data) {
     const userId = connection.user.id;
     const userRole = connection.user.role;
@@ -117,12 +108,7 @@ export class ChatServicePatientNurseDoctor {
         break;
 
       default:
-        connection.socket.send(
-          JSON.stringify({
-            type: "error",
-            message: "Unknown message type",
-          })
-        );
+        this.sendErrorAndClose(connection, "Unknown message type");
     }
   }
 
@@ -133,64 +119,40 @@ export class ChatServicePatientNurseDoctor {
       const canJoin = await this.canUserJoinRoom(userId, roomId);
 
       if (canJoin) {
-        // Add user to room tracking
         if (!this.rooms.has(roomId)) {
           this.rooms.set(roomId, new Set());
         }
         this.rooms.get(roomId).add(userId);
 
-        // Send confirmation
-        connection.socket.send(
-          JSON.stringify({
-            type: "room-joined",
-            roomId,
-          })
-        );
+        this.sendRoomMessage(connection, "room-joined", roomId);
 
-        // Send room history
         const messages = await this.getRoomMessages(roomId, userId);
-        connection.socket.send(
-          JSON.stringify({
-            type: "room-history",
-            roomId,
-            messages,
-          })
-        );
+        this.sendRoomMessage(connection, "room-history", roomId, { messages });
       } else {
-        connection.socket.send(
-          JSON.stringify({
-            type: "error",
-            message: "Cannot join room: unauthorized",
-          })
-        );
+        this.sendRoomMessage(connection, "error", roomId, {
+          message: "Cannot join room: unauthorized",
+        });
       }
     } catch (error) {
-      connection.socket.send(
-        JSON.stringify({
-          type: "error",
-          message: "Failed to join room",
-        })
-      );
+      this.sendRoomMessage(connection, "error", roomId, {
+        message: "Failed to join room",
+      });
     }
   }
 
   async handleSendMessage(connection, roomId, userId, userRole, content) {
     try {
       const message = await this.sendMessage(roomId, userId, userRole, content);
-
-      // Broadcast to room
       this.broadcastToRoom(roomId, {
         type: "new-message",
         roomId,
         message,
       });
     } catch (error) {
-      connection.socket.send(
-        JSON.stringify({
-          type: "error",
-          message: "Failed to send message: " + error.message,
-        })
-      );
+      this.sendJson(connection, {
+        type: "error",
+        message: "Failed to send message: " + error.message,
+      });
     }
   }
 
@@ -205,7 +167,6 @@ export class ChatServicePatientNurseDoctor {
 
       const connection = this.connectedUsers.get(userId);
       if (connection && connection.socket.readyState === 1) {
-        // WebSocket.OPEN
         connection.socket.send(message);
       }
     });
