@@ -12,9 +12,20 @@ export class ChatService {
     // }
   }
   handleConnection(connection, req) {
-    connection.socket.on("message", (message) => {
+    // Listen for messages using connection.on (not connection.socket.on)
+    connection.on("message", (message) => {
       console.log("Received:", message);
-      connection.socket.send("Message received");
+      connection.send("Message received"); // Use connection.send instead of connection.socket.send
+    });
+  
+    // Handle connection close
+    connection.on("close", () => {
+      console.log("Connection closed");
+    });
+  
+    // Handle errors
+    connection.on("error", (error) => {
+      console.error("WebSocket error:", error);
     });
   }
   // setupWebSocketHandlers() {

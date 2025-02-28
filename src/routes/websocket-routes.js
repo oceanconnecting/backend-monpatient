@@ -1,17 +1,19 @@
+import websocket from "@fastify/websocket";
 import { ChatServicePatientNurseDoctor } from "../services/chat/chat-pationt-nurse-doctor.service.js";
 import { ChatService } from "../services/chat/chat.service.js";
 import { ChatServicePatientNurse } from "../services/chat/chat-pation-nurse.service.js";
-import fastifyWebsocket from "@fastify/websocket";
 
 export async function websocketRoutes(fastify, options) {
   // Register WebSocket plugin
-  fastify.register(fastifyWebsocket, {
-    options: { maxPayload: 1048576 } // 1MB max payload
-  });
+  // await fastify.register(websocket, {
+  //   options: { maxPayload: 1048576 } // 1MB max payload
+  // });
+
   // Create chat service instances
   const chatServicePatientNurseDoctor = new ChatServicePatientNurseDoctor(fastify);
   const chatService = new ChatService(fastify);
   const chatServicePatientNurse = new ChatServicePatientNurse(fastify);
+
   // Define WebSocket routes
   fastify.get('/ws/patient-nurse-doctor', { websocket: true }, (connection, req) => {
     chatServicePatientNurseDoctor.handleConnection(connection, req);
@@ -20,76 +22,68 @@ export async function websocketRoutes(fastify, options) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     chatService.handleConnection(connection, req);
   });
-  fastify.get('/ws/patient-nurse', { websocket: true }, (connection, req) => 
-    chatServicePatientNurse.handleConnection(connection, req)
-  );
-  
+
+  fastify.get('/ws/patient-nurse', { websocket: true }, (connection, req) => {
+    chatServicePatientNurse.handleConnection(connection, req);
+  });
+
   // New test route for checking WebSocket functionality
   fastify.get('/ws/test', { websocket: true }, (connection, req) => {
     console.log('New test connection established');
-    
-    // Get a reference to the socket
-    const socket = connection.socket;
-    
-    // Log when data is received
-    socket.on('data', (message) => {
-      console.log('Received data:', message.toString());
-      
-      // Echo the message back
-      socket.write(message);
+
+    // Listen for messages using connection.on (not connection.socket.on)
+    connection.on('message', (data) => {
+      try {
+        console.log('Received data:', data.toString());
+        // Parse and handle the message
+        handleMessage(data, connection);
+      } catch (error) {
+        console.error('Message handling error:', error);
+      }
     });
-    
-    // Log when the connection closes
-    socket.on('end', () => {
-      console.log('Test connection closed (end event)');
+
+    // Handle connection close
+    connection.on('close', () => {
+      console.log('Test connection closed');
     });
-    
-    // Log any errors
-    socket.on('error', (error) => {
+
+    // Handle socket errors
+    connection.on('error', (error) => {
       console.error('WebSocket error:', error);
     });
+
+    // Send a welcome message
+    connection.send(JSON.stringify({
+      type: 'welcome',
+      message: 'Connected to WebSocket test endpoint',
+      timestamp: new Date().toISOString()
+    }));
   });
+
   // Helper function to handle incoming messages
   function handleMessage(message, connection) {
     try {
       const data = JSON.parse(message.toString());
       console.log('Received message on test route:', data);
-      
-      // Attempt to send response using available method
+
+      // Response message
       const response = JSON.stringify({
         type: 'response',
         originalMessage: data,
         timestamp: new Date().toISOString(),
         status: 'success'
       });
-      
-      // Try different sending methods
-      if (typeof connection.socket.send === 'function') {
-        connection.socket.send(response);
-      } 
-      else if (typeof connection.socket.write === 'function') {
-        connection.socket.write(response);
-      }
-      else if (typeof connection.send === 'function') {
-        connection.send(response);
-      }
-      
+
+      connection.send(response);
+
       // If it's a ping, send a pong
       if (data.type === 'ping') {
         const pong = JSON.stringify({
           type: 'pong',
           timestamp: new Date().toISOString()
         });
-        
-        if (typeof connection.socket.send === 'function') {
-          connection.socket.send(pong);
-        } 
-        else if (typeof connection.socket.write === 'function') {
-          connection.socket.write(pong);
-        }
-        else if (typeof connection.send === 'function') {
-          connection.send(pong);
-        }
+
+        connection.send(pong);
       }
     } catch (error) {
       console.error('Error processing message:', error);
@@ -98,16 +92,8 @@ export async function websocketRoutes(fastify, options) {
         message: 'Invalid message format',
         timestamp: new Date().toISOString()
       });
-      
-      if (typeof connection.socket.send === 'function') {
-        connection.socket.send(errorMsg);
-      } 
-      else if (typeof connection.socket.write === 'function') {
-        connection.socket.write(errorMsg);
-      }
-      else if (typeof connection.send === 'function') {
-        connection.send(errorMsg);
-      }
+
+      connection.send(errorMsg);
     }
   }
 }

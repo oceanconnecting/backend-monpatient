@@ -13,7 +13,7 @@ import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/relationships/patient.route.js";
-
+import { websocketRoutes } from "./routes/websocket-routes.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -93,7 +93,7 @@ fastify.get('/ws', { websocket: true }, (connection, req) => {
     }
   });
 });
-
+fastify.register(websocketRoutes);
 
 
 console.log('WebSocket routes registered')

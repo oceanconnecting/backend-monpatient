@@ -13,40 +13,39 @@ export class ChatServicePatientNurseDoctor {
       // Extract token from query parameter
       const token = req.query.token;
       if (!token) {
-        connection.socket.send(
+        connection.send(
           JSON.stringify({ type: "error", message: "No token provided" })
         );
-        connection.close();
-
+        connection.close(); // Use connection.close() directly
         return;
       }
-
+  
       // Verify token
       const decoded = this.fastify.jwt.verify(token);
       const userId = decoded.id;
-
+  
       console.log("New client connected:", decoded.email);
-
+  
       // Store user connection
       connection.user = decoded;
       this.connectedUsers.set(userId, connection);
-
+  
       // Send confirmation
-      connection.socket.send(
+      connection.send(
         JSON.stringify({
           type: "connected",
           userId,
         })
       );
-
+  
       // Handle messages
-      connection.socket.on("message", async (message) => {
+      connection.on("message", async (message) => {
         try {
           const data = JSON.parse(message.toString());
           await this.handleMessage(connection, data);
         } catch (error) {
           console.error("Error handling message:", error);
-          connection.socket.send(
+          connection.send(
             JSON.stringify({
               type: "error",
               message: "Failed to process message",
@@ -54,21 +53,20 @@ export class ChatServicePatientNurseDoctor {
           );
         }
       });
-
+  
       // Handle disconnection
-      connection.socket.on("close", () => {
+      connection.on("close", () => {
         console.log("Client disconnected:", decoded.email);
         this.connectedUsers.delete(userId);
       });
     } catch (error) {
       console.error("Authentication error:", error);
-      connection.socket.send(
+      connection.send(
         JSON.stringify({ type: "error", message: "Authentication failed" })
       );
-      connection.close();
+      connection.close(); // Use connection.close() directly
     }
   }
-
   async handleMessage(connection, data) {
     const userId = connection.user.id;
     const userRole = connection.user.role;
