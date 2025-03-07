@@ -169,7 +169,212 @@ export class ChatServicePatientNurseDoctor {
       }
     });
   }
+  async canUserJoinRoom(userId, roomId) {
+    const room = await this.prisma.chatRoomPatientNurse.findUnique({
+      where: { id: parseInt(roomId) },
+      include: {
+        patient: {
+          include: { user: true },
+        },
+        nurse: {
+          include: { user: true },
+        },
+      },
+    });
 
+    if (!room) return false;
+
+    return room.patient.user.id === userId || room.nurse.user.id === userId;
+  }
+
+  async createOrGetRoom(patientId, nurseId) {
+    // Check if a room already exists between the patient and nurse
+    let room = await this.prisma.chatRoomPatientNurse.findFirst({
+      where: {
+        patientId: parseInt(patientId),
+        nurseId: parseInt(nurseId),
+      },
+    });
+
+    if (!room) {
+      // Create a new room if it doesn't exist
+      room = await this.prisma.chatRoomPatientNurse.create({
+        data: {
+          patientId: parseInt(patientId),
+          nurseId: parseInt(nurseId),
+          status: 'ACTIVE',
+        },
+        include: {
+          patient: true,
+          nurse: true,
+        },
+      });
+    }
+
+    return room;
+  }
+
+  async markMessagesAsRead(roomId, userId) {
+    await this.prisma.message.updateMany({
+      where: {
+        chatRoomPatientNurseId: parseInt(roomId),
+        senderId: { not: parseInt(userId) },
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+  }
+
+  async sendMessage(roomId, senderId, senderRole, content) {
+    // Validate sender role
+    if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {
+      throw new Error('Invalid sender role');
+    }
+    // Get the sender's profile
+    const sender = await this.prisma.user.findUnique({
+      where: { id: parseInt(senderId) },
+      include: {
+        patient: true,
+        nurse: true,
+      },
+    });
+  
+    if (!sender) {
+      throw new Error('Sender not found');
+    }
+  
+    // Check if the sender has the correct profile
+    const profileId = senderRole === 'PATIENT' ? sender.patient?.id : sender.nurse?.id;
+    if (!profileId) {
+      throw new Error(`Sender is not a ${senderRole}`);
+    }
+  
+    // Verify that the sender is part of the chat room
+    const room = await this.prisma.chatRoomPatientNurse.findFirst({
+      where: {
+        id: parseInt(roomId),
+        OR: [
+          { patientId: senderRole === 'PATIENT' ? profileId : undefined },
+          { nurseId: senderRole === 'NURSE' ? profileId : undefined },
+        ],
+      },
+    });
+  
+    if (!room) {
+      throw new Error('Chat room not found or user not authorized');
+    }
+  
+    // Create the message
+    const message = await this.prisma.message.create({
+      data: {
+        content,
+        isRead: false,
+        senderRole,
+        senderId: parseInt(senderId),
+        chatRoomPatientNurse: {
+          connect: {
+            id: parseInt(roomId),
+          },
+        },
+      },
+      include: {
+        chatRoomPatientNurse: true,
+      },
+    });
+  
+    return message;
+  }
+
+  async getRoomMessages(roomId, userId) {
+    // Check if the user has access to the room
+    const room = await this.prisma.chatRoomPatientNurse.findFirst({
+      where: {
+        id: parseInt(roomId),
+        OR: [
+          { patient: { user: { id: parseInt(userId) } } },
+          { nurse: { user: { id: parseInt(userId) } } },
+        ],
+      },
+    });
+
+    if (!room) {
+      throw new Error('Chat room not found or user not authorized');
+    }
+
+    // Get messages for the room
+    const messages = await this.prisma.message.findMany({
+      where: {
+        chatRoomPatientNurseId: parseInt(roomId),
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return messages;
+  }
+  
+  async getUserRooms(userId, userRole) {
+    const query = {
+      where: {},
+    };
+
+    if (userRole === 'PATIENT') {
+      query.where.patient = {
+        user: {
+          id: parseInt(userId),
+        },
+      };
+    } else if (userRole === 'NURSE') {
+      query.where.nurse = {
+        user: {
+          id: parseInt(userId),
+        },
+      };
+    } else {
+      throw new Error('Invalid user role');
+    }
+
+    return this.prisma.chatRoomPatientNurse.findMany({
+      ...query,
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
+        nurse: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+    });
+  }
   // Your existing methods remain the same...
   // canUserJoinRoom, createOrGetRoom, markMessagesAsRead, sendMessage, etc.
 }
