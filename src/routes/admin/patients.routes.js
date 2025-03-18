@@ -31,15 +31,25 @@ export async function patientRoutes(fastify) {
   });
 
   fastify.post('/', {
-    onRequest: [fastify.authenticate, checkRole(['ADMIN'])],
+    onRequest: [fastify.authenticate, checkRole(['ADMIN'])], // Authentication and role check
     handler: async (request, reply) => {
       try {
-        const patient = await PatientService.createPatient(request.body);
+        // Check if a file was uploaded
+        const file = request.raw.files?.profilePhoto; // Access the file from the request
+  
+        if (!file) {
+          throw new Error('No file uploaded');
+        }
+  
+        // Create the patient with the uploaded file
+        const patient = await PatientService.createPatient(request.body, file);
+  
+        // Return the created patient
         return patient;
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    }
+    },
   });
 
   fastify.put('/:id', {

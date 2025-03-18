@@ -15,6 +15,7 @@ import { createNotificationMiddleware } from "./middleware/notification.middlewa
 import { patientRoutes } from "./routes/relationships/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
 import dotenv from "dotenv";
+import multer from 'fastify-multer'
 dotenv.config();
 
 // Store connected clients and their user info
@@ -54,14 +55,7 @@ fastify.addHook("onRequest", (request, reply, done) => {
   );
   done();
 });
-  // Register WebSocket plugin
-  // await fastify.register(fastifyWebsocket, {
-  //   options: {
-  //     maxPayload: 1048576, // 1MB max payload
-  //     clientTracking: true,
-  //   }
-  // });
-
+fastify.register(multer.contentParser)
   // JWT plugin
   await fastify.register(jwt, {
     secret: process.env.JWT_SECRET,

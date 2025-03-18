@@ -193,7 +193,6 @@ model DoctorPatientRequest {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   message     String?
-
   @@unique([patientId, doctorId])
 }
 
