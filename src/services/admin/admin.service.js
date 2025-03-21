@@ -45,7 +45,6 @@ export class AdminService {
       };
     });
   }
-
   static async getUserById(id) {
     if (!id) {
       throw new Error("Invalid user ID");

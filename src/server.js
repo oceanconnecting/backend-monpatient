@@ -12,10 +12,10 @@ import { chatPatientNurseRoutes } from "./routes/chat/chat-pationt-nurse.routes.
 import { createAuthMiddleware } from "./middleware/auth.middleware.js";
 import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-doctor.js";
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
-import { patientRoutes } from "./routes/relationships/patient.route.js";
+import { patientRoutes } from "./routes/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
 import dotenv from "dotenv";
-import multer from 'fastify-multer'
+import multer from "fastify-multer";
 dotenv.config();
 
 // Store connected clients and their user info
@@ -40,22 +40,22 @@ async function buildApp() {
   // Register CORS first
   await fastify.register(fastifyCors, {
     origin: true, // Allow all origins
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    exposedHeaders: ['Authorization'],
+    exposedHeaders: ["Authorization"],
     preflightContinue: false,
-    optionsSuccessStatus: 204
+    optionsSuccessStatus: 204,
   });
- // In your buildApp() function, modify the onRequest hook:
-fastify.addHook("onRequest", (request, reply, done) => {
-  reply.header(
-    "Content-Security-Policy",
-    "connect-src 'self' http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000;"
-  );
-  done();
-});
-fastify.register(multer.contentParser)
+  // In your buildApp() function, modify the onRequest hook:
+  fastify.addHook("onRequest", (request, reply, done) => {
+    reply.header(
+      "Content-Security-Policy",
+      "connect-src 'self' http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000;"
+    );
+    done();
+  });
+  fastify.register(multer.contentParser);
   // JWT plugin
   await fastify.register(jwt, {
     secret: process.env.JWT_SECRET,
@@ -77,45 +77,53 @@ fastify.register(multer.contentParser)
     });
   });
 
-
-
-fastify.get('/ws', { websocket: true }, (connection, req) => {
-  // Listen for messages from the client
-  connection.on('message', (data) => {
-    try {
-      // Broadcast the message to all connected clients
-      fastify.websocketServer.clients.forEach((client) => {
-        if (client.readyState === 1) { // 1 means OPEN
-          client.send(data);
-        }
-      });
-    } catch (error) {
-      console.error(error);
-    }
+  fastify.get("/ws", { websocket: true }, (connection, req) => {
+    // Listen for messages from the client
+    connection.on("message", (data) => {
+      try {
+        // Broadcast the message to all connected clients
+        fastify.websocketServer.clients.forEach((client) => {
+          if (client.readyState === 1) {
+            // 1 means OPEN
+            client.send(data);
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    });
   });
-});
-fastify.register(websocketRoutes);
+  fastify.register(websocketRoutes);
 
-
-console.log('WebSocket routes registered')
+  console.log("WebSocket routes registered");
   // Register routes
   const apiPrefix = "/api";
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
-  await fastify.register(doctorPatientRoutes, { prefix: `${apiPrefix}/doctor-patient` });
-  await fastify.register(nurseServiceRoutes, { prefix: `${apiPrefix}/nurse-service` });
-  await fastify.register(notificationRoutes, { prefix: `${apiPrefix}/notifications` });
+  await fastify.register(doctorPatientRoutes, {
+    prefix: `${apiPrefix}/doctor-patient`,
+  });
+  await fastify.register(nurseServiceRoutes, {
+    prefix: `${apiPrefix}/nurse-service`,
+  });
+  await fastify.register(notificationRoutes, {
+    prefix: `${apiPrefix}/notifications`,
+  });
   await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` });
-  await fastify.register(chatPatientNurseRoutes, { prefix: `${apiPrefix}/chat-patient-nurse` });
-  await fastify.register(chatPatientNurseDoctorRoutes, { prefix: `${apiPrefix}/chat-patient-nurse-doctor` });
+  await fastify.register(chatPatientNurseRoutes, {
+    prefix: `${apiPrefix}/chat-patient-nurse`,
+  });
+  await fastify.register(chatPatientNurseDoctorRoutes, {
+    prefix: `${apiPrefix}/chat-patient-nurse-doctor`,
+  });
 
   // Health check route
   fastify.get("/health", async () => {
     return {
       status: "ok",
       timestamp: new Date().toISOString(),
-      connections: connectedClients.size
+      connections: connectedClients.size,
     };
   });
 
@@ -127,7 +135,7 @@ const start = async () => {
   try {
     const fastify = await buildApp();
     await fastify.listen({
-      port: 3000
+      port: 3000,
     });
     console.log(`Server running at http://localhost:${process.env.PORT}`);
   } catch (err) {

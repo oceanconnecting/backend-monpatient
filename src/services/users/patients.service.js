@@ -96,7 +96,7 @@ export class PatientService {
     });
   }
  // Cretae a patient
- static async createPatient(data, file) {
+  static async createPatient(data, file) {
   if (!data) {
     throw new Error('Invalid patient data');
   }
@@ -139,8 +139,39 @@ export class PatientService {
       patient: true,
     },
   });
-}
-
+  } 
+  static async updatePatientDetails(patientId, detailsData) {
+    if (!patientId) {
+      throw new Error('Invalid patient ID');
+    }
+  
+    // Verify patient exists
+    const patientRecord = await prisma.patient.findUnique({
+      where: { id: patientId }
+    });
+  
+    if (!patientRecord) {
+      throw new Error('Patient not found');
+    }
+  
+    // Update patient details
+    const updatedPatient = await prisma.patient.update({
+      where: { id: patientId },
+      data: {
+        allergies: detailsData.allergies,
+        emergencyContactName: detailsData.emergencyContactName,
+        emergencyContactPhone: detailsData.emergencyContactPhone,
+        emergencyContactRelationship: detailsData.emergencyContactRelationship,
+        insuranceInfo: detailsData.insuranceInfo,
+        preferredPharmacy: detailsData.preferredPharmacy
+      },
+      include: {
+        user: true
+      }
+    });
+  
+    return updatedPatient;
+  }
   // Delete a patient by ID
   static async deletePatientById(id) {
     if (!id ) {
@@ -159,6 +190,7 @@ export class PatientService {
       where: { id},
     });
   }
+  // Get all doctors
   static async getAlldoctors() {
     return await prisma.doctor.findMany(
       {

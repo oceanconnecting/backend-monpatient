@@ -148,10 +148,6 @@ export async function chatRoutes(fastify, options) {
     try {
       const decoded = fastify.jwt.verify(token);
       const userId = decoded.id;
-      
-  
-
-      
       console.log(`WebSocket connected: User ${userId}`);
       
       // Handle incoming messages
