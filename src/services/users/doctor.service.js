@@ -40,7 +40,6 @@ export class DoctorService {
         activeChatRooms: doctor.chatRooms.filter(room => room.status === 'ACTIVE').length
       }));
   }
-
   static async updateDoctor(id, userData) {
     const existingDoctor = await prisma.user.findUnique({
       where: { id, role:'DOCTOR'},
