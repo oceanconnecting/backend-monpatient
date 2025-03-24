@@ -27,6 +27,7 @@
     "fastify-mailer": "^2.3.1",
     "fastify-multer": "^2.0.3",
     "fastify-websocket": "^4.2.2",
+    "logger-factory": "^1.0.2",
     "nodemailer": "^6.10.0"
   },
   "devDependencies": {
