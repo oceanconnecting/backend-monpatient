@@ -4,7 +4,7 @@ import { NurseProfileService } from '../services/users/nurse-profile.service.js'
 import { PatientProfileService } from '../services/users/patient-profile.service.js';
 import { PharmacyProfileService } from '../services/users/pharmacy-profile.service.js';
 import { BaseProfileService } from '../services/users/base-profile.service.js';
-import { createAuthMiddleware, checkRole } from '../middleware/auth.middleware.js';
+import { checkRole } from '../middleware/auth.middleware.js';
 
 export async function profileRoutes(fastify, options) {
   // Decorate fastify with profile services
@@ -23,7 +23,6 @@ export async function profileRoutes(fastify, options) {
     }
     return serviceFactory(db);
   };
-
   // Route for common profile operations
   fastify.get('/', {
     preHandler: fastify.authenticate,

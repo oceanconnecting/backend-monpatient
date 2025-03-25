@@ -15,6 +15,7 @@ import { createNotificationMiddleware } from "./middleware/notification.middlewa
 import { patientRoutes } from "./routes/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
 import { profileRoutes } from "./routes/profile.routes.js";
+import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multer from 'fastify-multer';
@@ -118,6 +119,7 @@ async function buildApp() {
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
+  await fastify.register(medicalRecordsRoutes, { prefix: `${apiPrefix}/medical-records` });
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
   });
