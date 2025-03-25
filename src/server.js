@@ -14,8 +14,25 @@ import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-d
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
+import { profileRoutes } from "./routes/profile.routes.js";
 import dotenv from "dotenv";
-import multer from "fastify-multer";
+// Add this near other plugin registrations
+import multer from 'fastify-multer';
+
+// After creating fastify instance
+
+
+// Configure storage if needed
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+})
+
+
 dotenv.config();
 
 // Store connected clients and their user info
@@ -94,7 +111,7 @@ async function buildApp() {
     });
   });
   fastify.register(websocketRoutes);
-
+  fastify.decorate('upload', multer({ storage }));
   console.log("WebSocket routes registered");
   // Register routes
   const apiPrefix = "/api";
@@ -104,6 +121,7 @@ async function buildApp() {
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
   });
+  await fastify.register(profileRoutes, { prefix: `${apiPrefix}/profile` });
   await fastify.register(nurseServiceRoutes, {
     prefix: `${apiPrefix}/nurse-service`,
   });

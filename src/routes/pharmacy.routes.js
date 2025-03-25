@@ -3,7 +3,7 @@ import { PharmacyService } from "../services/pharmacies/pharmacies.service.js";
 
 export async function pharmacyRoutes(fastify) {
   fastify.get("/", {
-    onRequest: [fastify.authenticate, checkRole(["PHARMACY"])],
+    preHandler: fastify.authenticate,
     handler: async (request, reply) => {
       try {
         const pharmacies = await PharmacyService.getAllPharmacies();
@@ -15,7 +15,7 @@ export async function pharmacyRoutes(fastify) {
   });
 
   fastify.get('/:id', {
-    onRequest: [fastify.authenticate, checkRole(['PHARMACY'])],
+    preHandler: fastify.authenticate,
     handler: async (request, reply) => {
       try {
         const id = request.params.id;
