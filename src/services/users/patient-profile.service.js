@@ -12,7 +12,8 @@ export class PatientProfileService extends BaseProfileService {
         preferredPharmacy:true,
         allergies: true,
         insuranceInfo:true,
-        emergencyContact: true
+        emergencyContactName:true,
+        emergencyContactRelationship:true
       }
     });
     return { ...commonProfile, ...patientDetails };

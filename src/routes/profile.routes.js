@@ -35,6 +35,16 @@ export async function profileRoutes(fastify, options) {
             email: { type: 'string' },
             firstname: { type: 'string' },
             lastname: { type: 'string' },
+            telephoneNumber: { type: 'string' },
+            profilePhoto: { type: 'string' },
+            role: { type: 'string' },
+            allergies: { type: 'string' },
+            emergencyContactName: { type: 'string' },
+            emergencyContactRelationship: { type: 'string' },
+            insuranceInfo: { type: 'string' },
+            preferredPharmacy: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' },
             // Add other common profile fields
           }
         }
@@ -116,8 +126,8 @@ export async function profileRoutes(fastify, options) {
 
   // Profile picture upload
   fastify.post('/upload', {
+    onRequest: [fastify.authenticate],
     preHandler: [
-      fastify.authenticate,
       fastify.upload.single('profilePhoto')
     ],
     schema: {
@@ -146,7 +156,7 @@ export async function profileRoutes(fastify, options) {
         
         return { 
           message: 'Profile picture uploaded successfully',
-          avatarUrl: result.avatar 
+          profilePhoto: result.profilePhoto 
         };
       } catch (error) {
         reply.code(error.statusCode || 500).send({ 

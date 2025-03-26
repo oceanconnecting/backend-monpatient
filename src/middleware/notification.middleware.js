@@ -68,6 +68,15 @@ export async function getAllNotifications(userId, userRole) {
   // For admin, return all notifications
   if (userRole === 'ADMIN') {
     return prisma.notification.findMany({
+      include: {
+        user: {
+          select: {
+            firstname: true,
+            lastname: true,
+            role: true
+          }
+        }
+      },
       orderBy: {
         createdAt: 'desc'
       }
@@ -76,6 +85,15 @@ export async function getAllNotifications(userId, userRole) {
 
   // For other roles, return only their notifications
   return prisma.notification.findMany({
+    include: {
+      user: {
+        select: {
+          firstname: true,
+          lastname: true,
+          role: true
+        }
+      }
+    },
     where: {
       userId
     },

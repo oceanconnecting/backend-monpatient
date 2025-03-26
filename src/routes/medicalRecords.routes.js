@@ -3,7 +3,7 @@ import { checkRole } from '../middleware/auth.middleware.js';
 
 export async function medicalRecordsRoutes(fastify, options) {
   // Get all medical records for a specific patient (Only the patient can view their own records)
-fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIENT"])],}, async (request, reply) => {
+  fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIENT"])],}, async (request, reply) => {
     try {
       const records = await MedicalRecordService.getMedicalRecordsByPatient(request.params.patientId);
       reply.send(records);
@@ -12,7 +12,7 @@ fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIE
     }
   });
 // Medical Record Schemas
-const medicalRecordSchemas = {
+  const medicalRecordSchemas = {
     createMedicalRecord: {
       body: {
         type: 'object',
@@ -86,7 +86,7 @@ const medicalRecordSchemas = {
     }
   };
   // Create a new medical record (Only doctors can create medical records)
-  fastify.post('/', { 
+  fastify.post('/', {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
@@ -97,8 +97,8 @@ const medicalRecordSchemas = {
       reply.status(500).send({ error: 'Failed to create record' });
     }
   });
-  
-  fastify.put('/:id', { 
+  // Update a medical record (Only nurses and doctors can update records)
+  fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole(["NURSE", "DOCTOR"])],
     schema: medicalRecordSchemas.updateMedicalRecord
   }, async (request, reply) => {
@@ -112,7 +112,6 @@ const medicalRecordSchemas = {
       reply.status(500).send({ error: 'Failed to update record' });
     }
   });
-
   // Delete a medical record (Only doctors can delete records)
   fastify.delete('/:id', { 
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])]

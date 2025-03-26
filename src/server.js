@@ -19,10 +19,7 @@ import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multer from 'fastify-multer';
-
-// After creating fastify instance
-
-
+ 
 // Configure storage if needed
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
