@@ -13,7 +13,6 @@ export class PharmacyProfileService extends BaseProfileService {
         contactName: true,
         openingHours: true,
         deliveryOptions: true,
-        openingHours: true,
         pharmacyLicenseNumber: true
       }
     });
