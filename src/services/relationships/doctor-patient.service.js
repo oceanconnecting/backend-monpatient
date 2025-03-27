@@ -44,19 +44,19 @@ export class DoctorPatientService {
       }
     })
     // Create notification for doctor
-    await prisma.notification.create({
-      data: {
-        userId: doctor.user.id,
-        type: 'DOCTOR_REQUEST',
-        title: 'New Patient Request',
-        message: `Patient ${patient.name} has requested to be added to your patient list`,
-        metadata: {
-          requestId: request.id,
-          patientId: patientId,
-          patientName: patient.name
-        }
-      }
-    })
+    // await prisma.notification.create({
+    //   data: {
+    //     userId: doctor.user.id,
+    //     type: 'DOCTOR_REQUEST',
+    //     title: 'New Patient Request',
+    //     message: `Patient ${patient.name} has requested to be added to your patient list`,
+    //     metadata: {
+    //       requestId: request.id,
+    //       patientId: patientId,
+    //       patientName: patient.name
+    //     }
+    //   }
+    // })
 
     return request
   }

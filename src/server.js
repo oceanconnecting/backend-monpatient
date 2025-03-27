@@ -91,6 +91,7 @@ async function buildApp() {
       }
     });
   });
+// In your Fastify setup
 
   fastify.get("/ws", { websocket: true }, (connection, req) => {
     // Listen for messages from the client
