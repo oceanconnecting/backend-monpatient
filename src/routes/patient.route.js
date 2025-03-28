@@ -39,57 +39,27 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-
-  fastify.post("/", {
+  
+  fastify.get("/emergency-contact/:id", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
       try {
-        const patient = await PatientService.createPatient(request.body, request.file);
-        reply.code(200).send(patient);
+        const emergencyContact = await PatientService.getEmergencyContact(request.params.id);
+        reply.code(200).send(emergencyContact);
       } catch (error) {
         reply.code(500).send(error);
       }
     },
   });
-
-  fastify.put('/:id/details', {
+  fastify.put("/emergency-contact/:id", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
       try {
-        const { id } = request.params;
-        const {
-          allergies,
-          emergencyContactName,
-          emergencyContactPhone,
-          emergencyContactRelationship,
-          insuranceInfo,
-          preferredPharmacy
-        } = request.body;  // Changed from req.body to request.body
-        
-        // Create data object with patient details
-        const detailsData = {
-          allergies,
-          emergencyContactName,
-          emergencyContactPhone,
-          emergencyContactRelationship,
-          insuranceInfo,
-          preferredPharmacy
-        };
-        
-        // Update patient details using the service
-        const updatedPatient = await PatientService.updatePatientDetails(id, detailsData);
-        
-        return reply.code(200).send({  // Changed from res.status to reply.code
-          success: true,
-          message: 'Patient details updated successfully',
-          data: updatedPatient
-        });
+        const emergencyContact = await PatientService.updateEmergencyContact(request.params.id, request.body);
+        reply.code(200).send(emergencyContact);
       } catch (error) {
-        return reply.code(400).send({  // Changed from res.status to reply.code
-          success: false,
-          message: error.message
-        });
+        reply.code(500).send(error);
       }
-    }
+    },
   });
 }

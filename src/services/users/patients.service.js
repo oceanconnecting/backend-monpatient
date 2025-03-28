@@ -244,4 +244,46 @@ export class PatientService {
       }
     );
   }
+  static async getEmergencyContact(id) {
+    try {
+      const patient = await prisma.patient.findUnique({
+        where: { id },
+        select: {
+          emergencyContactName: true,
+          emergencyContactPhone: true,
+          emergencyContactRelationship: true,
+        },
+      });
+
+      if (!patient) {
+        throw new Error('Patient not found');
+      }
+
+      return patient;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  /**
+   * Update a patient's emergency contact details
+   */
+  static async updateEmergencyContact(id, data) {
+    const { emergencyContactName, emergencyContactPhone, emergencyContactRelationship } = data;
+
+    try {
+      const updatedPatient = await prisma.patient.update({
+        where: { id },
+        data: {
+          emergencyContactName,
+          emergencyContactPhone,
+          emergencyContactRelationship,
+        },
+      });
+
+      return updatedPatient;
+    } catch (error) {
+      throw new Error('Could not update emergency contact');
+    }
+  }
 }
