@@ -25,7 +25,7 @@ export async function profileRoutes(fastify, options) {
   };
   // Route for common profile operations
   fastify.get('/', {
-    preHandler: fastify.authenticate,
+    onRequest: [fastify.authenticate],
     schema: {
       response: {
         200: {
@@ -62,7 +62,7 @@ export async function profileRoutes(fastify, options) {
 
   // Common update route
   fastify.put('/', {
-    preHandler: fastify.authenticate,
+    onRequest: [fastify.authenticate],
     schema: {
       body: {
         type: 'object',
@@ -70,6 +70,7 @@ export async function profileRoutes(fastify, options) {
           firstname: { type: 'string', minLength: 2 },
           lastname: { type: 'string', minLength: 2 },
           telephoneNumber: { type: 'string' },
+          email: { type: 'string' },
           // Add other updatable fields
         }
       }
@@ -90,7 +91,7 @@ export async function profileRoutes(fastify, options) {
 
   // Common password change
   fastify.post('/change-password', {
-    preHandler: fastify.authenticate,
+    onRequest: [fastify.authenticate],
     schema: {
       body: {
         type: 'object',

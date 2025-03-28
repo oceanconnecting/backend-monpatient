@@ -1,13 +1,49 @@
 import { ChatServicePatientNurseDoctor } from "../services/chat/chat-pationt-nurse-doctor.service.js";
 import { ChatService } from "../services/chat/chat.service.js";
 import { ChatServicePatientNurse } from "../services/chat/chat-pation-nurse.service.js";
-
+import { createNotificationMiddleware } from "../middleware/notification.middleware.js";
 export async function websocketRoutes(fastify, options) {
 
   const chatServicePatientNurseDoctor = new ChatServicePatientNurseDoctor(fastify);
   const chatService = new ChatService(fastify);
   const chatServicePatientNurse = new ChatServicePatientNurse(fastify);
+  if (!fastify.notificationClients) {
+    fastify.decorate('notificationClients', new Map());
+  }
 
+  // Notification WebSocket Route
+  fastify.get('/ws/notifications', { websocket: true }, (connection, req) => {
+    // Authenticate the connection
+    if (!req.user?.id) {
+      connection.socket.close(1008, 'Unauthorized');
+      return;
+    }
+
+    const userId = req.user.id;
+    
+    // Add client to the notification clients map
+    fastify.notificationClients.set(userId, connection.socket);
+    console.log(`Notification client connected: ${userId}`);
+
+    // Send existing unread notifications
+    sendUnreadNotifications(fastify, userId, req.user.role);
+
+    // Handle messages from client (e.g., mark as read)
+    connection.socket.on('message', (message) => {
+      handleNotificationMessage(fastify, message, userId, req.user.role);
+    });
+
+    // Handle connection close
+    connection.socket.on('close', () => {
+      fastify.notificationClients.delete(userId);
+      console.log(`Notification client disconnected: ${userId}`);
+    });
+
+    // Handle errors
+    connection.socket.on('error', (error) => {
+      console.error(`Notification WebSocket error for user ${userId}:`, error);
+    });
+  });
   // Define WebSocket routes
   fastify.get('/ws/patient-nurse-doctor', { websocket: true }, (connection, req) => {
     chatServicePatientNurseDoctor.handleConnection(connection, req);

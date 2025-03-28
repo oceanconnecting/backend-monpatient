@@ -16,6 +16,7 @@ import { patientRoutes } from "./routes/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
 import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
+import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multer from 'fastify-multer';
@@ -132,6 +133,7 @@ async function buildApp() {
   await fastify.register(chatPatientNurseRoutes, {
     prefix: `${apiPrefix}/chat-patient-nurse`,
   });
+  await fastify.register(prescriptionRoutes, { prefix: `${apiPrefix}/prescription` })
   await fastify.register(chatPatientNurseDoctorRoutes, {
     prefix: `${apiPrefix}/chat-patient-nurse-doctor`,
   });

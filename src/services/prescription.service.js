@@ -127,4 +127,51 @@ export class PrescriptionService {
 
     return { message: 'Prescription deleted successfully' };
   }
+  static async getPrescriptionsByPatientId(patientId) {
+    if (!patientId) {
+      throw new Error('Invalid patient ID');
+    }
+
+    try {
+      const prescriptions = await prisma.prescription.findMany({
+        where: {
+          patientId: patientId,
+        },
+        include: {
+          patient: { include: { user: true } },
+          doctor: { include: { user: true } },
+          pharmacy: { include: { user: true } },
+        },
+        orderBy: {
+          date: 'desc', // Optional: order by date descending (newest first)
+        },
+      });
+
+      return prescriptions.map((prescription) => ({
+        id: prescription.id,
+        date: prescription.date,
+        details: prescription.details,
+        approved: prescription.approved,
+        patient: {
+          id: prescription.patient.id,
+          name: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
+          email: prescription.patient.user.email,
+        },
+        doctor: {
+          id: prescription.doctor.id,
+          name: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
+          email: prescription.doctor.user.email,
+        },
+        pharmacy: prescription.pharmacy
+          ? {
+              id: prescription.pharmacy.id,
+              name: prescription.pharmacy.user.firstname,
+              email: prescription.pharmacy.user.email,
+            }
+          : null,
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch patient prescriptions: ${error.message}`);
+    }
+  }
 }
