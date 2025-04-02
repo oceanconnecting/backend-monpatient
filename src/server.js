@@ -81,6 +81,15 @@ async function buildApp() {
   });
   await fastify.register(websocket);
   // Auth middleware
+  fastify.setErrorHandler((error, request, reply) => {
+    // Log the error
+    request.log.error(error);
+    // Send appropriate response based on error type
+    reply.status(error.statusCode || 500).send({ 
+      error: error.name, 
+      message: error.message 
+    });
+  });
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
   fastify.addHook("onRequest", createNotificationMiddleware(fastify));
 
