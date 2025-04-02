@@ -38,8 +38,12 @@ export class BaseProfileService {
     return prisma.user.update({
       where: { id: userId },
       data: {
-        name: profileData.name,
-        phone: profileData.phone,
+        firstname: profileData.firstname,
+        lastname: profileData.lastname,
+        telephoneNumber: profileData.telephoneNumber,
+        dateOfBirth: profileData.dateOfBirth,
+        gender:profileData.gender,
+        address:profileData.address,
         // other common fields
       }
     });
