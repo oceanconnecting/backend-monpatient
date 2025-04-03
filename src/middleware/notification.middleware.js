@@ -372,13 +372,30 @@ export async function markAllNotificationsAsRead(userId) {
  * @param {string} userRole - User role
  * @returns {Promise<Object>} Deleted notification
  */
-export async function deleteAllNotifications(userId, userRole) {
+export async function deleteNotification(notificationId, userId, userRole) {
   try {
-    const where = userRole === 'ADMIN' ? {} : { userId };
-    return await prisma.notification.deleteMany({ where });
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId }
+    })
+    
+    if (!notification) {
+      throw new Error('Notification not found')
+    }
+    
+    // If user is not an admin, ensure they own the notification
+    if (userRole !== 'ADMIN' && notification.userId !== userId) {
+      const error = new Error('Unauthorized to delete this notification')
+      error.name = 'UnauthorizedError'
+      error.statusCode = 403
+      throw error
+    }
+    
+    return await prisma.notification.delete({
+      where: { id: notificationId }
+    })
   } catch (error) {
-    console.error('Error deleting all notifications:', error);
-    throw error; // Re-throw to let the caller handle it
+    console.error('Error deleting notification:', error)
+    throw error
   }
 }
 
@@ -390,12 +407,11 @@ export async function deleteAllNotifications(userId, userRole) {
  */
 export async function deleteAllNotifications(userId, userRole) {
   try {
-    const where = userRole === 'ADMIN' ? {} : { userId }
-    
-    return prisma.notification.deleteMany({ where })
+    const where = userRole === 'ADMIN' ? {} : { userId };
+    return await prisma.notification.deleteMany({ where });
   } catch (error) {
-    console.error('Error deleting all notifications:', error)
-    throw error
+    console.error('Error deleting all notifications:', error);
+    throw error; // Re-throw to let the caller handle it
   }
 }
 
