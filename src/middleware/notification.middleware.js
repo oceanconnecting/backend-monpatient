@@ -302,7 +302,7 @@ export async function createNotification(data, userId, options = {}) {
     })
     
     // Emit through websocket if requested
-    if (sendWebsocket && fastify && fastify.io) {
+    if (sendWebsocket && fastify?.io) {
       fastify.io.to(`user:${userId}`).emit('notification', notification)
     }
     
@@ -355,13 +355,13 @@ export async function markNotificationAsRead(notificationId, userId, userRole) {
  */
 export async function markAllNotificationsAsRead(userId) {
   try {
-    return prisma.notification.updateMany({
+    return await prisma.notification.updateMany({
       where: { userId, read: false },
-      data: { read: true }
-    })
+      data: { read: true },
+    });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error)
-    throw error
+    console.error("Error marking all notifications as read:", error);
+    throw error; // Re-throw to let the caller handle it
   }
 }
 
@@ -372,30 +372,13 @@ export async function markAllNotificationsAsRead(userId) {
  * @param {string} userRole - User role
  * @returns {Promise<Object>} Deleted notification
  */
-export async function deleteNotification(notificationId, userId, userRole) {
+export async function deleteAllNotifications(userId, userRole) {
   try {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId }
-    })
-    
-    if (!notification) {
-      throw new Error('Notification not found')
-    }
-    
-    // If user is not an admin, ensure they own the notification
-    if (userRole !== 'ADMIN' && notification.userId !== userId) {
-      const error = new Error('Unauthorized to delete this notification')
-      error.name = 'UnauthorizedError'
-      error.statusCode = 403
-      throw error
-    }
-    
-    return prisma.notification.delete({
-      where: { id: notificationId }
-    })
+    const where = userRole === 'ADMIN' ? {} : { userId };
+    return await prisma.notification.deleteMany({ where });
   } catch (error) {
-    console.error('Error deleting notification:', error)
-    throw error
+    console.error('Error deleting all notifications:', error);
+    throw error; // Re-throw to let the caller handle it
   }
 }
 
