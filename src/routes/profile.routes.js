@@ -5,7 +5,10 @@ import { PatientProfileService } from '../services/users/patient-profile.service
 import { PharmacyProfileService } from '../services/users/pharmacy-profile.service.js';
 import { BaseProfileService } from '../services/users/base-profile.service.js';
 import { checkRole } from '../middleware/auth.middleware.js';
-
+import fs from 'fs';
+import path from 'path';
+import { pipeline } from 'stream/promises';
+import { v4 as uuidv4 } from 'uuid'; 
 export async function profileRoutes(fastify, options) {
   // Decorate fastify with profile services
   fastify.decorate('profileServices', {
@@ -129,43 +132,55 @@ export async function profileRoutes(fastify, options) {
 
   // Profile picture upload
   fastify.post('/upload', {
-    onRequest: [fastify.authenticate],
-    preHandler: [
-      fastify.upload.single('profilePhoto')
-    ],
-    schema: {
-      consumes: ['multipart/form-data'],
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            message: { type: 'string' },
-            avatarUrl: { type: 'string' }
-          }
-        }
-      }
-    },
-    handler: async (request, reply) => {
-      if (!request.file) {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    try {
+      const data = await request.file();
+      
+      if (!data) {
         return reply.code(400).send({ error: 'No file uploaded' });
       }
-  
-      try {
-        const profileService = new BaseProfileService(fastify.db);
-        const result = await profileService.uploadProfilePicture(
-          request.user.id,
-          request.file
-        );
-        
-        return { 
-          message: 'Profile picture uploaded successfully',
-          profilePhoto: result.profilePhoto 
-        };
-      } catch (error) {
-        reply.code(error.statusCode || 500).send({ 
-          error: error.message || 'Failed to upload profile picture' 
-        });
+      
+      // Create temp directory if it doesn't exist
+      const tempDir = path.join(process.cwd(), 'temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
       }
+      
+      // Create a temporary file path
+      const tempFilePath = path.join(tempDir, `${uuidv4()}${path.extname(data.filename)}`);
+      
+      // Save the file to disk (needed for Cloudinary)
+      await pipeline(data.file, fs.createWriteStream(tempFilePath));
+      
+      // Create a file object similar to what multer would provide
+      const fileObj = {
+        path: tempFilePath,
+        filename: data.filename,
+        mimetype: data.mimetype,
+        size: data.file.bytesRead
+      };
+      
+      // Upload to Cloudinary using your existing service
+      const profileService = new BaseProfileService(fastify.db);
+      const result = await profileService.uploadProfilePicture(
+        request.user.id,
+        fileObj
+      );
+      
+      // Clean up the temporary file
+      fs.unlinkSync(tempFilePath);
+      
+      return {
+        status: 'success',
+        message: 'File uploaded successfully',
+        data: result
+      };
+    } catch (error) {
+      request.log.error(error);
+      reply.code(error.statusCode || 500).send({
+        error: error.message || 'Failed to upload profile picture'
+      });
     }
   });
 

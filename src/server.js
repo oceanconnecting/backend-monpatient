@@ -19,19 +19,8 @@ import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
-import multer from 'fastify-multer';
+import multipart from '@fastify/multipart';
  
-// Configure storage if needed
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname)
-  }
-})
-
-
 dotenv.config();
 
 // Store connected clients and their user info
@@ -71,7 +60,11 @@ async function buildApp() {
     );
     done();
   });
-  fastify.register(multer.contentParser);
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB limit (adjust as needed)
+    }
+  });
   // JWT plugin
   await fastify.register(jwt, {
     secret: process.env.JWT_SECRET,
@@ -120,7 +113,7 @@ async function buildApp() {
     });
   });
   fastify.register(websocketRoutes);
-  fastify.decorate('upload', multer({ storage }));
+
   console.log("WebSocket routes registered");
   // Register routes
   const apiPrefix = "/api";
