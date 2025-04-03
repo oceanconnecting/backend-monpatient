@@ -70,13 +70,9 @@ export async function profileRoutes(fastify, options) {
           firstname: { type: 'string', minLength: 2 },
           lastname: { type: 'string', minLength: 2 },
           telephoneNumber: { type: 'string' },
-<<<<<<< HEAD
-          email: { type: 'string' },
-=======
           dateOfBirth: { type: 'string',format: 'date-time' },
           gender: { type: 'string' },
           address: { type: 'string' },
->>>>>>> b9c542b0f9b0f5dfe6d01dc1618a82e5b1e603ad
           // Add other updatable fields
         }
       }

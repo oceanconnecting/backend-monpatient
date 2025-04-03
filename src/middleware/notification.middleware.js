@@ -5,16 +5,11 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
 })
 
-/**
- * Creates a notification middleware for Fastify
- * @param {Object} fastify - Fastify instance
- * @param {Object} options - Configuration options
- * @returns {Function} Middleware function
- */
+
 export function createNotificationMiddleware(fastify, options = {}) {
   const debug = options.debug ?? (process.env.NODE_ENV === 'development')
   const logPerformance = options.logPerformance ?? true
-  const excludePaths = options.excludePaths ?? ['/health', '/metrics']
+  const excludePaths = options.excludePaths ?? ['/health']
   const batchInterval = options.batchInterval ?? 1000 // ms to batch notifications
 
   // Storage for notification batch processing
