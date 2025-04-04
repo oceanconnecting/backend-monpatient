@@ -50,6 +50,8 @@ model User {
   gender          String?
   address         String?
   profilePhoto    String?
+  oauthProvider      String? // 'google', 'microsoft', etc.
+  oauthProviderId    String? // ID from the provider
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   isEmailVerified Boolean   @default(false)
