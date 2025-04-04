@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 
-import { uploadToCloudinary } from '../../utils/uploadToCloudinary.js';
 const prisma = new PrismaClient();
 
 export class PatientService {
@@ -96,21 +95,9 @@ export class PatientService {
     });
   }
  // Cretae a patient
-  static async createPatient(data, file) {
+  static async createPatient(data) {
   if (!data) {
     throw new Error('Invalid patient data');
-  }
-
-  let profilePhotoUrl = null;
-
-  // Upload file to Cloudinary if a file is provided
-  if (file) {
-    try {
-      const cloudinaryResult = await uploadToCloudinary(file);
-      profilePhotoUrl = cloudinaryResult.secure_url; // Get the Cloudinary URL
-    } catch (error) {
-      throw new Error(`Failed to upload profile photo: ${error.message}`);
-    }
   }
 
   // Create the patient with the Cloudinary URL
@@ -123,7 +110,7 @@ export class PatientService {
       dateOfBirth: data.dateOfBirth,
       gender: data.gender,
       address: data.address,
-      profilePhoto: profilePhotoUrl, // Use the Cloudinary URL
+     // Use the Cloudinary URL
       patient: {
         create: {
           allergies: data.patient.allergies,

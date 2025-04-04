@@ -39,7 +39,7 @@ export class AuthService {
     }
 
     // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
     if (!emailRegex.test(userData.email)) {
       throw new Error("Invalid email format");
     }

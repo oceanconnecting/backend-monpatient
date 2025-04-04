@@ -96,6 +96,7 @@ export async function authRoutes(fastify) {
                 role: { type: "string" },
                 createdAt: { type: "string" },
                 firstname: { type: "string" },
+                profilePhoto: { type: "string" },
                 lastname: { type: "string" },
                 isEmailVerified: { type: "boolean" },
                 emailVerificationToken: { type: "string" },
