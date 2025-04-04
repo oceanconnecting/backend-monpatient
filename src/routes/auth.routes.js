@@ -31,7 +31,6 @@ export async function authRoutes(fastify) {
                 id: { type: "string" },
                 email: { type: "string" },
                 role: { type: "string" },
-                ValidityState: { type: "string" },
                 isEmailVerified: { type: "boolean" },
                 emailVerificationToken: { type: "string" },
                 emailVerificationExpires: { type: "string" },
