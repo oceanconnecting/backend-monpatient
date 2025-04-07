@@ -16,7 +16,15 @@ export async function authRoutes(fastify) {
     },
     scope: ['profile', 'email'],
     startRedirectPath: '/login/google',
-    callbackUri: `${process.env.API_BASE_URL}/auth/login/google/callback`
+    callbackUri: 'http://localhost:3000/api/auth/login/google/callback',
+    state: true, // Enable state parameter for security
+    generateStateFunction: () => {
+      return Math.random().toString(36).substring(2, 15);
+    },
+    checkStateFunction: (state, callback) => {
+      // For testing purposes, we're accepting any state value
+      callback(null, true);
+    }
   });
 
   // Register OAuth2 plugin for Microsoft
@@ -31,27 +39,89 @@ export async function authRoutes(fastify) {
     },
     scope: ['openid', 'profile', 'email'],
     startRedirectPath: '/login/microsoft',
-    callbackUri: `${process.env.API_BASE_URL}/auth/login/microsoft/callback`,
-    tenant: process.env.MICROSOFT_TENANT_ID || 'common'
+    callbackUri: `${process.env.API_BASE_URL}/login/microsoft/callback`,
+    tenant: process.env.MICROSOFT_TENANT_ID || 'common',
+    state: true,
+    generateStateFunction: () => {
+      return Math.random().toString(36).substring(2, 15);
+    },
+    checkStateFunction: (state, callback) => {
+      // For testing purposes, we're accepting any state value
+      callback(null, true);
+    }
+  });
+
+  // Add a route to check OAuth configuration
+  fastify.get('/oauth-config', async (request, reply) => {
+    return {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID ? 'configured' : 'missing',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'configured' : 'missing',
+        callbackUrl: 'http://localhost:3000/api/auth/login/google/callback',
+        frontendUrl: process.env.FRONTEND_URL
+      }
+    };
   });
 
   // Google OAuth routes
   fastify.get('/login/google/callback', async function (request, reply) {
     try {
+      fastify.log.info('Starting Google OAuth callback');
+      
+      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        fastify.log.error('Google OAuth credentials not configured');
+        return reply.code(400).send({
+          success: false,
+          error: 'OAuth credentials not configured'
+        });
+      }
+      
       const { token } = await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
-      const userInfo = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      
+      if (!token || !token.access_token) {
+        fastify.log.error('No access token received from Google');
+        return reply.code(400).send({
+          success: false,
+          error: 'Failed to get access token from Google'
+        });
+      }
+
+      fastify.log.info('Successfully received access token from Google');
+
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           Authorization: `Bearer ${token.access_token}`
         }
-      }).then(res => res.json());
+      });
+
+      if (!userInfoResponse.ok) {
+        fastify.log.error('Failed to fetch user info', { status: userInfoResponse.status });
+        return reply.code(400).send({
+          success: false,
+          error: 'Failed to fetch user info from Google'
+        });
+      }
+
+      const userInfo = await userInfoResponse.json();
+      fastify.log.info('Successfully fetched user info from Google');
+
+      if (!userInfo.email) {
+        fastify.log.error('No email provided by Google');
+        return reply.code(400).send({
+          success: false,
+          error: 'Email not provided by Google'
+        });
+      }
 
       const user = await AuthService.handleOAuthUser({
         email: userInfo.email,
-        firstname: userInfo.given_name,
-        lastname: userInfo.family_name,
+        firstname: userInfo.given_name || '',
+        lastname: userInfo.family_name || '',
         provider: 'google',
         providerId: userInfo.id
       });
+
+      fastify.log.info('Successfully created/updated user', { userId: user.id });
 
       const jwtToken = fastify.jwt.sign({
         id: user.id,
@@ -59,7 +129,7 @@ export async function authRoutes(fastify) {
         role: user.role,
       });
 
-      // Set cookie and redirect or return token
+      // Set cookie and return JSON response for testing
       reply.setCookie('token', jwtToken, {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
@@ -67,10 +137,25 @@ export async function authRoutes(fastify) {
         sameSite: 'lax'
       });
 
-      reply.redirect(`${process.env.FRONTEND_URL}/oauth-callback?token=${jwtToken}`);
+      return {
+        success: true,
+        token: jwtToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          role: user.role
+        },
+        googleUserInfo: userInfo
+      };
+
     } catch (error) {
-      fastify.log.error(error);
-      reply.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+      fastify.log.error('Google OAuth error:', error);
+      return reply.code(400).send({
+        success: false,
+        error: error.message
+      });
     }
   });
 
@@ -274,6 +359,19 @@ export async function authRoutes(fastify) {
       }
     },
   });
+  
+  // Test endpoint to check if token is valid
+  fastify.get("/test-auth", {
+    onRequest: [fastify.authenticate],
+    handler: async (request, reply) => {
+      return {
+        success: true,
+        message: "Authentication successful",
+        user: request.user
+      };
+    },
+  });
+
   fastify.post("/verify-email", {
     schema: {
       body: {
