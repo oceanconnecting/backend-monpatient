@@ -47,11 +47,13 @@ model User {
   role            Role
   telephoneNumber String?
   dateOfBirth     DateTime?
+  googleId                String?   // For Google OAuth
+  microsoftId             String? 
   gender          String?
   address         String?
   profilePhoto    String?
-  oauthProvider      String? // 'google', 'microsoft', etc.
-  oauthProviderId    String? // ID from the provider
+  provider        String?  // OAuth provider (google, microsoft, etc.)
+  providerId      String?  // ID from the provider
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   isEmailVerified Boolean   @default(false)
