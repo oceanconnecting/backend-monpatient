@@ -14,6 +14,7 @@ import { chatPatientNurseDoctorRoutes } from "./routes/chat/chat-pationt-nurse-d
 import { createNotificationMiddleware } from "./middleware/notification.middleware.js";
 import { patientRoutes } from "./routes/patient.route.js";
 import { websocketRoutes } from "./routes/websocket-routes.js";
+import googleOAuth2 from "./plugin/google-oauth.js";
 import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
@@ -120,6 +121,7 @@ async function buildApp() {
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
+  await fastify.register(googleOAuth2);
   await fastify.register(medicalRecordsRoutes, { prefix: `${apiPrefix}/medical-records` });
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
