@@ -1,6 +1,6 @@
 import { AuthService } from "../services/auth/auth.service.js";
 import { PrismaClient } from "@prisma/client";
-
+import sget from 'simple-get'
 const prisma = new PrismaClient();
 
 export async function authRoutes(fastify) {
@@ -151,56 +151,65 @@ export async function authRoutes(fastify) {
     },
   });
     // Google OAuth callback handler
-  fastify.get("/login/google/callback", async function(request, reply) {
-      try {
-        // Get the authorization token from Google
-        if (request.query.error) {
-          fastify.log.error(`Google OAuth error: ${request.query.error}`);
-          fastify.log.error(`Error details: ${request.query.error_description || 'No details provided'}`);
-          return reply.code(401).send({
-            error: "Google authentication failed",
-            message: request.query.error_description || request.query.error
-          });
-        }
-        const { token } = await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
-        
-        // Get the user's profile from Google
-        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: {
-            Authorization: `Bearer ${token.access_token}`
+    fastify.get("/login/google/callback", async function(request, reply) {
+          try {
+            // Get the authorization token from Google
+            if (request.query.error) {
+              fastify.log.error(`Google OAuth error: ${request.query.error}`);
+              fastify.log.error(`Error details: ${request.query.error_description || 'No details provided'}`);
+              return reply.code(401).send({
+                error: "Google authentication failed",
+                message: request.query.error_description || request.query.error
+              });
+            }
+            const { token } = await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+            
+            // Get the user's profile from Google using simple-get
+            const googleUser = await new Promise((resolve, reject) => {
+              sget.concat({
+                url: 'https://www.googleapis.com/oauth2/v2/userinfo',
+                method: 'GET',
+                headers: {
+                  Authorization: `Bearer ${token.access_token}`
+                },
+                json: true
+              }, (error, response, data) => {
+                if (error) return reject(error);
+                if (response.statusCode !== 200) {
+                  return reject(new Error(`Request failed with status code ${response.statusCode}`));
+                }
+                resolve(data);
+              });
+            });
+            
+            // Use our AuthService to handle Google login
+            const user = await AuthService.loginWithGoogle({
+              email: googleUser.email,
+              firstname: googleUser.given_name || googleUser.name.split(' ')[0],
+              lastname: googleUser.family_name || googleUser.name.split(' ').slice(1).join(' '),
+              googleId: googleUser.id,
+            });
+            
+            // Generate JWT token
+            const jwtToken = fastify.jwt.sign({
+              id: user.id,
+              email: user.email,
+              firstname: user.firstname,
+              lastname: user.lastname,
+              role: user.role,
+            });
+            
+            // Redirect to frontend with token
+            // In production, you should use a more secure approach
+            return reply.redirect(`${process.env.FRONTEND_URL}/auth-callback?token=${jwtToken}`);
+          } catch (error) {
+            fastify.log.error(error);
+            reply.code(401).send({
+              error: "Google authentication failed",
+              message: error.message
+            });
           }
         });
-        
-        const googleUser = await userInfoResponse.json();
-        
-        // Use our AuthService to handle Google login
-        const user = await AuthService.loginWithGoogle({
-          email: googleUser.email,
-          firstname: googleUser.given_name || googleUser.name.split(' ')[0],
-          lastname: googleUser.family_name || googleUser.name.split(' ').slice(1).join(' '),
-          googleId: googleUser.id,
-        });
-        
-        // Generate JWT token
-        const jwtToken = fastify.jwt.sign({
-          id: user.id,
-          email: user.email,
-          firstname: user.firstname,
-          lastname: user.lastname,
-          role: user.role,
-        });
-        
-        // Redirect to frontend with token
-        // In production, you should use a more secure approach
-        return reply.redirect(`${process.env.FRONTEND_URL}/auth-callback?token=${jwtToken}`);
-      } catch (error) {
-        fastify.log.error(error);
-        reply.code(401).send({
-          error: "Google authentication failed",
-          message: error.message
-        });
-      }
-    });
   // Protected route example
   fastify.get("/me", {
     onRequest: [fastify.authenticate],
