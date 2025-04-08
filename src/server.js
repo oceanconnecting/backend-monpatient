@@ -17,10 +17,11 @@ import { websocketRoutes } from "./routes/websocket-routes.js";
 import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
+import { doctorRoutes } from "./routes/doctor.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
-import multipart from '@fastify/multipart';
- 
+import multipart from "@fastify/multipart";
+
 dotenv.config();
 
 // Store connected clients and their user info
@@ -62,8 +63,8 @@ async function buildApp() {
   });
   await fastify.register(multipart, {
     limits: {
-      fileSize: 10 * 1024 * 1024 // 10MB limit (adjust as needed)
-    }
+      fileSize: 10 * 1024 * 1024, // 10MB limit (adjust as needed)
+    },
   });
   // JWT plugin
   await fastify.register(jwt, {
@@ -78,9 +79,9 @@ async function buildApp() {
     // Log the error
     request.log.error(error);
     // Send appropriate response based on error type
-    reply.status(error.statusCode || 500).send({ 
-      error: error.name, 
-      message: error.message 
+    reply.status(error.statusCode || 500).send({
+      error: error.name,
+      message: error.message,
     });
   });
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
@@ -94,7 +95,7 @@ async function buildApp() {
       }
     });
   });
-// In your Fastify setup
+  // In your Fastify setup
 
   fastify.get("/ws", { websocket: true }, (connection, req) => {
     // Listen for messages from the client
@@ -120,7 +121,9 @@ async function buildApp() {
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
-  await fastify.register(medicalRecordsRoutes, { prefix: `${apiPrefix}/medical-records` });
+  await fastify.register(medicalRecordsRoutes, {
+    prefix: `${apiPrefix}/medical-records`,
+  });
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
   });
@@ -135,10 +138,13 @@ async function buildApp() {
   await fastify.register(chatPatientNurseRoutes, {
     prefix: `${apiPrefix}/chat-patient-nurse`,
   });
-  await fastify.register(prescriptionRoutes, { prefix: `${apiPrefix}/prescription` })
+  await fastify.register(prescriptionRoutes, {
+    prefix: `${apiPrefix}/prescription`,
+  });
   await fastify.register(chatPatientNurseDoctorRoutes, {
     prefix: `${apiPrefix}/chat-patient-nurse-doctor`,
   });
+  await fastify.register(doctorRoutes, { prefix: `${apiPrefix}/doctors` });
 
   // Health check route
   fastify.get("/health", async () => {
