@@ -9,25 +9,6 @@ import { checkRole } from '../../middleware/auth.middleware.js'
 
 export async function notificationRoutes(fastify) {
   const clients = new Map();
-  fastify.get('/ws', { websocket: true }, (connection, req) => {
-    // Authenticate the WebSocket connection
-    if (!req.user?.id) {
-      // Properly close the connection if not authenticated
-      connection.socket?.close(1008, 'Unauthorized');
-      return;
-    }
-
-    const userId = req.user.id;
-    
-    // Add new client to the map
-    clients.set(userId, connection.socket);
-
-    // Remove client when they disconnect
-    connection.socket.on('close', () => {
-      clients.delete(userId);
-    });
-  });
-
   function broadcastNotification(userId, notification) {
     const client = clients.get(userId);
     if (client && client.readyState === client.OPEN) {
