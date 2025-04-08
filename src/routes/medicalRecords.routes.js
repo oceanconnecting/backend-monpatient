@@ -87,7 +87,7 @@ export async function medicalRecordsRoutes(fastify, options) {
   };
   // Create a new medical record (Only doctors can create medical records)
   fastify.post('/', {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR","NURSE"])],
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
     try {
