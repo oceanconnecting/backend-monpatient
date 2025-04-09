@@ -12,6 +12,74 @@ export class AuthService {
   static async hashPassword(password) {
     return bcryptjs.hash(password, 10);
   }
+  static async loginWithGoogle(googleUserData) {
+    try {
+      // Check if user exists with this email
+      let user = await prisma.user.findUnique({
+        where: { email: googleUserData.email },
+        include: {
+          patient: true,
+          nurse: true,
+          doctor: true,
+          pharmacy: true,
+          admin: true,
+        },
+      });
+      
+      if (user) {
+        // User exists, update Google ID if not set
+        if (!user.googleId) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              googleId: googleUserData.googleId,
+              isEmailVerified: true, // Google has verified this email
+              profilePhoto: user.profilePhoto || googleUserData.picture
+            },
+            include: {
+              patient: true,
+              nurse: true,
+              doctor: true,
+              pharmacy: true,
+              admin: true,
+            },
+          });
+        }
+      } else {
+        // Create new user with Google data
+        // For new Google users, we'll set them as PATIENT by default
+        // You may want to change this or add a step where they choose their role
+        const roleData = this.getRoleSpecificData({ role: "PATIENT" });
+        
+        user = await prisma.user.create({
+          data: {
+            email: googleUserData.email,
+            firstname: googleUserData.firstname,
+            lastname: googleUserData.lastname,
+            googleId: googleUserData.googleId,
+            role: "PATIENT", // Default role for Google sign-ups
+            isEmailVerified: true, // No need to verify email from Google
+            password: await this.hashPassword(crypto.randomBytes(20).toString("hex")), // Random password as they'll use Google to sign in
+            patient: {
+              create: roleData
+            }
+          },
+          include: {
+            patient: true,
+            nurse: true,
+            doctor: true,
+            pharmacy: true,
+            admin: true,
+          },
+        });
+      }
+      
+      return this.formatUserResponse(user);
+    } catch (error) {
+      console.error("Google authentication error:", error);
+      throw new Error("Google authentication failed: " + error.message);
+    }
+  }
   static async verifyPassword(password, hash) {
     return bcryptjs.compare(password, hash);
   }

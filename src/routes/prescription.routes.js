@@ -30,9 +30,9 @@ export async function prescriptionRoutes(fastify, options) {
 
   // Create new prescription
   fastify.post('/', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
     handler: async (request, reply) => {
-      try {
+      try { 
         const prescription = await PrescriptionService.createPrescription(request.body);
         return prescription;
       } catch (error) {
