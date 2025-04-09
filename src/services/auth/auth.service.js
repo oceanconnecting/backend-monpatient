@@ -292,6 +292,7 @@ export class AuthService {
           password: hashedPassword,
           firstname: userData.firstname || "",
           lastname: userData.lastname || "",
+          profilePhoto: userData.picture || "",
           role: defaultRole,
           isEmailVerified: true,
           [defaultRole.toLowerCase()]: {

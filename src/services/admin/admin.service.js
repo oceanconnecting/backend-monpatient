@@ -12,6 +12,8 @@ export class AdminService {
         email: true,
         role: true,
         profilePhoto: true,
+        microsoftId: true,
+        googleId: true,
         firstname: true,
         lastname: true,
         telephoneNumber: true,
@@ -31,19 +33,22 @@ export class AdminService {
       },
     });
 
-    return users.map((user) => {
-      // Extract role-specific data dynamically
-      const roleData = user[user.role.toLowerCase()] || {};
-
-      // Remove role-specific fields from the base user object
-      const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user;
-
-      // Merge base user data with role-specific data
-      return {
-        ...baseUser,
-        ...roleData, // Add only the relevant role data
-      };
-    });
+    return users.map((user) => ({
+      id: user.id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      googleId: user.googleId,
+      microsoftId: user.microsoftId,
+      telephoneNumber: user.telephoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      address: user.address,
+      profilePhoto: user.profilePhoto,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }));
   }
   static async getUserById(id) {
     if (!id) {
@@ -288,6 +293,7 @@ export class AdminService {
             updatedAt: true,
           },
         },
+        
       },
     });
 
