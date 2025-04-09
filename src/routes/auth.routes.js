@@ -80,7 +80,7 @@ export async function authRoutes(fastify) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const redirectUri = process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/auth/login/google/callback";
     const scope = "profile email";
-    
+    request.session.state = state;
     const authUrl = `${authorizationEndpoint}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
     
     reply.redirect(authUrl);
@@ -154,6 +154,9 @@ export async function authRoutes(fastify) {
   fastify.get("/login/google/callback", async function(request, reply) {
           try {
             // Get the authorization token from Google
+            if (!request.query.state || request.query.state !== request.session.state) {
+              throw new Error('Invalid state');
+            }
             if (request.query.error) {
               fastify.log.error(`Google OAuth error: ${request.query.error}`);
               fastify.log.error(`Error details: ${request.query.error_description || 'No details provided'}`);
