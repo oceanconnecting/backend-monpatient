@@ -87,7 +87,7 @@ async function buildApp() {
   });
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
   fastify.addHook("onRequest", createNotificationMiddleware(fastify));
-
+  await fastify.register(googleOAuth2);
   // Helper to broadcast messages to specific users
   fastify.decorate("broadcastToUser", (userId, event, data) => {
     connectedClients.forEach((client, connection) => {

@@ -25,16 +25,18 @@ export class AuthService {
           admin: true,
         },
       });
-      
+
       if (user) {
+        console.log("User found with email:", googleUserData.email);
         // User exists, update Google ID if not set
         if (!user.googleId) {
+          console.log("Updating user with Google ID and profile photo");
           user = await prisma.user.update({
             where: { id: user.id },
             data: {
               googleId: googleUserData.googleId,
               isEmailVerified: true, // Google has verified this email
-              profilePhoto: user.profilePhoto || googleUserData.picture
+              profilePhoto: googleUserData.picture || user.profilePhoto,
             },
             include: {
               patient: true,
@@ -46,11 +48,12 @@ export class AuthService {
           });
         }
       } else {
+        console.log("Creating new user with Google data");
         // Create new user with Google data
         // For new Google users, we'll set them as PATIENT by default
         // You may want to change this or add a step where they choose their role
         const roleData = this.getRoleSpecificData({ role: "PATIENT" });
-        
+
         user = await prisma.user.create({
           data: {
             email: googleUserData.email,
@@ -59,10 +62,13 @@ export class AuthService {
             googleId: googleUserData.googleId,
             role: "PATIENT", // Default role for Google sign-ups
             isEmailVerified: true, // No need to verify email from Google
-            password: await this.hashPassword(crypto.randomBytes(20).toString("hex")), // Random password as they'll use Google to sign in
+            password: await this.hashPassword(
+              crypto.randomBytes(20).toString("hex")
+            ), // Random password as they'll use Google to sign in
+            profilePhoto: googleUserData.picture,
             patient: {
-              create: roleData
-            }
+              create: roleData,
+            },
           },
           include: {
             patient: true,
@@ -73,7 +79,7 @@ export class AuthService {
           },
         });
       }
-      
+
       return this.formatUserResponse(user);
     } catch (error) {
       console.error("Google authentication error:", error);

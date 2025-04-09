@@ -11,6 +11,7 @@ export class AdminService {
         id: true,
         email: true,
         role: true,
+        googleId: true,
         profilePhoto: true,
         firstname: true,
         lastname: true,
@@ -58,6 +59,7 @@ export class AdminService {
         lastname: true,
         email: true,
         role: true,
+        googleId: true,
         createdAt: true,
         updatedAt: true,
         // Exclude password
