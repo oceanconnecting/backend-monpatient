@@ -304,4 +304,98 @@ export class AuthService {
 
     return this.formatUserResponse(user);
   }
+  // static async handleOAuthUser(userData) {
+  //   try {
+  //     console.log("Handling OAuth user:", userData);
+  
+  //     // Check if user already exists
+  //     let user = await prisma.user.findUnique({
+  //       where: { email: userData.email },
+  //       include: {
+  //         patient: true,
+  //         nurse: true,
+  //         doctor: true,
+  //         pharmacy: true,
+  //         admin: true,
+  //       },
+  //     });
+  
+  //     if (user) {
+  //       // Update existing user with OAuth provider info
+  //       const updateData = {
+  //         isEmailVerified: true, // OAuth emails are pre-verified
+  //       };
+  
+  //       // Set the appropriate provider ID field
+  //       if (userData.provider === 'google') {
+  //         updateData.googleId = userData.providerId;
+  //       } else if (userData.provider === 'microsoft') {
+  //         updateData.microsoftId = userData.providerId;
+  //       }
+  
+  //       // Update name if not previously set
+  //       if (!user.firstname && userData.firstname) {
+  //         updateData.firstname = userData.firstname;
+  //       }
+  //       if (!user.lastname && userData.lastname) {
+  //         updateData.lastname = userData.lastname;
+  //       }
+  
+  //       user = await prisma.user.update({
+  //         where: { id: user.id },
+  //         data: updateData,
+  //         include: {
+  //           patient: true,
+  //           nurse: true,
+  //           doctor: true,
+  //           pharmacy: true,
+  //           admin: true,
+  //         },
+  //       });
+  //     } else {
+  //       // Create new user with OAuth data
+  //       const randomPassword = crypto.randomBytes(16).toString("hex");
+  //       const hashedPassword = await this.hashPassword(randomPassword);
+  
+  //       // Default role for OAuth users
+  //       const defaultRole = "PATIENT";
+        
+  //       const createData = {
+  //         email: userData.email,
+  //         password: hashedPassword,
+  //         firstname: userData.firstname || "",
+  //         lastname: userData.lastname || "",
+  //         profilePhoto: userData.picture || "",
+  //         role: defaultRole,
+  //         isEmailVerified: true,
+  //         [defaultRole.toLowerCase()]: {
+  //           create: this.getRoleSpecificData({ role: defaultRole }),
+  //         }
+  //       };
+  
+  //       // Set the appropriate provider ID field
+  //       if (userData.provider === 'google') {
+  //         createData.googleId = userData.providerId;
+  //       } else if (userData.provider === 'microsoft') {
+  //         createData.microsoftId = userData.providerId;
+  //       }
+  
+  //       user = await prisma.user.create({
+  //         data: createData,
+  //         include: {
+  //           patient: true,
+  //           nurse: true,
+  //           doctor: true,
+  //           pharmacy: true,
+  //           admin: true,
+  //         },
+  //       });
+  //     }
+  
+  //     return this.formatUserResponse(user);
+  //   } catch (error) {
+  //     console.error("Error handling OAuth user:", error);
+  //     throw new Error("Failed to handle OAuth user: " + error.message);
+  //   }
+  // }
 }
