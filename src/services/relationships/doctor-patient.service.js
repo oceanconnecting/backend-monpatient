@@ -9,8 +9,8 @@ export class DoctorPatientService {
     const existingRequest = await prisma.doctorPatientRequest.findUnique({
       where: {
         patientId_doctorId: {
-          patientId: patientId,
-          doctorId: doctorId
+          patientId,
+          doctorId
         }
       }
     })
@@ -172,32 +172,25 @@ export class DoctorPatientService {
         }
       })
       
-      console.log('Creating chat room...')
+    
       // Create chat room for doctor and patient
-      const chatRoom = await prisma.chatRoom.create({
-        data: {
-          patientId: request.patientId,
-          doctorId: request.doctorId,
-          status: 'ACTIVE'
-        }
-      })
-      console.log('Created chat room:', chatRoom)
-      console.log('Creating notification...')
+      
+ 
       // Create notification for patient
-      await prisma.notification.create({
-        data: {
-          // userId: request.patient.id,
-          type: 'REQUEST_ACCEPTED',
-          title: 'Doctor Request Accepted',
-          message: `Dr. ${request.doctor.name} has accepted your request. You can now start chatting.`,
-          metadata: {
-            doctorId: request.doctorId,
-            chatRoomId: chatRoom.id
-          }
-        }
-      })
+      // await prisma.notification.create({
+      //   data: {
+      //     // userId: request.patient.id,
+      //     type: 'REQUEST_ACCEPTED',
+      //     title: 'Doctor Request Accepted',
+      //     message: `Dr. ${request.doctor.name} has accepted your request. You can now start chatting.`,
+      //     metadata: {
+      //       doctorId: request.doctorId,
+      //       chatRoomId: chatRoom.id
+      //     }
+      //   }
+      // })
 
-      return { updatedRequest, chatRoom }
+      return { updatedRequest }
     } catch (error) {
       console.error('Error in acceptRequest:', error)
       throw error
