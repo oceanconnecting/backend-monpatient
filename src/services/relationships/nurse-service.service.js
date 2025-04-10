@@ -169,7 +169,19 @@ export class NurseServiceService {
       }
     })
   }
-
+  static async nursePatients(id){
+    const nurse=await prisma.nurse.findUnique({
+      where:{id:id},
+      include:{
+        serviceRequests: {
+          include: {
+            patient: true
+          }
+        }
+      }
+    })
+    return nurse.serviceRequests
+  }
   static async cancelRequest(requestId, patientId) {
     const request = await prisma.nurseServiceRequest.findFirst({
       where: {

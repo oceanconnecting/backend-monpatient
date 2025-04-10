@@ -8,7 +8,7 @@ export class NurseProfileService extends BaseProfileService {
     const nurseDetails = await prisma.nurse.findUnique({
       where: { userId },
       select: {
-        professionalLicenseNumber: true,
+       professionalLicenseNumber: true,
        nursingCertification: true,
        yearsOfExperience: true,
        rating:true,

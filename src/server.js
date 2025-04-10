@@ -5,7 +5,7 @@ import websocket from "@fastify/websocket";
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
-import { nurseServiceRoutes } from "./routes/relationships/nurse-service.routes.js";
+import { nurseServiceRoutes } from "./routes/nurse-service.routes.js";
 import { notificationRoutes } from "./routes/notifications/notification.routes.js";
 import { chatRoutes } from "./routes/chat/chat.routes.js";
 import { chatPatientNurseRoutes } from "./routes/chat/chat-pationt-nurse.routes.js";

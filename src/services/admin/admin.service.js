@@ -21,11 +21,6 @@ export class AdminService {
         address: true,
         createdAt: true,
         updatedAt: true,
-        patient: true, // Include patient details
-        doctor: true, // Include doctor details
-        nurse: true, // Include nurse details
-        pharmacy: true, // Include pharmacy details
-        admin: true, // Include admin details
       },
       orderBy: {
         createdAt: "desc",

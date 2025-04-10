@@ -34,6 +34,7 @@ export async function profileRoutes(fastify, options) {
         200: {
           type: 'object',
           properties: {
+            // Common fields (from BaseProfileService)
             id: { type: 'string' },
             email: { type: 'string' },
             firstname: { type: 'string' },
@@ -41,14 +42,34 @@ export async function profileRoutes(fastify, options) {
             telephoneNumber: { type: 'string' },
             profilePhoto: { type: 'string' },
             role: { type: 'string' },
-            allergies: { type: 'string' },
-            emergencyContactName: { type: 'string' },
-            emergencyContactRelationship: { type: 'string' },
-            insuranceInfo: { type: 'string' },
-            preferredPharmacy: { type: 'string' },
+            allergies: { type: 'string', nullable: true },
+            emergencyContactName: { type: 'string', nullable: true },
+            emergencyContactRelationship: { type: 'string', nullable: true },
+            insuranceInfo: { type: 'string', nullable: true },
+            preferredPharmacy: { type: 'string', nullable: true },
             createdAt: { type: 'string' },
             updatedAt: { type: 'string' },
-            // Add other common profile fields
+  
+            // Role-specific fields (conditionally included based on role)
+            // Nurse fields
+            professionalLicenseNumber: { type: 'string', nullable: true },
+            nursingCertification: { type: 'string', nullable: true },
+            yearsOfExperience: { type: 'number', nullable: true },
+            hospitalAffiliation: { type: 'string', nullable: true },
+            availability: { type: 'string', nullable: true },
+            rating: { type: 'number', nullable: true },
+            // Doctor fields
+            specialization: { type: 'string', nullable: true },
+            licenseNumber: { type: 'string', nullable: true },
+            
+            // Patient fields
+            bloodType: { type: 'string', nullable: true },
+            height: { type: 'string', nullable: true },
+            weight: { type: 'string', nullable: true },
+            
+            // Pharmacy fields
+            pharmacyLicense: { type: 'string', nullable: true },
+            operatingHours: { type: 'string', nullable: true }
           }
         }
       }
@@ -76,6 +97,7 @@ export async function profileRoutes(fastify, options) {
           dateOfBirth: { type: 'string',format: 'date-time' },
           gender: { type: 'string' },
           address: { type: 'string' },
+
           // Add other updatable fields
         }
       }

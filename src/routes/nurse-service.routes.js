@@ -1,5 +1,5 @@
-import { NurseServiceService } from '../../services/relationships/nurse-service.service.js'
-import { checkRole } from '../../middleware/auth.middleware.js'
+import { NurseServiceService } from '../services/relationships/nurse-service.service.js'
+import { checkRole } from '../middleware/auth.middleware.js'
 
 export async function nurseServiceRoutes(fastify) {
   // Patient creates a service request
@@ -14,6 +14,7 @@ export async function nurseServiceRoutes(fastify) {
           description: { type: 'string' },
           preferredDate: { type: 'string', format: 'date-time' },
           urgency: { type: 'string', enum: ['Low', 'Medium', 'High'] },
+          location: { type: 'string' },
         }
       }
     },
@@ -153,7 +154,7 @@ export async function nurseServiceRoutes(fastify) {
   })
 
   // Nurse views their service requests
-  fastify.get('/nurse/requests', {
+  fastify.get('/requests', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
     handler: async (request, reply) => {
       try {
@@ -166,7 +167,18 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
+  fastify.get('/patients', {
+  onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+  handler: async (request, reply) => {
+    try {
+      const patients = await NurseServiceService.nursePatients(request.user.nurse.id)
+      return patients
+    } catch (error) {
+      reply.code(400).send({ error: error.message })
+    }
+  }
+  })
+  
   // Patient cancels their service request
   fastify.put('/cancel/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
