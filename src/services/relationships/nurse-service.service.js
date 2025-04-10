@@ -188,21 +188,108 @@ export class NurseServiceService {
       }
     })
   }
-  static async nursePatients(id){
-    const nurse=await prisma.nurse.findUnique({
-      where:{id:id},
-      include:{
+  static async nursePatients(id) {
+    const nurse = await prisma.nurse.findUnique({
+      where: { id: id },
+      include: {
         serviceRequests: {
-          where:{
-            status:'ACCEPTED' 
-          },
+          where: { status: 'ACCEPTED' },
           include: {
-            patient: true
+            patient: {
+              include: {
+                user: {
+                  select: {
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                  }
+                }
+              }
+            }
           }
         }
       }
-    })
-    return nurse.serviceRequests
+    });
+    
+    return nurse.serviceRequests.map((request) => ({
+      id: request.patient.id,
+      userId: request.patient.userId,
+      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+      email: request.patient.user.email,
+      serviceRequestId: request.id,
+      serviceType: request.serviceType,
+      status: request.status,
+      createdAt: request.createdAt,
+      preferredDate: request.preferredDate,
+    }));
+  }
+  static async searchPatient(nurseId, name) {
+    // If name is empty or undefined, return all patients for this nurse
+    if (!name || name.trim() === "") {
+      return this.nursePatients(nurseId);
+    }
+  
+    const serviceRequests = await prisma.nurseServiceRequest.findMany({
+      where: {
+        nurseId: nurseId,
+        status: 'ACCEPTED',
+        patient: {
+          user: {
+            OR: [
+              { firstname: { contains: name, mode: "insensitive" } },
+              { lastname: { contains: name, mode: "insensitive" } },
+            ],
+          },
+        },
+      },
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                telephoneNumber: true,
+                gender: true,
+                address: true,
+                profilePhoto: true,
+                dateOfBirth: true,
+              },
+            },
+       
+          },
+        },
+      },
+      orderBy: {
+        patient: {
+          user: {
+            lastname: "asc",
+          },
+        },
+      },
+    });
+  
+    return serviceRequests.map((request) => ({
+      id: request.patient.id,
+      userId: request.patient.userId,
+      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+      email: request.patient.user.email,
+      gender: request.patient.user.gender,
+      address: request.patient.user.address,
+      profilePhoto: request.patient.user.profilePhoto,
+      telephoneNumber: request.patient.user.telephoneNumber,
+      dateOfBirth: request.patient.user.dateOfBirth,
+      bloodType: request.patient.bloodType,
+      allergies: request.patient.allergies,
+      chronicDiseases: request.patient.chronicDiseases,
+      role: "PATIENT",
+      serviceRequestId: request.id,
+      serviceType: request.serviceType,
+      status: request.status,
+      createdAt: request.createdAt,
+      preferredDate: request.preferredDate,
+    }));
   }
   static async cancelRequest(requestId, patientId) {
     const request = await prisma.nurseServiceRequest.findFirst({

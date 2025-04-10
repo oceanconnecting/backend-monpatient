@@ -210,4 +210,26 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+  fastify.get('/patient/search/:name?', {
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' }
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const patients = await NurseServiceService.searchPatient(
+          request.user.nurse.id,
+          request.params.name || ''
+        );
+        return patients;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    }
+  });
 }
