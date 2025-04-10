@@ -1,0 +1,52 @@
+{
+  "name": "backend-monopation",
+  "version": "1.0.0",
+  "description": "Backend using Fastify and Prisma",
+  "main": "src/server.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "build": "prisma generate",
+    "vercel-build": "prisma generate"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/jwt": "^9.0.4",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/websocket": "^11.0.2",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "fastify-mailer": "^2.3.1",
+    "fastify-multer": "^2.0.3",
+    "fastify-websocket": "^4.2.2",
+    "fs": "^0.0.1-security",
+    "logger-factory": "^1.0.2",
+    "nodemailer": "^6.10.0",
+    "path": "^0.12.7",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@fastify/swagger": "^8.12.0",
+    "@fastify/swagger-ui": "^2.0.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "minimist": "^1.2.8",
+    "nodemon": "^3.0.2",
+    "prettier": "3.5.3",
+    "prisma": "^5.7.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "repository": "https://github.com/oceanconnecting/backend-monpatient.git",
+  "author": "<zakaryabaouali255@gmail.com>"
+}
