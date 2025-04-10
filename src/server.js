@@ -22,7 +22,8 @@ import { doctorRoutes } from "./routes/doctor.routes.js";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
-
+import { pharmacyMedicinesRoutes } from "./routes/pharmacy.medicine.route.js";
+import pharmacyPerscriptionRoutes from "./routes/pharmacy.prescription.route.js";
 dotenv.config();
 
 // Store connected clients and their user info
@@ -125,6 +126,12 @@ async function buildApp() {
   await fastify.register(medicalRecordsRoutes, {
     prefix: `${apiPrefix}/medical-records`,
   });
+
+
+  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}`});
+  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}`});
+
+
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
   });
