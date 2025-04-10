@@ -22,14 +22,21 @@ export async function nurseServiceRoutes(fastify) {
       try {
         const result = await NurseServiceService.createServiceRequest(
           request.user.patient.id,
-          request.body
-        )
-        return result
+          request.body,
+          reply // Pass the reply object to the service function
+        );
+        
+        // If the function returned normally (no error or early reply)
+        if (result) {
+          return result;
+        }
+        // If we get here without a result, it means reply was already sent
+        
       } catch (error) {
-        reply.code(400).send({ error: error.message })
+        return reply.code(400).send({ error: error.message });
       }
     }
-  })
+  });
   // Nurse views available service requests
   fastify.get('/available', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],

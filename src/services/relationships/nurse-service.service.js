@@ -3,20 +3,39 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export class NurseServiceService {
-  static async createServiceRequest(patientId, requestData) {
-    return prisma.nurseServiceRequest.create({
-      data: {
-        patientId,
-        serviceType: requestData.serviceType,
-        description: requestData.description,
-        preferredDate: new Date(requestData.preferredDate),
-        urgency: requestData.urgency,
-        location: requestData.location
-      },
-      include: {
-        patient: true
+  static async createServiceRequest(patientId, requestData, reply) {
+    try {
+      const existingActiveRequest = await prisma.nurseServiceRequest.findFirst({
+        where: {
+          patientId, // Add this to check only the current patient's requests
+          status: { not: 'CANCELLED' }, // Block if any non-cancelled request exists
+        },
+      });
+  
+      if (existingActiveRequest) {
+        return reply.status(409).send({ // HTTP 409 Conflict
+          error: 'Duplicate request',
+          message: `You already have an active request (status: ${existingActiveRequest.status}).`,
+        });
       }
-    })
+      
+      return await prisma.nurseServiceRequest.create({
+        data: {
+          patientId,
+          serviceType: requestData.serviceType,
+          description: requestData.description,
+          preferredDate: new Date(requestData.preferredDate),
+          urgency: requestData.urgency,
+          location: requestData.location
+        },
+        include: {
+          patient: true
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      throw error; // Re-throw the error to be caught by the handler
+    }
   }
 
   static async getAvailableRequests() {
@@ -174,6 +193,9 @@ export class NurseServiceService {
       where:{id:id},
       include:{
         serviceRequests: {
+          where:{
+            status:'ACCEPTED' 
+          },
           include: {
             patient: true
           }
