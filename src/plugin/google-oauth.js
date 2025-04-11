@@ -27,7 +27,6 @@ export default fp(async function (fastify, opts) {
       process.env.GOOGLE_CALLBACK_URL||
       "http://localhost:3000/api/auth/login/google/callback",
   });
-
   // Add a route to check if the OAuth plugin is properly registered
   fastify.get("/api/auth/oauth-status", async (request, reply) => {
     return {
