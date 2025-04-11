@@ -244,6 +244,7 @@ export class NurseServiceService {
       preferredDate: request.preferredDate,
     }));
   }
+
   static async searchPatient(nurseId, name = '', page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc') {
     // Validate inputs
     if (!nurseId) {

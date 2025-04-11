@@ -39,7 +39,7 @@ async function buildApp() {
         removeAdditional: "all",
         useDefaults: true,
         coerceTypes: true,
-        allErrors: true,
+        allErrors: true
       },
     },
   });
@@ -52,6 +52,7 @@ async function buildApp() {
     credentials: true,
     exposedHeaders: ["Authorization"],
     preflightContinue: false,
+
     optionsSuccessStatus: 204,
   });
   // In your buildApp() function, modify the onRequest hook:
