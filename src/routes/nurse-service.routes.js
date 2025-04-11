@@ -76,7 +76,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Nurse updates service status
   fastify.put('/status/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
@@ -148,7 +147,7 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-  // Patient views their service requests
+  // Patient views their service requests 
   fastify.get('/patient/requests', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
     handler: async (request, reply) => {
@@ -162,7 +161,6 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-
   // Nurse views their service requests
   fastify.get('/requests', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
@@ -177,9 +175,10 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+  // Nurse views their patients
   fastify.get('/patients', {
-  onRequest: [fastify.authenticate, checkRole(['NURSE'])],
-  handler: async (request, reply) => {
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    handler: async (request, reply) => {
     try {
       const patients = await NurseServiceService.nursePatients(request.user.nurse.id)
       return patients
@@ -213,6 +212,7 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+  // Nurse searches for a patient
   fastify.get('/patient/search', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
     schema: {
@@ -346,4 +346,16 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   });
+  // Nurse views their requests
+  fastify.get('/', {
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    handler: async (request, reply) => {
+      try {
+        const requests = await NurseServiceService.getRequests(request.user.nurse.id) 
+        return requests
+      } catch (error) {
+        reply.code(400).send({ error: error.message })
+      }
+    }
+  })
 }

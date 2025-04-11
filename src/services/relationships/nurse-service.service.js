@@ -385,4 +385,29 @@ export class NurseServiceService {
       }
     })
   }
+  static async getRequests(nurseId) {
+    return prisma.nurseServiceRequest.findMany({
+      where: {
+        nurseId: nurseId,
+      },
+      include: {
+        patient: {
+          include: {
+            user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                  telephoneNumber: true,
+                  gender: true,
+                  address: true,
+                  profilePhoto: true,
+                  dateOfBirth: true,
+                }
+            }
+          }
+        }
+      }
+    })
+  }
 }
