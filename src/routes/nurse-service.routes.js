@@ -8,8 +8,9 @@ export async function nurseServiceRoutes(fastify) {
     schema: {
       body: {
         type: 'object',
-        required: ['serviceType', 'description', 'preferredDate', 'urgency', 'location'],
+        required: ['nurseId','serviceType', 'description', 'preferredDate', 'urgency', 'location'],
         properties: {
+          nurseId: { type: 'string' },
           serviceType: { type: 'string' },
           description: { type: 'string' },
           preferredDate: { type: 'string', format: 'date-time' },
@@ -30,6 +31,8 @@ export async function nurseServiceRoutes(fastify) {
         if (result) {
           return result;
         }
+
+
         // If we get here without a result, it means reply was already sent
         
       } catch (error) {
@@ -210,25 +213,136 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
-  fastify.get('/patient/search/:name?', {
+  fastify.get('/patient/search', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
     schema: {
-      params: {
+      querystring: {
         type: 'object',
         properties: {
-          name: { type: 'string' }
+          name: {
+            type: 'string',
+            description: 'Patient name (first or last name)',
+            minLength: 0,
+            maxLength: 100,
+            pattern: '^[a-zA-Z -]*$' // Only allow letters, spaces and hyphens
+          },
+          page: {
+            type: 'integer',
+            minimum: 1,
+            default: 1,
+            description: 'Page number for pagination'
+          },
+          limit: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            default: 20,
+            description: 'Number of records per page'
+          },
+          sortBy: {
+            type: 'string',
+            enum: ['name', 'createdAt', 'status'],
+            default: 'name',
+            description: 'Field to sort by'
+          },
+          sortOrder: {
+            type: 'string',
+            enum: ['asc', 'desc'],
+            default: 'asc',
+            description: 'Sort order'
+          }
+        },
+        additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  userId: { type: 'string' },
+                  name: { type: 'string' },
+                  email: { type: 'string' },
+                  gender: { type: 'string' },
+                  address: { type: 'string', nullable: true },
+                  profilePhoto: { type: 'string', nullable: true },
+                  telephoneNumber: { type: 'string', nullable: true },
+                  dateOfBirth: { type: 'string', format: 'date-time', nullable: true },
+                  bloodType: { type: 'string', nullable: true },
+                  allergies: { type: 'string', nullable: true },
+                  chronicDiseases: { type: 'string', nullable: true },
+                  role: { type: 'string' },
+                  serviceRequestId: { type: 'string' },
+                  serviceType: { type: 'string' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  preferredDate: { type: 'string', format: 'date-time', nullable: true }
+                }
+              }
+            },
+            pagination: {
+              type: 'object',
+              properties: {
+                total: { type: 'integer' },
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                pages: { type: 'integer' }
+              }
+            }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        403: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        500: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
         }
       }
     },
     handler: async (request, reply) => {
       try {
-        const patients = await NurseServiceService.searchPatient(
-          request.user.nurse.id,
-          request.params.name || ''
+        const { name = '', page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = request.query;
+        const nurseId = request.user.nurse.id;
+        
+        const result = await NurseServiceService.searchPatient(
+          nurseId, 
+          name.trim(),
+          page,
+          limit,
+          sortBy,
+          sortOrder
         );
-        return patients;
+        
+        return result;
       } catch (error) {
-        reply.code(400).send({ error: error.message });
+        request.log.error('Patient search failed:', error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          reply.code(400).send({ error: 'Database error occurred' });
+        } else {
+          reply.code(500).send({ error: 'Internal server error' });
+        }
       }
     }
   });

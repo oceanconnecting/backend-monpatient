@@ -7,21 +7,41 @@ export class NurseServiceService {
     try {
       const existingActiveRequest = await prisma.nurseServiceRequest.findFirst({
         where: {
-          patientId, // Add this to check only the current patient's requests
-          status: { not: 'CANCELLED' }, // Block if any non-cancelled request exists
+          OR: [
+            {
+              patientId, // Check for active requests for this patient
+              status: { not: 'CANCELLED' },
+            },
+            {
+              nurseId: requestData.nurseId, // Also check for active requests for this nurse
+              status: { not: 'CANCELLED' },
+            }
+          ]
         },
+        include: {
+          patient: true,
+          nurse: true
+        }
       });
-  
+
       if (existingActiveRequest) {
+        let message;
+        if (existingActiveRequest.patientId === patientId) {
+          message = `You already have an active request (status: ${existingActiveRequest.status}).`;
+        } else {
+          message = `Nurse ${existingActiveRequest.nurse.name} already has an active request (status: ${existingActiveRequest.status}).`;
+        }
+        
         return reply.status(409).send({ // HTTP 409 Conflict
           error: 'Duplicate request',
-          message: `You already have an active request (status: ${existingActiveRequest.status}).`,
+          message: message,
         });
       }
       
       return await prisma.nurseServiceRequest.create({
         data: {
           patientId,
+          nurseId: requestData.nurseId,
           serviceType: requestData.serviceType,
           description: requestData.description,
           preferredDate: new Date(requestData.preferredDate),
@@ -29,7 +49,8 @@ export class NurseServiceService {
           location: requestData.location
         },
         include: {
-          patient: true
+          patient: true,
+          nurse: true
         }
       });
     } catch (error) {
@@ -223,74 +244,126 @@ export class NurseServiceService {
       preferredDate: request.preferredDate,
     }));
   }
-  static async searchPatient(nurseId, name) {
-    // If name is empty or undefined, return all patients for this nurse
-    if (!name || name.trim() === "") {
-      return this.nursePatients(nurseId);
+  static async searchPatient(nurseId, name = '', page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc') {
+    // Validate inputs
+    if (!nurseId) {
+      throw new Error('Nurse ID is required');
     }
   
-    const serviceRequests = await prisma.nurseServiceRequest.findMany({
-      where: {
+    // Convert page and limit to integers
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+  
+    try {
+      // Build the where clause for the query
+      const whereClause = {
         nurseId: nurseId,
         status: 'ACCEPTED',
-        patient: {
+      };
+  
+      // Add name search condition if provided
+      if (name && name.trim() !== '') {
+        whereClause.patient = {
           user: {
             OR: [
-              { firstname: { contains: name, mode: "insensitive" } },
-              { lastname: { contains: name, mode: "insensitive" } },
-            ],
-          },
-        },
-      },
-      include: {
-        patient: {
-          include: {
-            user: {
-              select: {
-                firstname: true,
-                lastname: true,
-                email: true,
-                telephoneNumber: true,
-                gender: true,
-                address: true,
-                profilePhoto: true,
-                dateOfBirth: true,
+              { firstname: { contains: name, mode: 'insensitive' } },
+              { lastname: { contains: name, mode: 'insensitive' } },
+              // Handle multi-word search
+              ...name.split(' ').filter(part => part.trim() !== '').map(part => ({
+                OR: [
+                  { firstname: { contains: part, mode: 'insensitive' } },
+                  { lastname: { contains: part, mode: 'insensitive' } }
+                ]
+              }))
+            ]
+          }
+        };
+      }
+  
+      // Determine the orderBy configuration
+      const orderBy = {};
+      if (sortBy === 'name') {
+        orderBy.patient = {
+          user: {
+            lastname: sortOrder
+          }
+        };
+      } else if (sortBy === 'createdAt') {
+        orderBy.createdAt = sortOrder;
+      } else if (sortBy === 'status') {
+        orderBy.status = sortOrder;
+      }
+  
+      // Count total records for pagination
+      const totalRecords = await prisma.nurseServiceRequest.count({
+        where: whereClause
+      });
+  
+      // Execute query with pagination
+      const serviceRequests = await prisma.nurseServiceRequest.findMany({
+        where: whereClause,
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                  telephoneNumber: true,
+                  gender: true,
+                  address: true,
+                  profilePhoto: true,
+                  dateOfBirth: true,
+                },
               },
             },
-       
           },
         },
-      },
-      orderBy: {
-        patient: {
-          user: {
-            lastname: "asc",
-          },
-        },
-      },
-    });
+        orderBy: orderBy,
+        skip: skip,
+        take: limitInt
+      });
   
-    return serviceRequests.map((request) => ({
-      id: request.patient.id,
-      userId: request.patient.userId,
-      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
-      email: request.patient.user.email,
-      gender: request.patient.user.gender,
-      address: request.patient.user.address,
-      profilePhoto: request.patient.user.profilePhoto,
-      telephoneNumber: request.patient.user.telephoneNumber,
-      dateOfBirth: request.patient.user.dateOfBirth,
-      bloodType: request.patient.bloodType,
-      allergies: request.patient.allergies,
-      chronicDiseases: request.patient.chronicDiseases,
-      role: "PATIENT",
-      serviceRequestId: request.id,
-      serviceType: request.serviceType,
-      status: request.status,
-      createdAt: request.createdAt,
-      preferredDate: request.preferredDate,
-    }));
+      // Format the response data
+      const patients = serviceRequests.map((request) => ({
+        id: request.patient.id,
+        userId: request.patient.userId,
+        name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+        email: request.patient.user.email,
+        gender: request.patient.user.gender,
+        address: request.patient.user.address,
+        profilePhoto: request.patient.user.profilePhoto,
+        telephoneNumber: request.patient.user.telephoneNumber,
+        dateOfBirth: request.patient.user.dateOfBirth,
+        bloodType: request.patient.bloodType,
+        allergies: request.patient.allergies,
+        chronicDiseases: request.patient.chronicDiseases,
+        role: 'PATIENT',
+        serviceRequestId: request.id,
+        serviceType: request.serviceType,
+        status: request.status,
+        createdAt: request.createdAt,
+        preferredDate: request.preferredDate,
+      }));
+  
+      // Return data with pagination info
+      return {
+        data: patients,
+        pagination: {
+          total: totalRecords,
+          page: pageInt,
+          limit: limitInt,
+          pages: Math.ceil(totalRecords / limitInt)
+        }
+      };
+    } catch (error) {
+      console.error('Search patient error:', error);
+      throw error;
+    }
   }
+  
   static async cancelRequest(requestId, patientId) {
     const request = await prisma.nurseServiceRequest.findFirst({
       where: {
