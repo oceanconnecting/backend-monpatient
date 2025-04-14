@@ -38,6 +38,12 @@ enum TaskStatus {
   CANCELLED
 }
 
+enum OrderStatus {
+  PENDING
+  Processing
+  Delivered
+}
+
 model User {
   id              String       @id @default(cuid())
   email           String    @unique
@@ -87,6 +93,7 @@ model Patient {
   scheduledTasks  Schedule[] 
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   chatRoomPatients ChatRoomPatientNurse[] @relation("PatientChats")
+  orders        Order[]
 }
 
 model Nurse {
@@ -238,6 +245,7 @@ model Pharmacy {
   openingHours    String?
   deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
+  orders        Order[]
 }
 
 model Admin {
@@ -261,6 +269,7 @@ model Prescription {
   @@index([patientId])
   @@index([doctorId])
   @@index([pharmacyId])
+  orders        Order[]
 }
 
 model Notification {
@@ -395,4 +404,24 @@ model AuditLog {
   
   @@index([entity, entityId])
   @@index([userId])
+}
+
+
+
+
+
+
+model Order {
+  id            String   @id @default(cuid())
+  status        OrderStatus   @default(PENDING)
+  createdAt     DateTime      @default(now())
+
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  patientId     String
+
+  pharmacy      Pharmacy      @relation(fields: [pharmacyId], references: [id])
+  pharmacyId    String
+
+  prescription  Prescription  @relation(fields: [prescriptionId], references: [id])
+  prescriptionId String
 }

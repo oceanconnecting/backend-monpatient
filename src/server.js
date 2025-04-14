@@ -24,8 +24,16 @@ import fastifyHelmet from '@fastify/helmet';
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
+import { pharmacyMedicinesRoutes } from "./routes/pharmacy.medicine.route.js";
+import pharmacyPerscriptionRoutes from "./routes/pharmacy.prescription.route.js";
 
+
+import pharmacyOrdersRoutes from "./routes/Order.Pharmacy.Route.js";
 dotenv.config();
+
+
+
+
 
 // Store connected clients and their user info
 const connectedClients = new Map();
@@ -140,6 +148,13 @@ async function buildApp() {
   await fastify.register(medicalRecordsRoutes, {
     prefix: `${apiPrefix}/medical-records`,
   });
+
+
+  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}`});
+  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}`});
+  await fastify.register(pharmacyOrdersRoutes,{prefix:`${apiPrefix}/pharmacy/orders`});
+
+
   await fastify.register(doctorPatientRoutes, {
     prefix: `${apiPrefix}/doctor-patient`,
   });
