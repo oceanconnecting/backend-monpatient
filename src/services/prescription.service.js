@@ -61,7 +61,7 @@ export class PrescriptionService {
 
     return prescription;
   }
-
+  
   static async createPrescription(data) {
     if (!data.patientId || !data.doctorId || !data.details) {
       throw new Error('Missing required fields (patientId, doctorId, details)');
@@ -127,6 +127,7 @@ export class PrescriptionService {
 
     return { message: 'Prescription deleted successfully' };
   }
+
   static async getPrescriptionsByPatientId(patientId) {
     if (!patientId) {
       throw new Error('Invalid patient ID');
