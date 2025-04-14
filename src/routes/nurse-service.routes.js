@@ -17,6 +17,19 @@ export async function nurseServiceRoutes(fastify) {
           urgency: { type: 'string', enum: ['Low', 'Medium', 'High'] },
           location: { type: 'string' },
         }
+      },
+      response: {
+        201: {
+          description: 'Service request created successfully',
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            patientId: { type: 'string' },
+            nurseId: { type: 'string' },
+            serviceType: { type: 'string' },
+            // Add other properties you want to return
+          }
+        }
       }
     },
     handler: async (request, reply) => {
@@ -24,19 +37,29 @@ export async function nurseServiceRoutes(fastify) {
         const result = await NurseServiceService.createServiceRequest(
           request.user.patient.id,
           request.body,
-          reply // Pass the reply object to the service function
+          reply
         );
         
         // If the function returned normally (no error or early reply)
         if (result) {
-          return result;
+          return reply.code(201).send(result);
         }
-
-
         // If we get here without a result, it means reply was already sent
-        
       } catch (error) {
-        return reply.code(400).send({ error: error.message });
+        request.log.error(error);
+        
+        // More specific error handling
+        if (error.code === 'P2003') {
+          return reply.code(400).send({ 
+            error: 'Invalid Reference', 
+            message: 'One of the referenced entities does not exist' 
+          });
+        }
+        
+        return reply.code(500).send({ 
+          error: 'Internal Server Error',
+          message: 'An unexpected error occurred'
+        });
       }
     }
   });
@@ -187,7 +210,13 @@ export async function nurseServiceRoutes(fastify) {
     }
   }
   })
-  
+  fastify.get('/patients/:id', {
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    handler: async (request, reply) => {
+      const patients = await NurseServiceService.nursePatientsbyId(request.params.id)
+      return patients
+    }
+  })
   // Patient cancels their service request
   fastify.put('/cancel/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
@@ -358,4 +387,5 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+  //
 }
