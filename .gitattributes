@@ -6,6 +6,11 @@
 *.txt text
 *.json text
 
+* text=auto
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.md text eol=lf
 # Scripts
 *.js text
 *.ts text
