@@ -5,39 +5,62 @@ const prisma = new PrismaClient()
 export class NurseServiceService {
   static async createServiceRequest(patientId, requestData, reply) {
     try {
-      const existingActiveRequest = await prisma.nurseServiceRequest.findFirst({
-        where: {
-          OR: [
-            {
-              patientId, // Check for active requests for this patient
-              status: { not: 'CANCELLED' },
-            },
-            {
-              nurseId: requestData.nurseId, // Also check for active requests for this nurse
-              status: { not: 'CANCELLED' },
-            }
-          ]
-        },
-        include: {
-          patient: true,
-          nurse: true
-        }
+      // First check if both patient and nurse exist
+      const patient = await prisma.patient.findUnique({
+        where: { id: patientId }
       });
-
-      if (existingActiveRequest) {
-        let message;
-        if (existingActiveRequest.patientId === patientId) {
-          message = `You already have an active request (status: ${existingActiveRequest.status}).`;
-        } else {
-          message = `Nurse ${existingActiveRequest.nurse.name} already has an active request (status: ${existingActiveRequest.status}).`;
-        }
-        
-        return reply.status(409).send({ // HTTP 409 Conflict
-          error: 'Duplicate request',
-          message: message,
+      
+      if (!patient) {
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Patient not found'
         });
       }
       
+      const nurse = await prisma.nurse.findUnique({
+        where: { id: requestData.nurseId }
+      });
+      
+      if (!nurse) {
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Nurse not found'
+        });
+      }
+  
+      // Rest of your existing code for checking active requests
+      // const existingActiveRequest = await prisma.nurseServiceRequest.findFirst({
+      //   where: {
+      //     OR: [
+      //       {
+      //         patientId, // Check for active requests for this patient
+      //         status: { not: 'CANCELLED' },
+      //       },
+      //       {
+      //         nurseId: requestData.nurseId, // Also check for active requests for this nurse
+      //         status: { not: 'CANCELLED' },
+      //       }
+      //     ]
+      //   },
+      //   include: {
+      //     patient: true,
+      //     nurse: true
+      //   }
+      // });
+  
+      // if (existingActiveRequest) {
+      //   let message;
+      //   if (existingActiveRequest.patientId === patientId) {
+      //     message = `You already have an active request (status: ${existingActiveRequest.status}).`;
+      //   } else {
+      //     message = `Nurse ${existingActiveRequest.nurse.name} already has an active request (status: ${existingActiveRequest.status}).`;
+      //   }
+      //   return reply.status(409).send({
+      //     error: 'Duplicate request',
+      //     message: message,
+      //   });
+      // }
+  
       return await prisma.nurseServiceRequest.create({
         data: {
           patientId,
@@ -54,8 +77,15 @@ export class NurseServiceService {
         }
       });
     } catch (error) {
+      // Add more specific error handling
+      if (error.code === 'P2003' && error.meta?.field_name?.includes('nurseId')) {
+        return reply.status(400).send({
+          error: 'Invalid Reference',
+          message: 'The specified nurse does not exist'
+        });
+      }
       console.error(error);
-      throw error; // Re-throw the error to be caught by the handler
+      throw error;
     }
   }
 
