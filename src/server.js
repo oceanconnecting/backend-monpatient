@@ -19,6 +19,8 @@ import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import { doctorRoutes } from "./routes/doctor.routes.js";
+import fastifyRateLimit from '@fastify/rate-limit';
+import fastifyHelmet from '@fastify/helmet';
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
@@ -42,6 +44,7 @@ async function buildApp() {
         allErrors: true
       },
     },
+    
   });
 
   // Register CORS first
@@ -120,6 +123,17 @@ async function buildApp() {
   console.log("WebSocket routes registered");
   // Register routes
   const apiPrefix = "/api";
+  await fastify.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: '1 minute'
+  });
+  const signals = ['SIGINT', 'SIGTERM'];
+signals.forEach(signal => {
+  process.on(signal, async () => {
+    await fastify.close();
+    process.exit(0);
+  });
+});
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
@@ -136,6 +150,7 @@ async function buildApp() {
   await fastify.register(notificationRoutes, {
     prefix: `${apiPrefix}/notifications`,
   });
+  await fastify.register(fastifyHelmet);
   await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` });
   await fastify.register(chatPatientNurseRoutes, {
     prefix: `${apiPrefix}/chat-patient-nurse`,
