@@ -128,12 +128,12 @@ async function buildApp() {
     timeWindow: '1 minute'
   });
   const signals = ['SIGINT', 'SIGTERM'];
-signals.forEach(signal => {
-  process.on(signal, async () => {
-    await fastify.close();
-    process.exit(0);
+  signals.forEach(signal => {
+    process.on(signal, async () => {
+      await fastify.close();
+      process.exit(0);
+    });
   });
-});
   await fastify.register(authRoutes, { prefix: `${apiPrefix}/auth` });
   await fastify.register(adminRoutes, { prefix: `${apiPrefix}/admin` });
   await fastify.register(patientRoutes, { prefix: `${apiPrefix}/patient` });
