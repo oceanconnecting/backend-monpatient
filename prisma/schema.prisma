@@ -295,6 +295,7 @@ model MedicalRecord {
   diagnosis   String
   treatment   String
   notes       String?
+  recordDate  DateTime  @default(now())  // Date of the medical encounter
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   nurses      Nurse[]   @relation("NurseUpdates")

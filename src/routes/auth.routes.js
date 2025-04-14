@@ -2,7 +2,7 @@ import { AuthService } from "../services/auth/auth.service.js";
 import { PrismaClient } from "@prisma/client";
 import sget from "simple-get";
 const prisma = new PrismaClient();
-import crypto from "crypto";
+
 export async function authRoutes(fastify) {
   fastify.post("/register", {
     schema: {

@@ -19,27 +19,42 @@ export const MedicalRecordService = {
     }
   },
 
-  async createMedicalRecord(data) {
+  async createMedicalRecord(data, userId) {
     try {
+      // First find the patient
       const patient = await prisma.patient.findUnique({
-        where: { id: data.patientId }
+        where: { id: data.patientId },
+        include: {
+          doctors: {
+            where: { doctorId: userId }
+          },
+          nurseServiceRequests: {
+            where: { nurseId: userId }
+          }
+        }
       });
-  
+      
       if (!patient) {
         throw new Error(`Patient with ID ${data.patientId} not found`);
       }
-  
+      
+      // Check if the current user has a relationship with this patient
+      if (patient.doctors.length === 0 && patient.nurseServiceRequests.length === 0) {
+        throw new Error("You are not authorized to create medical records for this patient");
+      }
+      
+      // Proceed with creating the record
       return await prisma.medicalRecord.create({
         data: {
           diagnosis: data.diagnosis,
           treatment: data.treatment,
           notes: data.notes,
-          patient: { connect: { id: data.patientId } },
+          patient: { connect: { id: data.patientId } }
         },
       });
     } catch (error) {
       console.error("Error creating medical record:", error);
-      throw new Error("Failed to create medical record");
+      throw new Error(error.message || "Failed to create medical record");
     }
   },
 

@@ -3,7 +3,7 @@ import { checkRole } from '../middleware/auth.middleware.js';
 
 export async function medicalRecordsRoutes(fastify, options) {
   // Get all medical records for a specific patient (Only the patient can view their own records)
-  fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIENT"])],}, async (request, reply) => {
+  fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIENT","DOCTOR","NURSE"])],}, async (request, reply) => {
     try {
       const records = await MedicalRecordService.getMedicalRecordsByPatient(request.params.patientId);
       reply.send(records);
@@ -85,16 +85,24 @@ export async function medicalRecordsRoutes(fastify, options) {
       }
     }
   };
-  // Create a new medical record (Only doctors can create medical records)
+  // Create a new medical record (Only doctors and nu can create medical records)
   fastify.post('/', {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR","NURSE"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE"])],
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
     try {
-      const record = await MedicalRecordService.createMedicalRecord(request.body);
+      // Pass the authenticated user's ID to the service
+      const record = await MedicalRecordService.createMedicalRecord(
+        request.body, 
+        request.user.id // Assuming your authentication middleware adds user to request
+      );
       reply.status(201).send(record);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to create record' });
+      if (error.message.includes("authorized")) {
+        reply.status(403).send({ error: error.message });
+      } else {
+        reply.status(500).send({ error: error.message || 'Failed to create record' });
+      }
     }
   });
   // Update a medical record (Only nurses and doctors can update records)
