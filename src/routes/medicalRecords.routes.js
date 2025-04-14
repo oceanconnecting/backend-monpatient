@@ -91,11 +91,13 @@ export async function medicalRecordsRoutes(fastify, options) {
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
     try {
-      // Pass the authenticated user's ID to the service
+      // Pass both the user ID and role to the service
       const record = await MedicalRecordService.createMedicalRecord(
         request.body, 
-        request.user.id // Assuming your authentication middleware adds user to request
+        request.user.id,
+        request.user.role // Make sure your auth sets this property
       );
+      
       reply.status(201).send(record);
     } catch (error) {
       if (error.message.includes("authorized")) {
