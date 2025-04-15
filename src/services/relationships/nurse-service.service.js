@@ -424,20 +424,34 @@ export class NurseServiceService {
         patient: {
           include: {
             user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                  telephoneNumber: true,
-                  gender: true,
-                  address: true,
-                  profilePhoto: true,
-                  dateOfBirth: true,
-                }
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true,
+                telephoneNumber: true,
+                gender: true,
+                address: true,
+                profilePhoto: true,
+                dateOfBirth: true,
+              }
             }
           }
         }
       }
-    })
+    }).then(requests => {
+      return requests.map(request => {
+        const user = request.patient.user;
+        return {
+          
+          name: `${user.firstname} ${user.lastname}`,
+          urgency: request.urgency,
+          status: request.status,
+          description: request.description,
+          serviceType: request.serviceType,
+          preferredDate: request.preferredDate,
+          // Add any other concatenated fields you need here
+        };
+      });
+    });
   }
 }
