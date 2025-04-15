@@ -1,11 +1,9 @@
-import { PharmacyMedicinesService } from "../services/pharmacy.medicine.service.js";
+import { PharmacyMedicinesService } from "../../services/pharmacies/pharmacy.medicine.service.js";
 
 export async function pharmacyMedicinesRoutes(fastify, options) {
-  fastify.addHook('preHandler', async (request, reply) => {
-    request.pharmacyId = request.user?.pharmacy?.id || "your-pharmacy-id"; // Replace logic as needed
-  });
+  
 
-  fastify.get('/pharmacy/medicines', {
+  fastify.get('/', {
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
       const pharmacyId = request.pharmacyId;
@@ -26,15 +24,15 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
     }
   });
 
-  fastify.post('/pharmacy/medicines', {
+  fastify.post('/', {
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
-      const pharmacyId = request.pharmacyId;
+      const pharmacyId = request.user?.pharmacy?.id;
       if (!pharmacyId) {
         return reply.status(401).send({ error: 'Pharmacy ID missing' });
       }
 
-      const { name, description, stock, price } = request.body;
+      const { name, description, dosage, manufacturer, category, sideEffects, instructions, price } = request.body;
 
       if (!name || price === undefined) {
         return reply.status(400).send({ error: 'Name and price are required' });
@@ -44,7 +42,11 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
         const newMedicine = await PharmacyMedicinesService.createMedicine(pharmacyId, {
           name,
           description,
-          stock,
+          dosage,
+          manufacturer,
+          category,
+          sideEffects,
+          instructions,
           price,
         });
         reply.status(201).send(newMedicine);

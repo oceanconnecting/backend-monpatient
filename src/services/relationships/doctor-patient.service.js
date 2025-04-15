@@ -318,7 +318,7 @@ export class DoctorPatientService {
       }
     })
   }
-
+  
   static async endDoctorPatientRelationship(patientId, doctorId) {
     return prisma.doctorPatient.update({
       where: {

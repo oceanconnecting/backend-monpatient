@@ -1,5 +1,5 @@
 // routes/pharmacyOrdersRoutes.js
-import { processOrder, deliverOrder } from "../services/Order.Pharmacy.Service.js";
+import { processOrder, deliverOrder } from "../../services/pharmacies/Order.Pharmacy.Service.js";
 
 export default async function pharmacyOrdersRoutes(fastify, options) {
   // Transition from Pending → Processing

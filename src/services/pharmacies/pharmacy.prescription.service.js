@@ -9,7 +9,7 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
 
   const prescriptions = await prisma.prescription.findMany({
     where: {
-      pharmacyId: Number(pharmacyId),
+      pharmacyId: pharmacyId,
     },
   });
 

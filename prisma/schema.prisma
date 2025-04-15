@@ -246,6 +246,7 @@ model Pharmacy {
   deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
   orders        Order[]
+   medicines       Medicine[]
 }
 
 model Admin {
@@ -266,12 +267,12 @@ model Prescription {
   doctorId    String
   pharmacy    Pharmacy? @relation("PharmacyPrescriptions", fields: [pharmacyId], references: [id])
   pharmacyId  String?
+  items       PrescriptionItem[]
+  orders      Order[]
   @@index([patientId])
   @@index([doctorId])
   @@index([pharmacyId])
-  orders        Order[]
 }
-
 model Notification {
   id        String       @id @default(cuid())
   userId    String        
@@ -406,9 +407,37 @@ model AuditLog {
   @@index([userId])
 }
 
+model Medicine {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  dosage        String
+  manufacturer  String?
+  category      String?
+  inStock       Boolean        @default(true)
+  price         Float?
+  sideEffects   String?
+  instructions  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  pharmacy      Pharmacy?      @relation(fields: [pharmacyId], references: [id])
+  pharmacyId    String?
+  prescriptionItems PrescriptionItem[]
+}
 
-
-
+model PrescriptionItem {
+  id              String       @id @default(cuid())
+  quantity        Int
+  instructions    String
+  duration        String?      // e.g., "7 days", "2 weeks"
+  refills         Int          @default(0)
+  medicine        Medicine     @relation(fields: [medicineId], references: [id])
+  medicineId      String
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id])
+  prescriptionId  String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
 
 
 model Order {

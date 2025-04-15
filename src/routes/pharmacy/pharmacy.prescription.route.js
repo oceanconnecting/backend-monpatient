@@ -1,11 +1,11 @@
-import { getPrescriptionsByPharmacy } from '../services/pharmacy.prescription.service.js';  // Import the function from the service
+import { getPrescriptionsByPharmacy } from '../../services/pharmacies/pharmacy.prescription.service.js';  // Import the function from the service
 
 export default async function pharmacyPerscriptionRoutes(fastify) {
-  fastify.get('/pharmacy/prescriptions', {
-    preHandler: [fastify.authenticate]  // هنا كتضيف authenticate ف preHandler باش تدير التوثيق قبل ما توصل للـ route
+  fastify.get('/', {
+    preHandler: [fastify.authenticate]
   }, async (request, reply) => {
     try {
-      const { pharmacyId } = request.query;
+      const pharmacyId = request.user?.pharmacy?.id;
 
       const prescriptions = await getPrescriptionsByPharmacy(pharmacyId);
 

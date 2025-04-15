@@ -32,15 +32,14 @@ export async function prescriptionRoutes(fastify, options) {
   fastify.post('/', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
     handler: async (request, reply) => {
-      try { 
-        const prescription = await PrescriptionService.createPrescription(request.body);
+      try {
+        const prescription = await PrescriptionService.createPrescription(request.user.doctor.id, request.body);
         return prescription;
       } catch (error) {
         reply.code(error.statusCode || 500).send({ error: error.message });
       }
     }
   });
-
   // Update prescription
   fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],

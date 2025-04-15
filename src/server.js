@@ -24,11 +24,11 @@ import fastifyHelmet from '@fastify/helmet';
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
-import { pharmacyMedicinesRoutes } from "./routes/pharmacy.medicine.route.js";
-import pharmacyPerscriptionRoutes from "./routes/pharmacy.prescription.route.js";
+import { pharmacyMedicinesRoutes } from "./routes/pharmacy/pharmacy.medicine.route.js";
+import pharmacyPerscriptionRoutes from "./routes/pharmacy/pharmacy.prescription.route.js";
 
 
-import pharmacyOrdersRoutes from "./routes/Order.Pharmacy.Route.js";
+import pharmacyOrdersRoutes from "./routes/pharmacy/Order.Pharmacy.Route.js";
 dotenv.config();
 
 
@@ -128,7 +128,6 @@ async function buildApp() {
   });
   fastify.register(websocketRoutes);
 
-  console.log("WebSocket routes registered");
   // Register routes
   const apiPrefix = "/api";
   await fastify.register(fastifyRateLimit, {
@@ -150,8 +149,8 @@ async function buildApp() {
   });
 
 
-  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}`});
-  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}`});
+  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}/pharmacy/medicines`});
+  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}/pharmacy/prescriptions`});
   await fastify.register(pharmacyOrdersRoutes,{prefix:`${apiPrefix}/pharmacy/orders`});
 
 

@@ -62,23 +62,43 @@ export class PrescriptionService {
     return prescription;
   }
   
-  static async createPrescription(data) {
-    if (!data.patientId || !data.doctorId || !data.details) {
+  static async createPrescription(doctorId, data) {
+    if (!data.patientId || !data.details) {
       throw new Error('Missing required fields (patientId, doctorId, details)');
     }
-
     return await prisma.prescription.create({
       data: {
         details: data.details,
         approved: data.approved ?? false,
         patient: { connect: { id: data.patientId } },
-        doctor: { connect: { id: data.doctorId } },
+        doctor: { connect: { id: doctorId } },
         pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
       },
       include: {
-        patient: { include: { user: true } },
-        doctor: { include: { user: true } },
-        pharmacy: { include: { user: true } },
+        patient: { include: { user: {
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+          }
+        } } },
+        doctor: { include: { user: {
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+          }
+        } } },
+        pharmacy: { include: { user: {
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
+          }
+        } } },
       },
     });
   }

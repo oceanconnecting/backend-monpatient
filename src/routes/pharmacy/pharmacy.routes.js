@@ -1,5 +1,5 @@
-import { checkRole } from "../middleware/auth.middleware.js";
-import { PharmacyService } from "../services/pharmacies/pharmacies.service.js";
+import { checkRole } from "../../middleware/auth.middleware.js";
+import { PharmacyService } from "../../services/pharmacies/pharmacies.service.js";
 
 export async function pharmacyRoutes(fastify) {
   fastify.get("/", {

@@ -9,15 +9,18 @@ export const PharmacyMedicinesService = {
       include: { medicines: true },
     });
   },
-
-  async createMedicine(pharmacyId, { name, description, stock = 0, price }) {
+  async createMedicine(pharmacyId, data) {
     return await prisma.medicine.create({
       data: {
-        name,
-        description,
-        stock,
-        price,
-        pharmacies: {
+        name:data.name,
+        description:data.description,
+        dosage:data.dosage,
+        manufacturer:data.manufacturer,
+        category:data.category,
+        sideEffects:data.sideEffects,
+        instructions:data.instructions,
+        price:data.price,
+        pharmacy: {
           connect: { id: pharmacyId },
         },
       },

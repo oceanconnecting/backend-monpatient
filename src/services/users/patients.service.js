@@ -231,6 +231,8 @@ export class PatientService {
       }
     );
   }
+
+  // Get emergency contact
   static async getEmergencyContact(id) {
     try {
       const patient = await prisma.patient.findUnique({
@@ -251,10 +253,7 @@ export class PatientService {
       throw new Error(error.message);
     }
   }
-
-  /**
-   * Update a patient's emergency contact details
-   */
+  // Update a patient's emergency contact details
   static async updateEmergencyContact(id, data) {
     const { emergencyContactName, emergencyContactPhone, emergencyContactRelationship } = data;
 
@@ -272,5 +271,50 @@ export class PatientService {
     } catch (error) {
       throw new Error('Could not update emergency contact');
     }
+  }
+  static async patientsendOrderMedicine(id, data) {
+    const { prescriptionId, pharmacyId } = data;
+    
+    // First verify patient exists
+    const patient = await prisma.patient.findUnique({
+      where: { id },
+    });
+    
+    if (!patient) {
+      throw new Error('Patient not found');
+    }
+    
+    // Verify the prescription exists and belongs to this patient
+    const prescription = await prisma.prescription.findFirst({
+      where: {
+        id: prescriptionId,
+        patientId: id,
+        // approved: true, // Ensuring prescription is approved
+      },
+    });
+    
+    if (!prescription) {
+      throw new Error('Valid prescription not found');
+    }
+    
+    // Update the prescription with pharmacy info if provided
+    if (pharmacyId) {
+      await prisma.prescription.update({
+        where: { id: prescriptionId },
+        data: { pharmacyId }
+      });
+    }
+    
+    // Create an order
+    const order = await prisma.order.create({
+      data: {
+        patient: { connect: { id } },
+        pharmacy: { connect: { id: pharmacyId } },
+        prescription: { connect: { id: prescriptionId } },
+        status: 'PENDING',
+      }
+    });
+    
+    return order;
   }
 }
