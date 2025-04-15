@@ -131,7 +131,6 @@ export class ChatService {
   // Helper method to handle sending a message
   async handleSendMessage(connection, data) {
     const userId = connection.user.id;
-    console.log(`New message from ${userId} in room ${data.roomId}:`, data.content);
 
     try {
       const message = await this.sendMessage(
