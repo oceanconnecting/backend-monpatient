@@ -1,6 +1,6 @@
 import { userRoutes } from './admin/users.routes.js';
 import { chatRoutes } from './admin/chat.routes.js';
-import { pharmacyRoutes } from './pharmacy.routes.js';
+import { pharmacyRoutes } from './admin/pharmacy.routes.js';
 
 export async function adminRoutes(fastify) {
   fastify.register(userRoutes, { prefix: '/users' });

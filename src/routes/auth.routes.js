@@ -197,7 +197,7 @@ export async function authRoutes(fastify) {
           (error, response, data) => {
             if (error) {
               fastify.log.error("Error fetching user profile:", error);
-              return reject(error);
+              return reject(error instanceof Error ? error : new Error(error.message || String(error)));
             }
             if (response.statusCode !== 200) {
               fastify.log.error(
