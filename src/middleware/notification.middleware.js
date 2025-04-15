@@ -24,11 +24,11 @@ export function createNotificationMiddleware(fastify, options = {}) {
     notificationQueue.clear()
     
     try {
-      await prisma.$transaction(
-        batch.map(item => 
-          prisma.notification.create({ data: item })
-        )
-      )
+      // await prisma.$transaction(
+      //   batch.map(item => 
+      //     prisma.notification.create({ data: item })
+      //   )
+      // )
       
       if (debug) {
         fastify.log.info(`Processed batch of ${batch.length} notifications`)

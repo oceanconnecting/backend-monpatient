@@ -102,22 +102,6 @@ async function buildApp() {
   });
   // In your Fastify setup
 
-  fastify.get("/ws", { websocket: true }, (connection, req) => {
-    // Listen for messages from the client
-    connection.on("message", (data) => {
-      try {
-        // Broadcast the message to all connected clients
-        fastify.websocketServer.clients.forEach((client) => {
-          if (client.readyState === 1) {
-            // 1 means OPEN
-            client.send(data);
-          }
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    });
-  });
   fastify.register(websocketRoutes);
 
   console.log("WebSocket routes registered");
