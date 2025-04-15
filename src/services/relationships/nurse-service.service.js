@@ -89,11 +89,11 @@ export class NurseServiceService {
     }
   }
 
-  static async getAvailableRequests() {
+  static async getAvailableRequests(nurseId) {
     return prisma.nurseServiceRequest.findMany({
       where: {
         status: 'REQUESTED',
-        nurseId: null
+        nurseId: nurseId
       },
       include: {
         patient: true

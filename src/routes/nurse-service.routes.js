@@ -68,7 +68,7 @@ export async function nurseServiceRoutes(fastify) {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
     handler: async (request, reply) => {
       try {
-        const requests = await NurseServiceService.getAvailableRequests()
+        const requests = await NurseServiceService.getAvailableRequests(request.user.nurse.id)
         return requests
       } catch (error) {
         reply.code(400).send({ error: error.message })
