@@ -383,6 +383,7 @@ model Message {
   @@index([senderId])
   // Ensure that a message belongs to only one chat type
 }
+
 model AuditLog {
   id        String   @id @default(cuid())
   action    String   // CREATE, UPDATE, DELETE
