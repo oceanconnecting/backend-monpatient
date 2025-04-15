@@ -43,7 +43,6 @@ export class ChatService {
       }
     });
   }
-
   // Helper method to handle user connection
   async handleConnection(connection, req) {
     try {
@@ -84,7 +83,6 @@ export class ChatService {
       connection.close();
     }
   }
-
   // Helper method to handle incoming messages
   async handleMessage(connection, data) {
 
@@ -109,7 +107,6 @@ export class ChatService {
         this.handleError(connection, "Unknown message type");
     }
   }
-
   // Helper method to handle joining a room
   async handleJoinRoom(connection, roomId) {
     const userId = connection.user.id;
@@ -127,7 +124,6 @@ export class ChatService {
       this.handleError(connection.socket, "Cannot join room: not authorized");
     }
   }
-
   // Helper method to handle sending a message
   async handleSendMessage(connection, data) {
     const userId = connection.user.id;
@@ -146,7 +142,6 @@ export class ChatService {
       this.handleError(connection.socket, "Failed to send message: " + error.message);
     }
   }
-
   // Helper method to handle typing status
   handleTyping(connection, roomId) {
     const userId = connection.user.id;
@@ -156,7 +151,6 @@ export class ChatService {
       userId
     );
   }
-
   // Helper method to handle marking messages as read
   async handleMarkRead(connection, roomId) {
     const userId = connection.user.id;
@@ -168,7 +162,6 @@ export class ChatService {
       this.handleError(connection.socket, error.message);
     }
   }
-
   // Helper method to broadcast to a specific room
   broadcastToRoom(roomId, data, excludeUserId = null) {
     const roomKey = `room:${roomId}`;
@@ -177,7 +170,6 @@ export class ChatService {
     );
     this.broadcast(clients, data, excludeUserId);
   }
-
   // Helper method to create or get a room
   async createOrGetRoom(patientId, participantId, participantRole) {
     const participant = await this.prisma.user.findUnique({
@@ -201,7 +193,6 @@ export class ChatService {
     }
     return room;
   }
-
   // Helper method to send a message
   async sendMessage(roomId, senderId, senderRole, content) {
     const sender = await this.prisma.user.findUnique({
@@ -228,7 +219,6 @@ export class ChatService {
       include: { chatRoom: true },
     });
   }
-
   // Helper method to mark messages as read
   async markMessagesAsRead(roomId, userId) {
     await this.prisma.message.updateMany({
@@ -236,7 +226,6 @@ export class ChatService {
       data: { isRead: true, readAt: new Date() },
     });
   }
-
   // Helper method to get room messages
   async getRoomMessages(roomId, userId) {
     await this.validateRoomAccess(userId, roomId);
@@ -245,7 +234,6 @@ export class ChatService {
       orderBy: { createdAt: "asc" },
     });
   }
-
   // Helper method to get user rooms
   async getUserRooms(userId, userRole) {
     const query = {

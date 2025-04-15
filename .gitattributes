@@ -1,36 +1,31 @@
 # Auto detect text files and perform LF normalization
-* text=auto
+* text=auto eol=lf
 
 # Documents
 *.md text diff=markdown
 *.txt text
 *.json text
 
-* text=auto
+# Scripts
 *.js text eol=lf
 *.ts text eol=lf
-*.json text eol=lf
-*.md text eol=lf
-# Scripts
-*.js text
-*.ts text
-*.jsx text
-*.tsx text
+*.jsx text eol=lf
+*.tsx text eol=lf
 
 # Configs
-*.yml text
-*.yaml text
-*.xml text
-*.toml text
-*.ini text
-*.cfg text
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
 
 # Graphics
 *.png binary
 *.jpg binary
 *.gif binary
 *.ico binary
-*.svg text
+*.svg text eol=lf
 
 # Fonts
 *.ttf binary
