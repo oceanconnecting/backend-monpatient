@@ -19,8 +19,8 @@ import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import { doctorRoutes } from "./routes/doctor.routes.js";
-import fastifyRateLimit from '@fastify/rate-limit';
-import fastifyHelmet from '@fastify/helmet';
+import fastifyRateLimit from "@fastify/rate-limit";
+import fastifyHelmet from "@fastify/helmet";
 import dotenv from "dotenv";
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
@@ -41,31 +41,36 @@ async function buildApp() {
         removeAdditional: "all",
         useDefaults: true,
         coerceTypes: true,
-        allErrors: true
+        allErrors: true,
       },
     },
-    
   });
 
   // Register CORS first
   await fastify.register(fastifyCors, {
-    origin: true, // Allow all origins
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.ALLOWED_ORIGINS?.split(",") || true
+        : true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     exposedHeaders: ["Authorization"],
     preflightContinue: false,
-
     optionsSuccessStatus: 204,
   });
-  // In your buildApp() function, modify the onRequest hook:
+
+  // Update CSP for production
   fastify.addHook("onRequest", (request, reply, done) => {
-    reply.header(
-      "Content-Security-Policy",
-      "connect-src 'self' http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000;"
-    );
+    const csp =
+      process.env.NODE_ENV === "production"
+        ? `connect-src 'self' ${process.env.ALLOWED_ORIGINS || "*"};`
+        : "connect-src 'self' http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000;";
+
+    reply.header("Content-Security-Policy", csp);
     done();
   });
+
   await fastify.register(multipart, {
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB limit (adjust as needed)
@@ -109,10 +114,10 @@ async function buildApp() {
   const apiPrefix = "/api";
   await fastify.register(fastifyRateLimit, {
     max: 100,
-    timeWindow: '1 minute'
+    timeWindow: "1 minute",
   });
-  const signals = ['SIGINT', 'SIGTERM'];
-  signals.forEach(signal => {
+  const signals = ["SIGINT", "SIGTERM"];
+  signals.forEach((signal) => {
     process.on(signal, async () => {
       await fastify.close();
       process.exit(0);
@@ -163,10 +168,12 @@ async function buildApp() {
 const start = async () => {
   try {
     const fastify = await buildApp();
-    await fastify.listen({
-      port: 3000,
+    const port = process.env.PORT || 3000;
+     fastify.listen({
+      port: port,
+      host: "0.0.0.0", // This is important for Railway
     });
-    console.log(`Server running at http://localhost:${process.env.PORT}`);
+    console.log(`Server running at http://0.0.0.0:${port}`);
   } catch (err) {
     console.error("Error starting server:", err);
     process.exit(1);
