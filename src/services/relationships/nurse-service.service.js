@@ -454,4 +454,35 @@ export class NurseServiceService {
       });
     });
   }
+  static async nursePatientsbyPatientId(id) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: id },
+      include: {
+        nurseServiceRequests: {
+          where: { status: 'ACCEPTED' },
+          include: {
+            patient: {
+              include: {
+                user: {
+                  select: { firstname: true, lastname: true, email: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    return patient.nurseServiceRequests.map((request) => ({
+      id: request.patient.id,
+      userId: request.patient.userId,
+      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+      email: request.patient.user.email,
+      serviceRequestId: request.id,
+      serviceType: request.serviceType,
+      status: request.status,
+      createdAt: request.createdAt,
+      preferredDate: request.preferredDate,
+    }));
+  }
 }

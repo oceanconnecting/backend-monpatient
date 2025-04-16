@@ -381,4 +381,11 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+  fastify.get('/patient/:patientId', {
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    handler: async (request, reply) => {
+      const requests = await NurseServiceService.nursePatientsbyPatientId(request.params.patientId)
+      return requests
+    }
+  })
 }
