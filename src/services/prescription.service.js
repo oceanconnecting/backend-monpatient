@@ -62,8 +62,8 @@ export class PrescriptionService {
     return prescription;
   }
 
-  static async createPrescription(data) {
-    if (!data.patientId || !data.doctorId || !data.details) {
+  static async createPrescription(doctorId,data) {
+    if (!data.patientId || !data.details) {
       throw new Error('Missing required fields (patientId, doctorId, details)');
     }
 
@@ -72,7 +72,7 @@ export class PrescriptionService {
         details: data.details,
         approved: data.approved ?? false,
         patient: { connect: { id: data.patientId } },
-        doctor: { connect: { id: data.doctorId } },
+        doctor: { connect: { id: doctorId } },
         pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
       },
       include: {

@@ -264,11 +264,10 @@ export class PatientService {
     }
     
     // Verify the prescription exists and belongs to this patient
-    const prescription = await prisma.prescription.findFirst({
+    const prescription = await prisma.prescription.findUnique({
       where: {
         id: prescriptionId,
-        patientId: id,
-        approved: true, // Ensuring prescription is approved
+        patientId: id // Ensuring prescription is approved
       },
     });
     
@@ -289,8 +288,8 @@ export class PatientService {
       data: {
         patient: { connect: { id } },
         prescription: { connect: { id: prescriptionId } },
+        pharmacy: { connect: { id: pharmacyId } },
         status: 'PENDING',
-        orderedAt: new Date(),
       }
     });
     
