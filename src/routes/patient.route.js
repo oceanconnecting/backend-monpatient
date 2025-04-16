@@ -62,4 +62,15 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  fastify.post("/order-medicine", {
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    handler: async (request, reply) => {
+      try {
+        const orderMedicine = await PatientService.patientsendOrderMedicine(request.user.patient.id, request.body);
+        reply.code(200).send(orderMedicine);
+      } catch (error) {
+        reply.code(500).send(error);
+      }
+    },
+  });
 }
