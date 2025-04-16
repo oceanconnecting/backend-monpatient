@@ -15,7 +15,11 @@ enum Role {
   PHARMACY
   ADMIN
 }
-
+enum OrderStatus {
+  PENDING
+  Processing
+  Delivered
+}
 enum RequestStatus {
   PENDING
   ACCEPTED
@@ -87,6 +91,7 @@ model Patient {
   scheduledTasks  Schedule[] 
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   chatRoomPatients ChatRoomPatientNurse[] @relation("PatientChats")
+  orders Order[]
 }
 
 model Nurse {
@@ -238,6 +243,8 @@ model Pharmacy {
   openingHours    String?
   deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
+  medicines       Medicine[]
+  orders Order[]
 }
 
 model Admin {
@@ -246,7 +253,37 @@ model Admin {
   userId    String      @unique
   reports   Report[]
 }
+model Medicine {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  dosage        String
+  manufacturer  String?
+  category      String?
+  inStock       Boolean        @default(true)
+  price         Float?
+  sideEffects   String?
+  instructions  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  pharmacy      Pharmacy?      @relation(fields: [pharmacyId], references: [id])
+  pharmacyId    String?
+  prescriptionItems PrescriptionItem[]
+}
 
+model PrescriptionItem {
+  id              String       @id @default(cuid())
+  quantity        Int
+  instructions    String
+  duration        String?      // e.g., "7 days", "2 weeks"
+  refills         Int          @default(0)
+  medicine        Medicine     @relation(fields: [medicineId], references: [id])
+  medicineId      String
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id])
+  prescriptionId  String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
 model Prescription {
   id          String       @id @default(cuid())
   date        DateTime  @default(now())
@@ -258,11 +295,26 @@ model Prescription {
   doctorId    String
   pharmacy    Pharmacy? @relation("PharmacyPrescriptions", fields: [pharmacyId], references: [id])
   pharmacyId  String?
+  items       PrescriptionItem[]
+  orders      Order[]
   @@index([patientId])
   @@index([doctorId])
   @@index([pharmacyId])
 }
+model Order {
+  id            String   @id @default(cuid())
+  status        OrderStatus   @default(PENDING)
+  createdAt     DateTime      @default(now())
 
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  patientId     String
+
+  pharmacy      Pharmacy      @relation(fields: [pharmacyId], references: [id])
+  pharmacyId    String
+
+  prescription  Prescription  @relation(fields: [prescriptionId], references: [id])
+  prescriptionId String
+}
 model Notification {
   id        String       @id @default(cuid())
   userId    String        

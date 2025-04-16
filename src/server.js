@@ -19,6 +19,9 @@ import { profileRoutes } from "./routes/profile.routes.js";
 import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import { doctorRoutes } from "./routes/doctor.routes.js";
+import { pharmacyMedicinesRoutes } from "./routes/pharmacy/pharmacy.medicine.route.js";
+import  pharmacyPerscriptionRoutes  from "./routes/pharmacy/pharmacy.prescription.route.js";
+import  pharmacyOrdersRoutes  from "./routes/pharmacy/Order.Pharmacy.Route.js";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyHelmet from "@fastify/helmet";
 import dotenv from "dotenv";
@@ -139,6 +142,9 @@ async function buildApp() {
   await fastify.register(notificationRoutes, {
     prefix: `${apiPrefix}/notifications`,
   });
+  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}/pharmacy/medicines`});
+  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}/pharmacy/prescriptions`});
+  await fastify.register(pharmacyOrdersRoutes,{prefix:`${apiPrefix}/pharmacy/orders`});
   await fastify.register(fastifyHelmet);
   await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` });
   await fastify.register(chatPatientNurseRoutes, {

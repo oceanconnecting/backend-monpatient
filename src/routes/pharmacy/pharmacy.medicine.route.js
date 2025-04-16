@@ -6,7 +6,7 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
   fastify.get('/', {
     onRequest: [fastify.authenticate],
     handler: async (request, reply) => {
-      const pharmacyId = request.pharmacyId;
+      const pharmacyId = request.user?.pharmacy?.id;
       if (!pharmacyId) {
         return reply.status(401).send({ error: 'Pharmacy ID missing' });
       }
@@ -16,7 +16,7 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
         if (!pharmacy) {
           return reply.status(404).send({ error: 'Pharmacy not found' });
         }
-        reply.send(pharmacy.medicines);
+        reply.send(pharmacy);
       } catch (error) {
         fastify.log.error(error);
         reply.status(500).send({ error: 'Failed to fetch medicines' });
