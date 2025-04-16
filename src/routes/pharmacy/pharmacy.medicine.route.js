@@ -26,33 +26,56 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
 
   fastify.post('/', {
     onRequest: [fastify.authenticate],
+    schema: {  // Recommended: Add input validation
+      body: {
+       type: 'object',
+        required: ['medicines'],
+        properties: {
+          medicines: {
+            type: 'array',
+            items: {
+             type: 'object',
+              required: ['name', 'price'], // Add other required fields
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                dosage: { type: 'string' },
+                manufacturer: { type: 'string' },
+                category: { type: 'string' },
+                sideEffects: { type: 'string' },
+                instructions: { type: 'string' },
+                price: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+    },
     handler: async (request, reply) => {
       const pharmacyId = request.user?.pharmacy?.id;
       if (!pharmacyId) {
         return reply.status(401).send({ error: 'Pharmacy ID missing' });
       }
-
-      const { name, description, dosage, manufacturer, category, sideEffects, instructions, price } = request.body;
-
-      if (!name || price === undefined) {
-        return reply.status(400).send({ error: 'Name and price are required' });
+  
+      const { medicines } = request.body;
+  
+      if (!medicines || !Array.isArray(medicines)) {
+        return reply.status(400).send({ error: 'Medicines array is required' });
       }
-
+  
       try {
-        const newMedicine = await PharmacyMedicinesService.createMedicine(pharmacyId, {
-          name,
-          description,
-          dosage,
-          manufacturer,
-          category,
-          sideEffects,
-          instructions,
-          price,
+        const result = await PharmacyMedicinesService.createMedicines(pharmacyId, medicines);
+        reply.status(201).send({
+          success: true,
+          count: result.count,
+          message: `Created ${result.count} medicines`
         });
-        reply.status(201).send(newMedicine);
       } catch (error) {
         fastify.log.error(error);
-        reply.status(500).send({ error: 'Failed to create medicine' });
+        reply.status(500).send({ 
+          error: 'Failed to create medicines',
+          details: error.message 
+        });
       }
     }
   });

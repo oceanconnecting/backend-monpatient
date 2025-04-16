@@ -9,21 +9,13 @@ export const PharmacyMedicinesService = {
       include: { medicines: true },
     });
   },
-  async createMedicine(pharmacyId, data) {
-    return await prisma.medicine.create({
-      data: {
-        name:data.name,
-        description:data.description,
-        dosage:data.dosage,
-        manufacturer:data.manufacturer,
-        category:data.category,
-        sideEffects:data.sideEffects,
-        instructions:data.instructions,
-        price:data.price,
-        pharmacy: {
-          connect: { id: pharmacyId },
-        },
-      },
+  async createMedicines(pharmacyId, medicinesArray) {
+    return await prisma.medicine.createMany({
+      data: medicinesArray.map(medicine => ({
+        ...medicine,
+        pharmacyId: pharmacyId
+      })),
+      skipDuplicates: true
     });
-  },
+  }
 };
