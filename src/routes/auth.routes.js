@@ -151,11 +151,7 @@ export async function authRoutes(fastify) {
       }
     },
   });
-  fastify.get("/login/google", async (request, reply) => {
-    // Redirect to Google OAuth consent screen
-    const authorizationUri = await this.googleOAuth2.generateAuthorizationUri(request);
-    reply.redirect(authorizationUri);
-  });
+  
   // Google OAuth callback handler
   fastify.get("/login/google/callback", async function (request, reply) {
     try {
