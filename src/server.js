@@ -2,7 +2,6 @@ import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import websocket from "@fastify/websocket";
-import cookie from '@fastify/cookie'
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -21,12 +20,11 @@ import { medicalRecordsRoutes } from "./routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "./routes/prescription.routes.js";
 import { doctorRoutes } from "./routes/doctor.routes.js";
 import { pharmacyMedicinesRoutes } from "./routes/pharmacy/pharmacy.medicine.route.js";
-import pharmacyPerscriptionRoutes from "./routes/pharmacy/pharmacy.prescription.route.js";
-import pharmacyOrdersRoutes from "./routes/pharmacy/Order.Pharmacy.Route.js";
+import  pharmacyPerscriptionRoutes  from "./routes/pharmacy/pharmacy.prescription.route.js";
+import  pharmacyOrdersRoutes  from "./routes/pharmacy/Order.Pharmacy.Route.js";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyHelmet from "@fastify/helmet";
 import dotenv from "dotenv";
-
 // Add this near other plugin registrations
 import multipart from "@fastify/multipart";
 
@@ -64,9 +62,6 @@ async function buildApp() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
-
-  // Register cookie plugin
-  await fastify.register(cookie);
 
   // Update CSP for production
   fastify.addHook("onRequest", (request, reply, done) => {
@@ -147,15 +142,9 @@ async function buildApp() {
   await fastify.register(notificationRoutes, {
     prefix: `${apiPrefix}/notifications`,
   });
-  await fastify.register(pharmacyMedicinesRoutes, {
-    prefix: `${apiPrefix}/pharmacy/medicines`,
-  });
-  await fastify.register(pharmacyPerscriptionRoutes, {
-    prefix: `${apiPrefix}/pharmacy/prescriptions`,
-  });
-  await fastify.register(pharmacyOrdersRoutes, {
-    prefix: `${apiPrefix}/pharmacy/orders`,
-  });
+  await fastify.register(pharmacyMedicinesRoutes,{prefix: `${apiPrefix}/pharmacy/medicines`});
+  await fastify.register(pharmacyPerscriptionRoutes,{prefix:`${apiPrefix}/pharmacy/prescriptions`});
+  await fastify.register(pharmacyOrdersRoutes,{prefix:`${apiPrefix}/pharmacy/orders`});
   await fastify.register(fastifyHelmet);
   await fastify.register(chatRoutes, { prefix: `${apiPrefix}/chat` });
   await fastify.register(chatPatientNurseRoutes, {
@@ -186,7 +175,7 @@ const start = async () => {
   try {
     const fastify = await buildApp();
     const port = process.env.PORT || 3000;
-    fastify.listen({
+     fastify.listen({
       port: port,
       host: "0.0.0.0", // This is important for Railway
     });

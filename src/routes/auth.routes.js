@@ -151,6 +151,11 @@ export async function authRoutes(fastify) {
       }
     },
   });
+  fastify.get("/login/google", async (request, reply) => {
+    // Redirect to Google OAuth consent screen
+    const authorizationUri = await this.googleOAuth2.generateAuthorizationUri(request);
+    reply.redirect(authorizationUri);
+  });
   // Google OAuth callback handler
   fastify.get("/login/google/callback", async function (request, reply) {
     try {
@@ -238,16 +243,9 @@ export async function authRoutes(fastify) {
 
       // Redirect to frontend with token
       fastify.log.info("Redirecting to frontend with token");
-      reply.setCookie('user_token', jwtToken, {
-        path: new URL(process.env.FRONTEND_URL).pathname || '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 604800 // 7 days in seconds
-      });
-      
-      // Redirect to frontend
-      return reply.redirect(process.env.FRONTEND_URL);
+      return reply.redirect(
+        `${process.env.FRONTEND_URL}/?token=${jwtToken}`
+      );
     } catch (error) {
       fastify.log.error("Google authentication error:", error);
       reply.code(401).send({
