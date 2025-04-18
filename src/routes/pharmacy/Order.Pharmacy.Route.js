@@ -25,7 +25,10 @@ export default async function pharmacyOrdersRoutes(fastify, options) {
   };
 
   // Transition from Pending → Processing
-  fastify.post('/:id/process', async (request, reply) => {
+  fastify.post('/:id/process',{
+    onRequest: [fastify.authenticate, checkRole('PHARMACY')],
+  },
+    async (request, reply) => {
     return handleStatusTransition(
       request, 
       reply, 
@@ -35,7 +38,10 @@ export default async function pharmacyOrdersRoutes(fastify, options) {
   });
 
   // Transition from Processing → Delivered
-  fastify.post('/:id/deliver', async (request, reply) => {
+  fastify.post('/:id/deliver',{
+    onRequest: [fastify.authenticate, checkRole('PHARMACY')],
+  },
+    async (request, reply) => {
     return handleStatusTransition(
       request, 
       reply, 

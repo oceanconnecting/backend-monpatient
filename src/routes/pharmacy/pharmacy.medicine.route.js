@@ -4,7 +4,7 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
   
 
   fastify.get('/', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, checkRole('PHARMACY')],
     handler: async (request, reply) => {
       const pharmacyId = request.user?.pharmacy?.id;
       if (!pharmacyId) {

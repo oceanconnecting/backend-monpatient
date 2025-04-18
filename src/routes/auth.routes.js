@@ -238,9 +238,16 @@ export async function authRoutes(fastify) {
 
       // Redirect to frontend with token
       fastify.log.info("Redirecting to frontend with token");
-      return reply.redirect(
-        `${process.env.FRONTEND_URL}/?token=${jwtToken}`
-      );
+      reply.setCookie('user_token', jwtToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 604800 // 7 days in seconds
+      });
+      
+      // Redirect to frontend
+      return reply.redirect(process.env.FRONTEND_URL);
     } catch (error) {
       fastify.log.error("Google authentication error:", error);
       reply.code(401).send({

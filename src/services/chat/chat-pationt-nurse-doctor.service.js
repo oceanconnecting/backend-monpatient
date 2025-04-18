@@ -375,6 +375,4 @@ export class ChatServicePatientNurseDoctor {
       },
     });
   }
-  // Your existing methods remain the same...
-  // canUserJoinRoom, createOrGetRoom, markMessagesAsRead, sendMessage, etc.
 }
