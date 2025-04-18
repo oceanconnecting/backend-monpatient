@@ -239,7 +239,7 @@ export async function authRoutes(fastify) {
       // Redirect to frontend with token
       fastify.log.info("Redirecting to frontend with token");
       reply.setCookie('user_token', jwtToken, {
-        path: '/',
+        path: new URL(process.env.FRONTEND_URL).pathname || '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

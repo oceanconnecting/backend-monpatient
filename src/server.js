@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import websocket from "@fastify/websocket";
-import fastifyCookie from "@fastify/cookie";
+import cookie from '@fastify/cookie'
 import { authRoutes } from "./routes/auth.routes.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { doctorPatientRoutes } from "./routes/relationships/doctor-patient.routes.js";
@@ -66,7 +66,7 @@ async function buildApp() {
   });
 
   // Register cookie plugin
-  await fastify.register(fastifyCookie);
+  await fastify.register(cookie);
 
   // Update CSP for production
   fastify.addHook("onRequest", (request, reply, done) => {
