@@ -90,13 +90,23 @@ export class NurseServiceService {
   }
 
   static async getAvailableRequests(nurseId) {
-    return prisma.nurseServiceRequest.findMany({
+    const requests = await prisma.nurseServiceRequest.findMany({
       where: {
         status: 'REQUESTED',
         nurseId: nurseId
       },
       include: {
-        patient: true
+        patient: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true
+              }
+            }
+          }
+        }
       },
       orderBy: [
         {
@@ -106,7 +116,18 @@ export class NurseServiceService {
           preferredDate: 'asc'
         }
       ]
-    })
+    });
+  
+    return requests.map(request => {
+      const { patient, ...requestData } = request;
+      return {
+        ...requestData,
+        name: `${patient.user.firstname} ${patient.user.lastname}`,
+        email: patient.user.email,
+        // Keep the original patient data if needed
+       
+      };
+    });
   }
 
   static async acceptRequest(requestId, nurseId) {
@@ -129,7 +150,17 @@ export class NurseServiceService {
         status: 'ACCEPTED'
       },
       include: {
-        patient: true,
+        patient: {
+          include:{
+            user:{
+              select:{
+                firstname:true,
+                lastname:true,
+                email:true
+              }
+            }
+          }
+        },
         nurse: true
       }
     })
@@ -442,7 +473,7 @@ export class NurseServiceService {
       return requests.map(request => {
         const user = request.patient.user;
         return {
-          
+          patientId:request.id,
           name: `${user.firstname} ${user.lastname}`,
           urgency: request.urgency,
           status: request.status,
