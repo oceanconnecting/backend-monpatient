@@ -9,20 +9,20 @@ export async function websocketRoutes(fastify, options) {
   const chatServicePatientNurse = new ChatServicePatientNurse(fastify);
 
   // Define WebSocket routes
-  fastify.get('/ws/patient-nurse-doctor', { websocket: true }, (connection, req) => {
+  fastify.get('/patient-nurse-doctor', { websocket: true }, (connection, req) => {
     chatServicePatientNurseDoctor.handleConnection(connection, req);
   });
 
-  fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
+  fastify.get('/chat', { websocket: true }, (connection, req) => {
     chatService.handleConnection(connection, req);
   });
 
-  fastify.get('/ws/patient-nurse', { websocket: true }, (connection, req) => {
+  fastify.get('/patient-nurse', { websocket: true }, (connection, req) => {
     chatServicePatientNurse.handleConnection(connection, req);
   });
 
   // New test route for checking WebSocket functionality
-  fastify.get('/ws/test', { websocket: true }, (connection, req) => {
+  fastify.get('/test', { websocket: true }, (connection, req) => {
     console.log('New test connection established');
 
     // Listen for messages using connection.on (not connection.socket.on)
