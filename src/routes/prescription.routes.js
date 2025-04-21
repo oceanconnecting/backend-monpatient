@@ -31,9 +31,56 @@ export async function prescriptionRoutes(fastify, options) {
   // Create new prescription
   fastify.post('/', {
     onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['patientId', 'details', 'items'],
+        properties: {
+          patientId: { type: 'string' },
+          details: { type: 'string' },
+          approved: { type: 'boolean' },
+          items: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              required: ['quantity', 'instructions'],
+              properties: {
+                quantity: { type: 'integer', minimum: 1 },
+                instructions: { type: 'string' },
+                duration: { type: 'string' },
+                refills: { type: 'integer', minimum: 0 },
+                medicineId: { type: 'string' },
+                medicine: {
+                  type: 'object',
+                  oneOf: [
+                    { required: ['name', 'dosage'] }
+                  ],
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    dosage: { type: 'string' },
+                    manufacturer: { type: 'string' },
+                    category: { type: 'string' },
+                    sideEffects: { type: 'string' },
+                    instructions: { type: 'string' }
+                  }
+                }
+              },
+              // Either medicineId or medicine object must be provided
+              oneOf: [
+                { required: ['medicineId'] },
+                { required: ['medicine'] }
+              ]
+            }
+          }
+        }
+      },
+     
+    },
     handler: async (request, reply) => {
-      try { 
-        const prescription = await PrescriptionService.createPrescription(request.user.doctor.id,request.body);
+      try {
+        const prescription = await PrescriptionService.createPrescription(request.user.doctor.id, request.body);
         return prescription;
       } catch (error) {
         reply.code(error.statusCode || 500).send({ error: error.message });

@@ -10,9 +10,14 @@ export class PrescriptionService {
           patient: { include: { user: true } },
           doctor: { include: { user: true } },
           pharmacy: { include: { user: true } },
+          items: { 
+            include: { 
+              medicine: true 
+            } 
+          }
         },
       });
-
+  
       return prescriptions.map((prescription) => ({
         id: prescription.id,
         date: prescription.date,
@@ -28,6 +33,18 @@ export class PrescriptionService {
           name: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
           email: prescription.doctor.user.email,
         },
+        items: prescription.items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          dosage: item.dosage,
+          instructions: item.instructions,
+          medicine: {
+            id: item.medicine.id,
+            name: item.medicine.name,
+            description: item.medicine.description
+            // Add other medicine fields you need
+          }
+        })),
         pharmacy: prescription.pharmacy
           ? {
               id: prescription.pharmacy.id,
@@ -62,25 +79,113 @@ export class PrescriptionService {
     return prescription;
   }
 
-  static async createPrescription(doctorId,data) {
+  static async createPrescription(doctorId, data) {
     if (!data.patientId || !data.details) {
       throw new Error('Missing required fields (patientId, doctorId, details)');
     }
+  
+    // Validate prescription items
+    if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+      throw new Error('Prescription must include at least one item');
+    }
+  
+    return await prisma.$transaction(async (tx) => {
+      // Create the prescription first
+      const prescription = await tx.prescription.create({
+        data: {
+          details: data.details,
+          approved: data.approved ?? false,
+          patient: { connect: { id: data.patientId } },
+          doctor: { connect: { id: doctorId } },
+          pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
+        },
+        include: {
+          patient: { include: { user: true } },
+          doctor: { include: { user: true } },
+          pharmacy: { include: { user: true } },
+        },
+      });
+  
+      // Process each prescription item
+      for (const item of data.items) {
+        // Check if medicine exists by name or id
+        let medicineId = item.medicineId;
+        
+        if (!medicineId && item.medicine) {
+          // If there's medicine data but no ID, try to find existing medicine or create new one
+          let medicine;
+          
+          if (item.medicine.name) {
+            // Try to find existing medicine by name
+            medicine = await tx.medicineofPrescription.findFirst({
+              where: { name: item.medicine.name }
+            });
+          }
+          
+          if (!medicine) {
+            // Create new medicine if not found
+            medicine = await tx.medicineofPrescription.create({
+              data: {
+                name: item.medicine.name,
+                description: item.medicine.description,
+                dosage: item.medicine.dosage,
+                manufacturer: item.medicine.manufacturer,
+                category: item.medicine.category,
+                sideEffects: item.medicine.sideEffects,
+                instructions: item.medicine.instructions,
+              }
+            });
+          }
+          
+          medicineId = medicine.id;
+        }
+        
+        if (!medicineId) {
+          throw new Error('Medicine ID or medicine data is required for prescription items');
+        }
+  
+        // Create prescription item
+        await tx.prescriptionItem.create({
+          data: {
+            quantity: item.quantity,
+            instructions: item.instructions,
+            duration: item.duration,
+            refills: item.refills ?? 0,
+            medicine: { connect: { id: medicineId } },
+            prescription: { connect: { id: prescription.id } }
+          }
+        });
+      }
+  
+      // Return the prescription with all items included
+      return await tx.prescription.findUnique({
+        where: { id: prescription.id },
+        include: {
+          patient: { include: { user: {
+            select:{
+              firstname:true,
+              lastname:true,
+              email:true,
 
-    return await prisma.prescription.create({
-      data: {
-        details: data.details,
-        approved: data.approved ?? false,
-        patient: { connect: { id: data.patientId } },
-        doctor: { connect: { id: doctorId } },
-        pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
-      },
-      include: {
-        patient: { include: { user: true } },
-        doctor: { include: { user: true } },
-        pharmacy: { include: { user: true } },
-      },
-    });
+            }
+          } } },
+          doctor: { include:  { user: {
+            select:{
+              firstname:true,
+              lastname:true,
+              email:true,
+
+            }
+          } } },
+          pharmacy: { include: { user: true } },
+          items: true
+        }
+      });
+    },
+    {
+      timeout: 10000 // Increased timeout to 10 seconds
+    }
+  );
   }
 
   static async updatePrescription(id, data) {
