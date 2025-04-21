@@ -240,7 +240,7 @@ export async function authRoutes(fastify) {
       // Redirect to frontend with token
       fastify.log.info("Redirecting to frontend with token");
       return reply.redirect(
-        `${process.env.FRONTEND_URL}/?token=${jwtToken}`
+        `${process.env.FRONTEND_URL}/auth/login/?token=${jwtToken}`
       );
     } catch (error) {
       fastify.log.error("Google authentication error:", error);
