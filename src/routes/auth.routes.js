@@ -74,18 +74,6 @@ export async function authRoutes(fastify) {
       }
     },
   });
-  // fastify.get("/login/google", async (request, reply) => {
-  //   // Redirect to Google OAuth consent screen
-  //   const state = crypto.randomBytes(16).toString("hex");
-  //   const authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-  //   const clientId = process.env.GOOGLE_CLIENT_ID;
-  //   const redirectUri = process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/auth/login/google/callback";
-  //   const scope = "profile email";
-  //   request.session.state = state;
-  //   const authUrl = `${authorizationEndpoint}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
-
-  //   reply.redirect(authUrl);
-  // });
   fastify.post("/login", {
     schema: {
       body: {

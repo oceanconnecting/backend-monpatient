@@ -221,7 +221,7 @@ export class AuthService {
         text: `Verification  your account.`, // Plain text body
         html: `
           <h1>Monpatient</h1>
-          <p>Use this Link to verify your account:</p>
+          <p>Use this Link to verify your account:${token}</p>
           <a href="?token=${token}">Verify Email</a>
         `, // HTML body
       };
