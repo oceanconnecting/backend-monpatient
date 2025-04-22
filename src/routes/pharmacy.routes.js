@@ -13,7 +13,17 @@ export async function pharmacyRoutes(fastify) {
       }
     }
   });
-
+ fastify.get("/medicine",{
+  preHandler: fastify.authenticate,
+  handler: async (request, reply) => {
+    try {
+      const pharmacies = await PharmacyService.pharcygetMedicine(request.user.pharmacy.id);
+      return pharmacies;
+    } catch (error) {
+      reply.code(500).send({ error: error.message });
+    }
+  }
+ })
   fastify.get('/:id', {
     preHandler: fastify.authenticate,
     handler: async (request, reply) => {

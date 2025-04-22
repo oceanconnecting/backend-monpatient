@@ -210,7 +210,6 @@ export async function nurseServiceRoutes(fastify) {
     }
   }
   })
-  
   // Patient cancels their service request
   fastify.put('/cancel/:requestId', {
     onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
@@ -381,6 +380,7 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   })
+
   fastify.get('/patient/:patientId', {
     onRequest: [fastify.authenticate, checkRole(['NURSE'])],
     handler: async (request, reply) => {

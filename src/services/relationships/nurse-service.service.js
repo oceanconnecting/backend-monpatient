@@ -199,7 +199,7 @@ export class NurseServiceService {
       where: {
         id: requestId,
         patientId: patientId,
-        status: 'COMPLETED'
+        status: 'ACCEPTED'
       }
     })
 

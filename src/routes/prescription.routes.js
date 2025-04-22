@@ -30,7 +30,7 @@ export async function prescriptionRoutes(fastify, options) {
 
   // Create new prescription
   fastify.post('/', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate,checkRole("DOCTOR")],
     schema: {
       body: {
         type: 'object',
@@ -90,7 +90,7 @@ export async function prescriptionRoutes(fastify, options) {
 
   // Update prescription
   fastify.put('/:id', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
     handler: async (request, reply) => {
       try {
         const prescription = await PrescriptionService.updatePrescription(request.params.id, request.body);
@@ -103,7 +103,7 @@ export async function prescriptionRoutes(fastify, options) {
 
   // Delete prescription
   fastify.delete('/:id', {
-    onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],
+    onRequest: [fastify.authenticate, checkRole(['DOCTOR'])],
     handler: async (request, reply) => {
       try {
         const prescription = await PrescriptionService.deletePrescription(request.params.id);

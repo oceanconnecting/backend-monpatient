@@ -178,23 +178,90 @@ export class PatientService {
     });
   }
   // Get all doctors
-  static async getAlldoctors() {
-    return await prisma.doctor.findMany(
-      {
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              role:true,
-              firstname:true,
-              lastname:true,
-            
-            },
-          },
+  static async getDoctorsOfPatient(id) {
+    console.log(`Getting doctors for patient ID: ${id}`);
+    
+    const doctorPatientRequests = await prisma.doctorPatientRequest.findMany({
+      where: {
+        patientId: id
+      },
+      include: {
+        doctor: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true
+              }
+            }
+          }
         },
+        patient: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true
+              }
+            }
+          }
+        }
       }
-    );
+    });
+    
+    console.log(`Found ${doctorPatientRequests.length} doctor-patient relationships`);
+    
+    // Map and concatenate data
+    const formattedResults = doctorPatientRequests.map(relation => {
+      console.log(`Processing relation ID: ${relation.id}`);
+      
+      const doctorFullName = `${relation.doctor.user.firstname} ${relation.doctor.user.lastname}`;
+      const patientFullName = `${relation.patient.user.firstname} ${relation.patient.user.lastname}`;
+      
+      return {
+        relationId: relation.id,
+        status: relation.status,
+        doctorId: relation.doctorId,
+        patientId: relation.patientId,
+        doctor: {
+          ...relation.doctor,
+          fullName: doctorFullName,
+          user: relation.doctor.user
+        },
+        patient: {
+          ...relation.patient,
+          fullName: patientFullName,
+          user: relation.patient.user
+        }
+      };
+    });
+    
+    console.log(`Returning ${formattedResults.length} formatted results`);
+    return formattedResults;
+  }
+  static async getAllDoctors(){
+    const doctors=await prisma.doctor.findMany({
+      include:{
+        user:{
+          select:{
+            firstname:true,
+            lastname:true,
+            email:true
+          }
+        }
+      }
+    })
+    const formatdata=doctors.map(doctor=>{
+      const fullName=`${doctor.user.firstname} ${doctor.user.lastname}`
+      return{
+        name:fullName,
+        specialization:doctor.specialization,
+        email:doctor.user.email
+      }
+    })
+    return formatdata
   }
   static async getAllnurses() {
     return await prisma.nurse.findMany(

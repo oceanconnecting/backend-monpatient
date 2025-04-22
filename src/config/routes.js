@@ -39,6 +39,7 @@ export async function configureRoutes(fastify) {
       { routes: medicalRecordsRoutes, prefix: `${apiPrefix}/medical-records` },
       { routes: prescriptionRoutes, prefix: `${apiPrefix}/prescription` },
       { routes: nurseServiceRoutes, prefix: `${apiPrefix}/nurse-service` },
+      
     ],
     
     communications: [

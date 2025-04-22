@@ -1,21 +1,28 @@
 import { PharmacyMedicinesService } from "../../services/pharmacies/pharmacy.medicine.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
-export async function pharmacyMedicinesRoutes(fastify, options) {
-  
 
+export async function pharmacyMedicinesRoutes(fastify, options) {
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole('PHARMACY')],
     handler: async (request, reply) => {
-      const pharmacyId = request.user?.pharmacy?.id;
-      if (!pharmacyId) {
-        return reply.status(401).send({ error: 'Pharmacy ID missing' });
-      }
-
       try {
-        const pharmacy = await PharmacyMedicinesService.getMedicinesByPharmacy(pharmacyId);
+        // Check if pharmacy ID exists in the auth user
+        if (!request.user || !request.user.pharmacy || !request.user.pharmacy.id) {
+          return reply.status(400).send({ error: 'Pharmacy ID not found in user context' });
+        }
+        
+        const pharmacy = await PharmacyMedicinesService.getPharmacyMedicines(request.user.pharmacy.id);
+        
+        // Check if pharmacy exists
         if (!pharmacy) {
           return reply.status(404).send({ error: 'Pharmacy not found' });
         }
+        
+        // Check if medicines array exists
+        if (!pharmacy.medicines) {
+          return reply.status(200).send({ ...pharmacy, medicines: [] });
+        }
+        
         reply.send(pharmacy);
       } catch (error) {
         fastify.log.error(error);
@@ -24,18 +31,31 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
     }
   });
 
-  fastify.post('/', {
+  fastify.get('/all', {
     onRequest: [fastify.authenticate],
-    schema: {  // Recommended: Add input validation
+    handler: async (request, reply) => {
+      try {
+        const medicines = await PharmacyMedicinesService.getAllMedicines();
+        reply.send(medicines);
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ error: 'Failed to fetch all medicines' });
+      }
+    }
+  });
+
+  fastify.post('/', {
+    onRequest: [fastify.authenticate, checkRole('PHARMACY')],
+    schema: {
       body: {
-       type: 'object',
+        type: 'object',
         required: ['medicines'],
         properties: {
           medicines: {
             type: 'array',
             items: {
-             type: 'object',
-              required: ['name', 'price'], // Add other required fields
+              type: 'object',
+              required: ['name', 'price'],
               properties: {
                 name: { type: 'string' },
                 description: { type: 'string' },
@@ -79,6 +99,7 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
       }
     }
   });
+
   fastify.put('/:id', {
     onRequest: [fastify.authenticate, checkRole('PHARMACY')],
     handler: async (request, reply) => {
@@ -113,10 +134,14 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
       
       try {
         fastify.log.debug(`Attempting to delete medicine ${id}`);
-        await PharmacyMedicinesService.deleteMedicine(id, reply);
+        // Modified to handle the error in the route instead of passing reply to service
+        const deletedMedicine = await PharmacyMedicinesService.deleteMedicine(id);
         fastify.log.debug(`Successfully deleted medicine ${id}`);
         reply.send({ message: 'Medicine deleted successfully' });
       } catch (error) {
+        if (error.message === 'Medicine not found') {
+          return reply.status(404).send({ error: 'Medicine not found' });
+        }
         fastify.log.error(`Failed to delete medicine ${id}:`, error);
         reply.status(500).send({ error: 'Failed to delete medicine' });
       }

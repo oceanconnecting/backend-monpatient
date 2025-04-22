@@ -66,6 +66,17 @@ export class PharmacyService {
       })
       return { message: 'Pharmacy deleted successfully' }
     }
+    static async pharcygetMedicine(id){
+      const pharmacy =await prisma.pharmacy.findUnique(
+        {
+          where:{id},
+          include:{
+            medicines:true
+          }
+        }
+      )
+      return pharmacy
+    }
     static async getPharmacyById(id){
       if(!id){
         throw new Error('Invalid user ID')
