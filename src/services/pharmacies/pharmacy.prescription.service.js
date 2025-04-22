@@ -56,7 +56,13 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
         }
       }
     }
+  },
+  orders:{
+    select:{
+      status:true
+    }
   }
+
     }
   });
   
@@ -74,7 +80,8 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
         fullName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
      
       },
-      items: prescription.items 
+      items: prescription.items ,
+      order:prescription.orders
       
     };
   });
