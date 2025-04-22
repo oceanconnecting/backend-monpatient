@@ -59,7 +59,9 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
   },
   orders:{
     select:{
+      id:true,
       status:true
+
     }
   }
 

@@ -1,51 +1,47 @@
 // routes/pharmacyOrdersRoutes.js
-import { processOrder, deliverOrder } from "../../services/pharmacies/Order.Pharmacy.Service.js";
+import { PharmacyService } from "../../services/pharmacies/pharmacies.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
 
 export default async function pharmacyOrdersRoutes(fastify, options) {
   // Shared handler for order status transitions
-  const handleStatusTransition = async (request, reply, transitionFunction, successMessage) => {
-    const { id } = request.params;
-
-    try {
-      const updatedOrder = await transitionFunction(fastify.prisma, id);
-      return reply.code(200).send({
-        message: successMessage,
-        order: updatedOrder,
-      });
-    } catch (error) {
-      if (error.message === 'NOT_FOUND') {
-        return reply.code(404).send({ message: 'Order not found' });
-      }
-      if (error.message === 'INVALID_STATUS') {
-        return reply.code(400).send({ message: 'Order cannot transition from current status' });
-      }
-      return reply.code(500).send({ message: 'Something went wrong' });
-    }
-  };
 
   // Transition from Pending → Processing
-  fastify.post('/:id/process',{
+  fastify.get('/:id/process', {
     onRequest: [fastify.authenticate, checkRole('PHARMACY')],
-  },
-    async (request, reply) => {
-    return handleStatusTransition(
-      request, 
-      reply, 
-      processOrder, 
-      'Order processing started'
+  }, async (request, reply) => {
+    return (
+      request,
+      reply,
+      PharmacyService.makeprocessOrder(request.params.id)
     );
   });
-
+  fastify.get('/', {
+   
+    handler: async (request, reply) => {
+      try {
+        const orders = await PharmacyService.getAllorders();
+        
+        return reply.code(200).send({
+          success: true,
+          data: orders
+        });
+      } catch (error) {
+        fastify.log.error(`Error fetching pharmacy orders: ${error.message}`);
+        return reply.code(500).send({
+          success: false,
+          error: 'Failed to retrieve orders'
+        });
+      }
+    }
+  });
   // Transition from Processing → Delivered
-  fastify.post('/:id/deliver',{
+  fastify.post('/:id/deliver', {
     onRequest: [fastify.authenticate, checkRole('PHARMACY')],
-  },
-    async (request, reply) => {
-    return handleStatusTransition(
-      request, 
-      reply, 
-      deliverOrder, 
+  }, async (request, reply) => {
+    return (
+      request,
+      reply,
+      PharmacyService.makedelivrie,
       'Order delivered successfully'
     );
   });

@@ -112,4 +112,39 @@ export class PharmacyService {
         }
       })
     }
+    static async makeprocessOrder(orderId){
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+      });
+    
+      if (!order) throw new Error('NOT_FOUND');
+    if(order.status==='Processing')return{
+  success:true,
+  message:'Order already in Processing status',
+  data: order
+  }
+      const updatedOrder = await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'Processing' },
+      });
+    
+      return updatedOrder; // This will be the response data
+    }
+    static async makedelivrie(orderId){
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+      });
+    
+      if (!order) throw new Error('NOT_FOUND');
+      if (order.status !== 'Processing') throw new Error('INVALID_STATUS');
+    
+      return prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'Delivered' },
+      });
+
+    }
+    static async getAllorders(){
+      return prisma.order.findMany()
+    }
 }

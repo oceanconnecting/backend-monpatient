@@ -62,16 +62,16 @@ export async function configurePerformanceOptimizations(fastify) {
   });
   
   // Add hook for monitoring potentially slow routes
-  fastify.addHook('onResponse', (request, reply, done) => {
-    const responseTime = reply.getResponseTime();
-    if (responseTime > 1000) { // Log requests taking more than 1 second
-      request.log.warn({
-        url: request.url,
-        method: request.method,
-        responseTime: `${responseTime.toFixed(2)}ms`,
-        msg: 'Slow request detected'
-      });
-    }
-    done();
-  });
+  // fastify.addHook('onResponse', (request, reply, done) => {
+  //   const responseTime = reply.getResponseTime();
+  //   if (responseTime > 1000) { // Log requests taking more than 1 second
+  //     request.log.warn({
+  //       url: request.url,
+  //       method: request.method,
+  //       responseTime: `${responseTime.toFixed(2)}ms`,
+  //       msg: 'Slow request detected'
+  //     });
+  //   }
+  //   done();
+  // });
 }
