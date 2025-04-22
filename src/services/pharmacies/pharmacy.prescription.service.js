@@ -45,6 +45,18 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
           },
         },
       },
+  items:{
+    include:{
+      medicine:{
+        select:{
+          name:true,
+          description:true,
+          dosage:true,
+          manufacturer:true
+        }
+      }
+    }
+  }
     }
   });
   
@@ -53,20 +65,17 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
     return {
       id: prescription.id,
       patient: {
-        ...prescription.patient,
         fullName: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
-        user: prescription.patient.user
       },
       pharmacy: {
-        ...prescription.pharmacy,
         fullName: `${prescription.pharmacy.user.firstname} ${prescription.pharmacy.user.lastname}`,
-        user: prescription.pharmacy.user
       },
       doctor: {
-        ...prescription.doctor,
         fullName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
-        user: prescription.doctor.user
-      }
+     
+      },
+      items: prescription.items 
+      
     };
   });
   

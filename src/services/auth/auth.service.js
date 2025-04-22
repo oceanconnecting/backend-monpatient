@@ -222,7 +222,7 @@ export class AuthService {
         html: `
           <h1>Monpatient</h1>
           <p>Use this Link to verify your account:</p>
-          <a href="https://monpatient.vercel.app/verify-email?token=${token}">Verify Email</a>
+          <a href="?token=${token}">Verify Email</a>
         `, // HTML body
       };
 
