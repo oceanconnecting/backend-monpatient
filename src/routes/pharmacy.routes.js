@@ -13,7 +13,8 @@ export async function pharmacyRoutes(fastify) {
       }
     }
   });
- fastify.get("/medicine",{
+
+  fastify.get("/medicine",{
   preHandler: fastify.authenticate,
   handler: async (request, reply) => {
     try {
@@ -23,7 +24,8 @@ export async function pharmacyRoutes(fastify) {
       reply.code(500).send({ error: error.message });
     }
   }
- })
+  })
+  
   fastify.get('/:id', {
     preHandler: fastify.authenticate,
     handler: async (request, reply) => {

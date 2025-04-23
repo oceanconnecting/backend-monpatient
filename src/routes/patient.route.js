@@ -86,4 +86,19 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  fastify.get("/medical-record", {
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    handler: async (request, reply) => {
+      try {
+        const medicalRecord = await PatientService.getmedicalRecorde(request.user.patient.id);
+        if (!medicalRecord) {
+          return reply.code(404).send({ message: "Medical record not found" });
+        }
+        reply.code(200).send(medicalRecord);
+      } catch (error) {
+        console.error(error);  // Always good to log the error
+        reply.code(500).send({ message: "Internal server error" });
+      }
+    }
+  });
 }

@@ -43,7 +43,7 @@ export class BaseProfileService {
         telephoneNumber: profileData.telephoneNumber,
         dateOfBirth: profileData.dateOfBirth,
         gender:profileData.gender,
-        address:profileData.address,
+        address:profileData.address
         // other common fields
       }
     });

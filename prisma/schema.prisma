@@ -42,6 +42,7 @@ enum TaskStatus {
   CANCELLED
 }
 
+
 model User {
   id              String       @id @default(cuid())
   email           String    @unique
@@ -71,6 +72,16 @@ model User {
   @@index([role])
 }
 
+model InsuranceInfo {
+  id String @id @default(cuid())
+  type String?
+  insuranceCode String?
+  dateStart String?  // fixed capitalization from datestart
+  dateEnd String?
+  patient Patient?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 model Patient {
   id            String             @id @default(cuid())
   user          User            @relation(fields: [userId], references: [id],onDelete: Cascade)
@@ -79,8 +90,6 @@ model Patient {
   emergencyContactName String?
   emergencyContactPhone String?
   emergencyContactRelationship String?
-  insuranceInfo String?
-  preferredPharmacy String?
   medicalRecord MedicalRecord[]
   prescriptions Prescription[]  @relation("PatientPrescriptions")
   nurseVisits   NurseVisit[]
@@ -89,6 +98,8 @@ model Patient {
   nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
   chatRooms     ChatRoom[]     @relation("PatientChats")
   scheduledTasks  Schedule[] 
+  insuranceInfoId String? @unique  // Add this field for the relation
+  insuranceInfo InsuranceInfo? @relation(fields: [insuranceInfoId], references: [id])
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   chatRoomPatients ChatRoomPatientNurse[] @relation("PatientChats")
   orders Order[]

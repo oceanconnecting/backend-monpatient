@@ -45,8 +45,20 @@ export async function profileRoutes(fastify, options) {
             allergies: { type: 'string', nullable: true },
             emergencyContactName: { type: 'string', nullable: true },
             emergencyContactRelationship: { type: 'string', nullable: true },
-            insuranceInfo: { type: 'string', nullable: true },
-            preferredPharmacy: { type: 'string', nullable: true },
+            insuranceInfo: { 
+              type: 'object', 
+              nullable: true,
+              properties: {
+                id: { type: 'string' },
+                type: { type: 'string', nullable: true },
+                insuranceCode: { type: 'string', nullable: true },
+                dateStart: { type: 'string', nullable: true },
+                dateEnd: { type: 'string', nullable: true },
+                createdAt: { type: 'string' },
+                updatedAt: { type: 'string' }
+              }
+            },
+         
             createdAt: { type: 'string' },
             updatedAt: { type: 'string' },
   
@@ -151,7 +163,55 @@ export async function profileRoutes(fastify, options) {
       }
     }
   });
+// Add insurance info update route for patients
+fastify.put('/insurance', {
+  onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
+  schema: {
+    body: {
+      type: 'object',
+      required: ['type', 'insuranceCode', 'dateStart'],
+      properties: {
+        type: { type: 'string' },
+        insuranceCode: { type: 'string' },
+        dateStart: { type: 'string', format: 'date-time' },
+        dateEnd: { type: 'string', format: 'date-time', nullable: true }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          type: { type: 'string' },
+          insuranceCode: { type: 'string' },
+          dateStart: { type: 'string' },
+          dateEnd: { type: 'string', nullable: true },
+          createdAt: { type: 'string' },
+          updatedAt: { type: 'string' }
+        }
+      }
+    }
+  },
+  handler: async (request, reply) => {
+    try {
+      // Ensure the user is a patient
+      if (request.user.role !== 'PATIENT') {
+        return reply.code(403).send({ error: 'Only patients can update insurance information' });
+      }
 
+      const patientProfileService = new PatientProfileService(fastify.db);
+      const updatedInsurance = await patientProfileService.updateInsuranceInfo(
+        request.user.id,
+        request.body
+      );
+      
+      return updatedInsurance;
+    } catch (error) {
+      request.log.error(error);
+      reply.code(error.statusCode || 500).send({ error: error.message });
+    }
+  }
+});
   // Profile picture upload
   fastify.post('/upload', {
     onRequest: [fastify.authenticate]

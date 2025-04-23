@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export class NurseServiceService {
+  // patient create service request
   static async createServiceRequest(patientId, requestData, reply) {
     try {
       // First check if both patient and nurse exist
@@ -26,41 +27,7 @@ export class NurseServiceService {
           error: 'Not Found',
           message: 'Nurse not found'
         });
-      }
-  
-      // Rest of your existing code for checking active requests
-      // const existingActiveRequest = await prisma.nurseServiceRequest.findFirst({
-      //   where: {
-      //     OR: [
-      //       {
-      //         patientId, // Check for active requests for this patient
-      //         status: { not: 'CANCELLED' },
-      //       },
-      //       {
-      //         nurseId: requestData.nurseId, // Also check for active requests for this nurse
-      //         status: { not: 'CANCELLED' },
-      //       }
-      //     ]
-      //   },
-      //   include: {
-      //     patient: true,
-      //     nurse: true
-      //   }
-      // });
-  
-      // if (existingActiveRequest) {
-      //   let message;
-      //   if (existingActiveRequest.patientId === patientId) {
-      //     message = `You already have an active request (status: ${existingActiveRequest.status}).`;
-      //   } else {
-      //     message = `Nurse ${existingActiveRequest.nurse.name} already has an active request (status: ${existingActiveRequest.status}).`;
-      //   }
-      //   return reply.status(409).send({
-      //     error: 'Duplicate request',
-      //     message: message,
-      //   });
-      // }
-  
+      }  
       return await prisma.nurseServiceRequest.create({
         data: {
           patientId,
@@ -88,7 +55,7 @@ export class NurseServiceService {
       throw error;
     }
   }
-
+ // Nurse get available requestes
   static async getAvailableRequests(nurseId) {
     const requests = await prisma.nurseServiceRequest.findMany({
       where: {
@@ -129,7 +96,7 @@ export class NurseServiceService {
       };
     });
   }
-
+// nurse acceptRequest
   static async acceptRequest(requestId, nurseId) {
     const request = await prisma.nurseServiceRequest.findUnique({
       where: { id:requestId }
@@ -515,5 +482,16 @@ export class NurseServiceService {
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,
     }));
+  }
+
+  static async nurseVisiting(id){
+      const nurse= await prisma.nurse.findUnique({
+        where:{id},
+        include:{
+          serviceRequests:{
+            where:{serviceType:"visite  "}
+          }
+        }
+      })
   }
 }

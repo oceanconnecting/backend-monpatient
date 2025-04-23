@@ -117,7 +117,7 @@ export class PatientService {
           emergencyContactName: data.patient.emergencyContactName,
           emergencyContactPhone: data.patient.emergencyContactPhone,
           emergencyContactRelationship: data.patient.emergencyContactRelationship,
-          insuranceInfo: data.patient.insuranceInfo,
+        
           preferredPharmacy: data.patient.preferredPharmacy,
         },
       },
@@ -149,7 +149,7 @@ export class PatientService {
         emergencyContactName: detailsData.emergencyContactName,
         emergencyContactPhone: detailsData.emergencyContactPhone,
         emergencyContactRelationship: detailsData.emergencyContactRelationship,
-        insuranceInfo: detailsData.insuranceInfo,
+     
         preferredPharmacy: detailsData.preferredPharmacy
       },
       include: {
@@ -383,4 +383,11 @@ export class PatientService {
       throw new Error('Could not update emergency contact');
     }
   }
+  static async getmedicalRecorde(patientId){
+    const medicalRecord = await prisma.medicalRecord.findMany({
+      where: { patientId: patientId }
+    });
+    return medicalRecord[0]; // Return first record if multiple exist
+  }  
+
 }
