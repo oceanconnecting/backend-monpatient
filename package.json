@@ -33,7 +33,7 @@
     "cloudinary": "^2.5.1",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
-    "fastify": "^5.2.1",
+    "fastify": "^5.3.2",
     "fastify-plugin": "^5.0.1",
     "fs": "^0.0.1-security",
     "logger-factory": "^1.0.2",
