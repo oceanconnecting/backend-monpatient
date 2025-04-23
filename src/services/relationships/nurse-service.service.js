@@ -423,6 +423,7 @@ export class NurseServiceService {
           include: {
             user: {
               select: {
+                id:true,
                 firstname: true,
                 lastname: true,
                 email: true,
@@ -440,7 +441,9 @@ export class NurseServiceService {
       return requests.map(request => {
         const user = request.patient.user;
         return {
-          patientId:request.id,
+          
+          patientId:user.id,
+          requestId:request.id,
           name: `${user.firstname} ${user.lastname}`,
           urgency: request.urgency,
           status: request.status,
@@ -465,7 +468,8 @@ export class NurseServiceService {
                   select: { firstname: true, lastname: true, email: true }
                 }
               }
-            }
+            },
+           
           }
         }
       }
@@ -473,7 +477,7 @@ export class NurseServiceService {
     
     return patient.nurseServiceRequests.map((request) => ({
       id: request.patient.id,
-      userId: request.patient.userId,
+   
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
       email: request.patient.user.email,
       serviceRequestId: request.id,
