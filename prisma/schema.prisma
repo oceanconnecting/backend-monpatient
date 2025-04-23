@@ -270,33 +270,7 @@ model Medicine {
   pharmacyId    String
 }
 
-model PrescriptionItem {
-  id              String       @id @default(cuid())
-  quantity        Int
-  instructions    String
-  duration        String?      // e.g., "7 days", "2 weeks"
-  refills         Int          @default(0)
-  medicine        MedicineofPrescription     @relation(fields: [medicineId], references: [id])
-  medicineId      String
-  prescription    Prescription @relation(fields: [prescriptionId], references: [id])
-  prescriptionId  String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-}
-model MedicineofPrescription{
-  id             String       @id @default(cuid())
-  name          String
-  description   String?
-  dosage        String
-  manufacturer  String?
-  category      String?
-  sideEffects   String?
-  instructions  String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  prescriptionItems PrescriptionItem[]
 
-}
 model Prescription {
   id          String       @id @default(cuid())
   date        DateTime  @default(now())
@@ -308,7 +282,7 @@ model Prescription {
   doctorId    String
   pharmacy    Pharmacy? @relation("PharmacyPrescriptions", fields: [pharmacyId], references: [id])
   pharmacyId  String?
-  items       PrescriptionItem[]
+  items       Json[]
   orders      Order[]
   @@index([patientId])
   @@index([doctorId])

@@ -44,39 +44,16 @@ export async function prescriptionRoutes(fastify, options) {
             minItems: 1,
             items: {
               type: 'object',
-              required: ['quantity', 'instructions'],
+              required: ['name', 'quantity'],
               properties: {
+                name: { type: 'string' },
                 quantity: { type: 'integer', minimum: 1 },
-                instructions: { type: 'string' },
-                duration: { type: 'string' },
-                refills: { type: 'integer', minimum: 0 },
-                medicineId: { type: 'string' },
-                medicine: {
-                  type: 'object',
-                  oneOf: [
-                    { required: ['name', 'dosage'] }
-                  ],
-                  properties: {
-                    name: { type: 'string' },
-                    description: { type: 'string' },
-                    dosage: { type: 'string' },
-                    manufacturer: { type: 'string' },
-                    category: { type: 'string' },
-                    sideEffects: { type: 'string' },
-                    instructions: { type: 'string' }
-                  }
-                }
-              },
-              // Either medicineId or medicine object must be provided
-              oneOf: [
-                { required: ['medicineId'] },
-                { required: ['medicine'] }
-              ]
+            
+              }
             }
           }
         }
-      },
-     
+      }
     },
     handler: async (request, reply) => {
       try {
