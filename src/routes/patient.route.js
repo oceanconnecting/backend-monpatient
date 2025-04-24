@@ -101,4 +101,23 @@ export async function patientRoutes(fastify) {
       }
     }
   });
+  fastify.get("/search", {
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    handler: async (request, reply) => {
+      try {
+        const { name } = request.query;
+
+        // If no name is provided, return all 
+        if (!name) {
+          const DoctorsAndNurses = await PatientService.getAllDoctorsAndNurses();
+          return DoctorsAndNurses;
+        }
+
+        const DoctorsAndNurses = await PatientService.searchDoctorsAndNursesByName(searchName);
+        return DoctorsAndNurses;
+      } catch (error) {
+        reply.code(500).send({ error: error.message });
+      }
+    },
+  });
 }

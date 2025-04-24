@@ -42,6 +42,9 @@ export class DoctorService {
       ).length,
     }));
   }
+  //get all doctors and nurses
+ 
+  // update doctor
   static async updateDoctor(id, userData) {
     const existingDoctor = await prisma.user.findUnique({
       where: { id, role: "DOCTOR" },
@@ -75,6 +78,7 @@ export class DoctorService {
       },
     });
   }
+  // create doctor
   static async createDoctor(userData) {
     return await prisma.user.create({
       data: {
@@ -99,6 +103,7 @@ export class DoctorService {
       },
     });
   }
+  // delete doctor
   static async deleteDoctor(id) {
     const existingDoctor = await prisma.user.findUnique({
       where: { id, role: "DOCTOR" },
@@ -114,6 +119,7 @@ export class DoctorService {
       where: { id, role: "DOCTOR" },
     });
   }
+  // get dotor by id 
   static async getDoctorByid(id) {
     if (!id) {
       throw new Error("Invalid doctor ID");
@@ -126,7 +132,7 @@ export class DoctorService {
     });
     return doctor;
   }
-
+// seach for doctor by name
   static async searchDoctorsByName(name) {
     // If name is empty or undefined, return all doctors
     if (!name || name.trim() === "") {

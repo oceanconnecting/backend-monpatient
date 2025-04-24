@@ -389,5 +389,73 @@ export class PatientService {
     });
     return medicalRecord[0]; // Return first record if multiple exist
   }  
-
+  static async getAllDoctorsAndNurses() {
+    const doctors = await prisma.doctor.findMany({
+      include: {
+        user: {
+          select: {
+            firstname: true,
+            lastname: true,
+            email: true,
+            telephoneNumber: true,
+            gender: true,
+            address: true,
+            profilePhoto: true,
+            dateOfBirth: true,
+          },
+        },
+      },
+    });
+    
+    const nurses = await prisma.nurse.findMany({
+      include: {
+        user: {
+          select: {
+            firstname: true,
+            lastname: true,
+            email: true,
+            telephoneNumber: true,
+            gender: true,
+            address: true,
+            profilePhoto: true,
+            dateOfBirth: true,
+          },
+        },
+      },
+    });
+  
+    const mappedDoctors = doctors.map(doctor => ({
+      ...doctor,
+      role: 'doctor',
+      name: `${doctor.user.firstname} ${doctor.user.lastname}`,
+    }));
+  
+    const mappedNurses = nurses.map(nurse => ({
+      ...nurse,
+      role: 'nurse',
+      name: `${nurse.user.firstname} ${nurse.user.lastname}`,
+    }));
+  
+    const allStaff = [...mappedDoctors, ...mappedNurses];
+    
+    return { doctors, nurses, allStaff };
+  }
+  // search for doctor and nurse
+  static async searchDoctorsAndNursesByName(searchName) {
+    // First get all doctors and nurses
+    const { allStaff } = await this.getAllDoctorsAndNurses();
+    
+    // Convert search term to lowercase for case-insensitive comparison
+    const searchLower = searchName.toLowerCase();
+    
+    // Filter the combined staff list based on name matching
+    const searchResults = allStaff.filter(staff => {
+      // Check if any part of the name contains the search string
+      return staff.name.toLowerCase().includes(searchLower) || 
+             staff.user.firstname.toLowerCase().includes(searchLower) || 
+             staff.user.lastname.toLowerCase().includes(searchLower);
+    });
+    
+    return searchResults;
+  }
 }

@@ -55,7 +55,8 @@ export const MedicalRecordService = {
           diagnosis: data.diagnosis,
           treatment: data.treatment,
           notes: data.notes,
-          patient: { connect: { id: data.patientId } }
+          patient: { connect: { id: data.patientId } },
+          doctors:{connect:{id:data.doctorId}}
         },
       });
     } catch (error) {
