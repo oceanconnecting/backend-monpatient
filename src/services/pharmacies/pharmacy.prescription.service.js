@@ -45,18 +45,6 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
           },
         },
       },
-  items:{
-    include:{
-      medicine:{
-        select:{
-          name:true,
-          description:true,
-          dosage:true,
-          manufacturer:true
-        }
-      }
-    }
-  },
   orders:{
     select:{
       id:true,

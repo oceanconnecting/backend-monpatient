@@ -122,7 +122,7 @@ export const PharmacyMedicinesService = {
   
   async updateMedicine(medicineId, medicineData) {
     // First check if medicine exists
-    const existingMedicine = await prisma.medicine.findUnique({
+    const existingMedicine = await prisma.medicine.findMany({
       where: { id: medicineId }
     });
     
@@ -154,9 +154,10 @@ export const PharmacyMedicinesService = {
       include: {
         pharmacy: {
           select: {
-            name: true,
-            address: true,
-            phone: true
+            pharmacyName:true,
+            pharmacyAddress:true,
+            pharmacyLicenseNumber:true
+          
           }
         }
       }

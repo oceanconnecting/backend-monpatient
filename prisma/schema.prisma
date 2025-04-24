@@ -272,7 +272,7 @@ model Admin {
 }
 model Medicine {
   id            String         @id @default(cuid())
-  name          String
+  name          String?
   description   String?
   dosage        String
   manufacturer  String?

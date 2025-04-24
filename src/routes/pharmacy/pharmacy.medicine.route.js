@@ -200,7 +200,7 @@ export async function pharmacyMedicinesRoutes(fastify, options) {
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          name:{type:'string'},
           description: { type: 'string' },
           dosage: { type: 'string' },
           manufacturer: { type: 'string' },

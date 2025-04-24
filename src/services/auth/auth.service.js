@@ -222,7 +222,7 @@ export class AuthService {
         html: `
           <h1>Monpatient</h1>
           <p>Use this Link to verify your account:${token}</p>
-          <a href="?token=${token}">Verify Email</a>
+          <a href=https://localhost:5173/auth/verification-success?token=${token}">Verify Email</a>
         `, // HTML body
       };
 
