@@ -2,16 +2,6 @@ import { MedicalRecordService } from '../services/medicalRecords.service.js';
 import { checkRole } from '../middleware/auth.middleware.js';
 
 export async function medicalRecordsRoutes(fastify, options) {
-  // Get all medical records for a specific patient
-  fastify.get('/:patientId', { onRequest: [fastify.authenticate, checkRole(["PATIENT","DOCTOR","NURSE"])],}, async (request, reply) => {
-    try {
-      const records = await MedicalRecordService.getMedicalRecordsByPatient(request.params.patientId);
-      reply.send(records);
-    } catch (error) {
-      reply.status(500).send({ error: 'Failed to fetch records' });
-    }
-  });
-  
   // Medical Record Schemas
   const medicalRecordSchemas = {
     createMedicalRecord: {
@@ -24,7 +14,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseId: { type: 'string' },
+          nurseIds: { type: 'array', items: { type: 'string' } },
           recordDate: { type: 'string', format: 'date-time' }
         }
       },
@@ -38,7 +28,6 @@ export async function medicalRecordsRoutes(fastify, options) {
             treatment: { type: 'string' },
             notes: { type: 'string' },
             doctorId: { type: 'string' },
-            nurseId: { type: 'string' },
             recordDate: { type: 'string', format: 'date-time' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
@@ -52,7 +41,6 @@ export async function medicalRecordsRoutes(fastify, options) {
         }
       }
     },
-  
     updateMedicalRecord: {
       params: {
         type: 'object',
@@ -68,10 +56,10 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseId: { type: 'string' },
+          nurseIds: { type: 'array', items: { type: 'string' } },
           recordDate: { type: 'string', format: 'date-time' }
         },
-        minProperties: 1 // At least one field to update
+        minProperties: 1
       },
       response: {
         200: {
@@ -83,7 +71,6 @@ export async function medicalRecordsRoutes(fastify, options) {
             treatment: { type: 'string' },
             notes: { type: 'string' },
             doctorId: { type: 'string' },
-            nurseId: { type: 'string' },
             recordDate: { type: 'string', format: 'date-time' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
@@ -96,10 +83,191 @@ export async function medicalRecordsRoutes(fastify, options) {
           }
         }
       }
+    },
+    searchMedicalRecords: {
+      querystring: {
+        type: 'object',
+        properties: {
+          searchTerm: { type: 'string' },
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        },
+        required: ['searchTerm']
+      }
+    },
+    dateRangeQuery: {
+      querystring: {
+        type: 'object',
+        properties: {
+          startDate: { type: 'string', format: 'date-time' },
+          endDate: { type: 'string', format: 'date-time' },
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        },
+        required: ['startDate', 'endDate']
+      }
     }
   };
-  
-  // Create a new medical record (Only doctors and nurses can create medical records)
+
+  // Get all medical records (Admin only)
+  fastify.get('/', { 
+    onRequest: [fastify.authenticate, checkRole(["ADMIN"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.findMany({}, { skip, take });
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+  fastify.get('/patient', { 
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+     
+      const records = await MedicalRecordService.findByAuthenticatedPatient(request, { 
+        skip: 0, 
+        take: 10 
+      });;
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Get medical record by ID
+  fastify.get('/:id', { 
+    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "NURSE", "ADMIN"])] 
+  }, async (request, reply) => {
+    try {
+      const record = await MedicalRecordService.findById(request.params.id);
+      if (!record) {
+        return reply.status(404).send({ error: 'Medical record not found' });
+      }
+      reply.send(record);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Get medical records for a specific patient
+  fastify.get('/patient/:patientId', { 
+    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "NURSE", "ADMIN"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.findByPatientId(request.params.patientId, { skip, take });
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Get medical records for a specific doctor
+  fastify.get('/doctor/:doctorId', { 
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.findByDoctorId(request.params.doctorId, { skip, take });
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Get medical records for a specific nurse
+  fastify.get('/nurse/:nurseId', { 
+    onRequest: [fastify.authenticate, checkRole(["NURSE", "ADMIN"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          skip: { type: 'number', default: 0 },
+          take: { type: 'number', default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.findByNurseId(request.params.nurseId, { skip, take });
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Search medical records
+  fastify.get('/search', { 
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE", "ADMIN"])],
+    schema: medicalRecordSchemas.searchMedicalRecords
+  }, async (request, reply) => {
+    try {
+      const { searchTerm, skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.search(searchTerm, { skip, take });
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Get medical records by date range
+  fastify.get('/date-range', { 
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE", "ADMIN"])],
+    schema: medicalRecordSchemas.dateRangeQuery
+  }, async (request, reply) => {
+    try {
+      const { startDate, endDate, skip = 0, take = 10 } = request.query;
+      const records = await MedicalRecordService.findByDateRange(
+        new Date(startDate), 
+        new Date(endDate), 
+        { skip, take }
+      );
+      reply.send(records);
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Create a new medical record
   fastify.post('/', {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE"])],
     schema: medicalRecordSchemas.createMedicalRecord
@@ -108,89 +276,68 @@ export async function medicalRecordsRoutes(fastify, options) {
       const userId = request.user.id;
       const userRole = request.user.role;
       
-      // Create a new copy of the request body to avoid mutation
       const recordData = { ...request.body };
       
-      // Only include doctorId or nurseId if they actually exist in the database
-      // Let the service handle validation of these IDs
-      if (userRole === "DOCTOR") {
+      // Automatically assign the creator as doctor or nurse if not specified
+      if (userRole === "DOCTOR" && !recordData.doctorId) {
         recordData.doctorId = userId;
-        // If nurseId is empty or undefined, remove it to prevent connection errors
-        if (!recordData.nurseId) {
-          delete recordData.nurseId;
-        }
-      } else if (userRole === "NURSE") {
-        recordData.nurseId = userId;
-        // If doctorId is empty or undefined, remove it to prevent connection errors
-        if (!recordData.doctorId) {
-          delete recordData.doctorId;
-        }
+      } else if (userRole === "NURSE" && !recordData.nurseIds) {
+        recordData.nurseIds = [userId];
       }
       
-      const record = await MedicalRecordService.createMedicalRecord(
-        recordData,
-        userId,
-        userRole
-      );
-      
+      const record = await MedicalRecordService.create(recordData,request);
       reply.status(201).send(record);
     } catch (error) {
-      console.error("Error creating medical record:", error);
-      
-      if (error.code === 'P2025') {
-        reply.status(400).send({ 
-          error: 'Invalid reference: One or more referenced records do not exist' 
-        });
-      } else if (error.message.includes("authorized")) {
-        reply.status(403).send({ error: error.message });
+      if (error.message.includes('Failed to create')) {
+        reply.status(400).send({ error: error.message });
       } else {
         reply.status(500).send({ error: error.message || 'Failed to create record' });
       }
     }
   });
-  
-  // Update a medical record (Only nurses and doctors can update records)
+
+  // Update a medical record
   fastify.put('/:id', {
-    onRequest: [fastify.authenticate, checkRole(["NURSE", "DOCTOR"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE"])],
     schema: medicalRecordSchemas.updateMedicalRecord
   }, async (request, reply) => {
     try {
-      // Remove empty/undefined IDs to prevent connection errors
-      const updateData = { ...request.body };
-      if (!updateData.doctorId) delete updateData.doctorId;
-      if (!updateData.nurseId) delete updateData.nurseId;
-      
-      const updatedRecord = await MedicalRecordService.updateMedicalRecord(
+      const updatedRecord = await MedicalRecordService.update(
         request.params.id, 
-        updateData
+        request.body
       );
       reply.send(updatedRecord);
     } catch (error) {
-      console.error("Error updating medical record:", error);
-      
-      if (error.code === 'P2025') {
-        reply.status(404).send({ error: 'Medical record or referenced entity not found' });
+      if (error.message.includes('Failed to update')) {
+        reply.status(400).send({ error: error.message });
       } else {
         reply.status(500).send({ error: error.message || 'Failed to update record' });
       }
     }
   });
-  
-  // Delete a medical record (Only doctors can delete records)
+
+  // Delete a medical record
   fastify.delete('/:id', { 
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])]
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])]
   }, async (request, reply) => {
     try {
-      await MedicalRecordService.deleteMedicalRecord(request.params.id);
-      reply.send({ message: 'Record deleted' });
+      const deletedRecord = await MedicalRecordService.delete(request.params.id);
+      reply.send(deletedRecord);
     } catch (error) {
-      console.error("Error deleting medical record:", error);
-      
-      if (error.code === 'P2025') {
-        reply.status(404).send({ error: 'Medical record not found' });
-      } else {
-        reply.status(500).send({ error: error.message || 'Failed to delete record' });
-      }
+      reply.status(500).send({ error: error.message || 'Failed to delete record' });
     }
   });
+
+  // Count medical records (Admin only)
+  fastify.get('/count', { 
+    onRequest: [fastify.authenticate, checkRole(["ADMIN"])]
+  }, async (request, reply) => {
+    try {
+      const count = await MedicalRecordService.count();
+      reply.send({ count });
+    } catch (error) {
+      reply.status(500).send({ error: error.message });
+    }
+  });
+ 
 }

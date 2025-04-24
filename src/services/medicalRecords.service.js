@@ -7,10 +7,52 @@ export const MedicalRecordService = {
    * @param {Object} data - Medical record data
    * @returns {Promise<Object>} Created medical record
    */
-  create: async (data) => {
+  create: async (data, req) => {
     try {
+      // Clean up the data to avoid foreign key constraint errors
+      const cleanData = { ...data };
+      
+      // Get doctorId from authenticated user if available
+      if (req?.user?.doctor?.id) {
+        cleanData.doctorId = req.user.doctor.id;
+      } else if (cleanData.doctorId) {
+        // If request doesn't contain doctor info but doctorId is provided in data
+        // Verify the doctor exists
+        const doctorExists = await prisma.doctor.findUnique({
+          where: { id: cleanData.doctorId }
+        });
+        
+        if (!doctorExists) {
+          throw new Error("Doctor with the provided ID does not exist");
+        }
+      }
+      
+      // Check if nurseId exists, if provided
+      if (cleanData.nurseId) {
+        const nurseExists = await prisma.nurse.findUnique({
+          where: { id: cleanData.nurseId }
+        });
+        
+        if (!nurseExists) {
+          throw new Error("Nurse with the provided ID does not exist");
+        }
+      }
+      
+      // Validate that patientId exists (required field)
+      if (!cleanData.patientId) {
+        throw new Error("Patient ID is required");
+      }
+      
+      const patientExists = await prisma.patient.findUnique({
+        where: { id: cleanData.patientId }
+      });
+      
+      if (!patientExists) {
+        throw new Error("Patient with the provided ID does not exist");
+      }
+
       const medicalRecord = await prisma.medicalRecord.create({
-        data,
+        data: cleanData,
         include: {
           patient: {
             include: {
@@ -23,7 +65,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          doctor: {
+          doctor: cleanData.doctorId ? {
             include: {
               user: {
                 select: {
@@ -32,8 +74,8 @@ export const MedicalRecordService = {
                 }
               }
             }
-          },
-          nurses: {
+          } : undefined,
+          nurses: cleanData.nurseId ? {
             include: {
               user: {
                 select: {
@@ -42,7 +84,7 @@ export const MedicalRecordService = {
                 }
               }
             }
-          }
+          } : undefined
         }
       });
       return medicalRecord;
@@ -53,7 +95,7 @@ export const MedicalRecordService = {
 
   /**
    * Get a medical record by ID
-   * @param {string} id - Medical record ID
+  * @param {string} id - Medical record ID
    * @returns {Promise<Object|null>} Medical record or null if not found
    */
   findById: async (id) => {
@@ -100,9 +142,10 @@ export const MedicalRecordService = {
     }
   },
 
+
   /**
    * Find medical records with filters
-   * @param {Object} filters - Filter conditions
+  * @param {Object} filters - Filter conditions
    * @param {Object} options - Pagination and sorting options
    * @returns {Promise<Object[]>} List of medical records
    */
@@ -153,26 +196,35 @@ export const MedicalRecordService = {
     }
   },
 
+
   /**
    * Get medical records for a specific patient
-   * @param {string} patientId - Patient ID
+  * Get medical records created by the authenticated doctor
+   * @param {Object} req - Request object containing authenticated user
    * @param {Object} options - Pagination and sorting options
-   * @returns {Promise<Object[]>} List of patient's medical records
+   * @returns {Promise<Object[]>} List of doctor's medical records
    */
-  findByPatientId: async (patientId, options = { skip: 0, take: 10 }) => {
+  findByAuthenticatedDoctor: async (req, options = { skip: 0, take: 10 }) => {
     try {
+      if (!req?.user?.doctor?.id) {
+        throw new Error("Authenticated user is not a doctor");
+      }
+      
+      const doctorId = req.user.doctor.id;
+      
       const medicalRecords = await prisma.medicalRecord.findMany({
-        where: { patientId },
+        where: { doctorId },
         skip: options.skip,
         take: options.take,
         orderBy: options.orderBy || { recordDate: 'desc' },
         include: {
-          doctor: {
+          patient: {
             include: {
               user: {
                 select: {
                   firstname: true,
                   lastname: true,
+                  email: true,
                 }
               }
             }
@@ -191,9 +243,10 @@ export const MedicalRecordService = {
       });
       return medicalRecords;
     } catch (error) {
-      throw new Error(`Failed to fetch patient's medical records: ${error.message}`);
+      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
     }
   },
+
 
   /**
    * Get medical records created by a specific doctor
@@ -201,8 +254,13 @@ export const MedicalRecordService = {
    * @param {Object} options - Pagination and sorting options
    * @returns {Promise<Object[]>} List of doctor's medical records
    */
-  findByDoctorId: async (doctorId, options = { skip: 0, take: 10 }) => {
+  findByDoctorId: async (req, options = { skip: 0, take: 10 }) => {
     try {
+      if (!req?.user?.doctor?.id) {
+        throw new Error("Authenticated user is not a doctor");
+      }
+      
+      const doctorId = req.user.doctor.id;
       const medicalRecords = await prisma.medicalRecord.findMany({
         where: { doctorId },
         skip: options.skip,
@@ -470,5 +528,46 @@ export const MedicalRecordService = {
     } catch (error) {
       throw new Error(`Failed to fetch medical records by date range: ${error.message}`);
     }
-  }
+  },
+  findByAuthenticatedPatient: async (req, options = { skip: 0, take: 10 }) => {
+    try {
+      if (!req?.user?.patient?.id) {
+        throw new Error("Authenticated user is not a patient");
+      }
+      
+      const patientId = req.user.patient.id;
+      
+      const medicalRecords = await prisma.medicalRecord.findMany({
+        where: { patientId },
+        skip: options.skip,
+        take: options.take,
+        orderBy: options.orderBy || { recordDate: 'desc' },
+        include: {
+          doctor: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                }
+              }
+            }
+          },
+          nurses: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                }
+              }
+            }
+          }
+        }
+      });
+      return medicalRecords;
+    } catch (error) {
+      throw new Error(`Failed to fetch patient's medical records: ${error.message}`);
+    }
+  },
 };
