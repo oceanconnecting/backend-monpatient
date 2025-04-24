@@ -75,7 +75,7 @@ export const MedicalRecordService = {
               }
             }
           } : undefined,
-          nurses: cleanData.nurseId ? {
+          nurse: cleanData.nurseId ? {
             include: {
               user: {
                 select: {
@@ -124,7 +124,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -178,7 +178,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -229,7 +229,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -362,7 +362,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -453,7 +453,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -512,7 +512,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -553,7 +553,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          nurses: {
+          nurse: {
             include: {
               user: {
                 select: {
@@ -592,7 +592,7 @@ export const MedicalRecordService = {
           id: record.doctor.id,
           fullName: `${record.doctor.user.firstname} ${record.doctor.user.lastname}`
         } : null,
-        nurses: record.nurses ? record.nurses.map(nurse => ({
+        nurse: record.nurse ? record.nurse.map(nurse => ({
           id: nurse.id,
           fullName: `${nurse.user.firstname} ${nurse.user.lastname}`
         })) : [],

@@ -355,7 +355,7 @@ model MedicalRecord {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   nurseId     String?
-  nurses      Nurse?   @relation(fields: [nurseId], references: [id])
+  nurse      Nurse?   @relation(fields: [nurseId], references: [id])
   doctor      Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId    String?
 }
