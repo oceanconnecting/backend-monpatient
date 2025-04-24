@@ -442,7 +442,7 @@ export class NurseServiceService {
         const user = request.patient.user;
         return {
           
-          patientId:user.id,
+          patientId:request.patient.id,
           requestId:request.id,
           name: `${user.firstname} ${user.lastname}`,
           urgency: request.urgency,

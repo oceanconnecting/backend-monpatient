@@ -171,25 +171,6 @@ export class DoctorPatientService {
           active: true
         }
       })
-      
-    
-      // Create chat room for doctor and patient
-      
- 
-      // Create notification for patient
-      // await prisma.notification.create({
-      //   data: {
-      //     // userId: request.patient.id,
-      //     type: 'REQUEST_ACCEPTED',
-      //     title: 'Doctor Request Accepted',
-      //     message: `Dr. ${request.doctor.name} has accepted your request. You can now start chatting.`,
-      //     metadata: {
-      //       doctorId: request.doctorId,
-      //       chatRoomId: chatRoom.id
-      //     }
-      //   }
-      // })
-
       return { updatedRequest }
     } catch (error) {
       console.error('Error in acceptRequest:', error)
