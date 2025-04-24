@@ -405,7 +405,6 @@ export class PatientService {
           },
         },
       },
-      orderBy:{rating:'desc'}
     });
     
     const nurses = await prisma.nurse.findMany({
@@ -439,9 +438,9 @@ export class PatientService {
   
     const allStaff = [...mappedDoctors, ...mappedNurses];
     
-    return { doctors, nurses, allStaff };
+    return { doctors: mappedDoctors, nurses: mappedNurses, allStaff };
   }
-  // search for doctor and nurse
+  
   static async searchDoctorsAndNursesByName(searchName) {
     // First get all doctors and nurses
     const { allStaff } = await this.getAllDoctorsAndNurses();
@@ -451,8 +450,8 @@ export class PatientService {
     
     // Filter the combined staff list based on name matching
     const searchResults = allStaff.filter(staff => {
-      // Check if any part of the name contains the search string
-      return staff.name.toLowerCase().includes(searchLower) || 
+      const fullName = `${staff.user.firstname} ${staff.user.lastname}`.toLowerCase();
+      return fullName.includes(searchLower) || 
              staff.user.firstname.toLowerCase().includes(searchLower) || 
              staff.user.lastname.toLowerCase().includes(searchLower);
     });

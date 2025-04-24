@@ -106,14 +106,14 @@ export async function patientRoutes(fastify) {
     handler: async (request, reply) => {
       try {
         const { name } = request.query;
-
+  
         // If no name is provided, return all 
         if (!name) {
-          const DoctorsAndNurses = await PatientService.getAllDoctorsAndNurses();
-          return DoctorsAndNurses;
+          const { allStaff } = await PatientService.getAllDoctorsAndNurses();
+          return allStaff;
         }
-
-        const DoctorsAndNurses = await PatientService.searchDoctorsAndNursesByName(searchName);
+  
+        const DoctorsAndNurses = await PatientService.searchDoctorsAndNursesByName(name);
         return DoctorsAndNurses;
       } catch (error) {
         reply.code(500).send({ error: error.message });
