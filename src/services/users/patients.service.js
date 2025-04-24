@@ -405,6 +405,7 @@ export class PatientService {
           },
         },
       },
+      orderBy:{rating:'desc'}
     });
     
     const nurses = await prisma.nurse.findMany({
