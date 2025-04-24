@@ -445,15 +445,22 @@ export class PatientService {
     // First get all doctors and nurses
     const { allStaff } = await this.getAllDoctorsAndNurses();
     
-    // Convert search term to lowercase for case-insensitive comparison
-    const searchLower = searchName.toLowerCase();
+    // Convert search term to lowercase and trim whitespace
+    const searchLower = searchName.toLowerCase().trim();
     
-    // Filter the combined staff list based on name matching
+    // Filter the combined staff list based on exact name matching
     const searchResults = allStaff.filter(staff => {
       const fullName = `${staff.user.firstname} ${staff.user.lastname}`.toLowerCase();
+      const firstName = staff.user.firstname.toLowerCase();
+      const lastName = staff.user.lastname.toLowerCase();
+      
+      // Check if search term matches either:
+      // 1. Full name exactly
+      // 2. First name exactly
+      // 3. Last name exactly
       return fullName.includes(searchLower) || 
-             staff.user.firstname.toLowerCase().includes(searchLower) || 
-             staff.user.lastname.toLowerCase().includes(searchLower);
+             firstName.includes(searchLower) || 
+             lastName.includes(searchLower);
     });
     
     return searchResults;

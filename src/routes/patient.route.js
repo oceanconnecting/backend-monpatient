@@ -105,15 +105,15 @@ export async function patientRoutes(fastify) {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
       try {
-        const { name } = request.query;
+        const { searchName } = request.query; // Changed from 'name' to 'searchName'
   
-        // If no name is provided, return all 
-        if (!name) {
+        // If no searchName is provided, return all 
+        if (!searchName) {
           const { allStaff } = await PatientService.getAllDoctorsAndNurses();
           return allStaff;
         }
   
-        const DoctorsAndNurses = await PatientService.searchDoctorsAndNursesByName(name);
+        const DoctorsAndNurses = await PatientService.searchDoctorsAndNursesByName(searchName);
         return DoctorsAndNurses;
       } catch (error) {
         reply.code(500).send({ error: error.message });
