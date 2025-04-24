@@ -162,10 +162,10 @@ export async function doctorPatientRoutes(fastify) {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {
       try {
-        // if (!request?.user?.doctor) {
-        //   reply.code(400).send({ error: "User is not a doctor" });
-        //   return;
-        // }
+        if (!request?.user?.doctor) {
+          reply.code(400).send({ error: "User is not a doctor" });
+          return;
+        }
 
         const patients = await DoctorPatientService.doctorPatientbyorder(
           request?.user?.doctor?.id
