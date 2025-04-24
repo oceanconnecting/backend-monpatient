@@ -562,10 +562,49 @@ export const MedicalRecordService = {
                 }
               }
             }
+          },
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                }
+              }
+            }
           }
         }
       });
-      return medicalRecords;
+
+      // Return empty array if no records found
+      if (!medicalRecords || medicalRecords.length === 0) {
+        return [];
+      }
+
+      // Map the results to concatenate names and structure the response
+      const mappedRecords = medicalRecords.map(record => ({
+        id: record.id,
+        recordDate: record.recordDate,
+        diagnosis: record.diagnosis,
+        treatment: record.treatment,
+        notes: record.notes,
+        doctor: record.doctor ? {
+          id: record.doctor.id,
+          fullName: `${record.doctor.user.firstname} ${record.doctor.user.lastname}`
+        } : null,
+        nurses: record.nurses ? record.nurses.map(nurse => ({
+          id: nurse.id,
+          fullName: `${nurse.user.firstname} ${nurse.user.lastname}`
+        })) : [],
+        patient: record.patient ? {
+          id: record.patient.id,
+          fullName: `${record.patient.user.firstname} ${record.patient.user.lastname}`
+        } : null,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt
+      }));
+
+      return mappedRecords;
     } catch (error) {
       throw new Error(`Failed to fetch patient's medical records: ${error.message}`);
     }
