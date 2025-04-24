@@ -333,4 +333,30 @@ export class DoctorPatientService {
       }
     })
   }
+  static async doctorPatientbyorder(doctorId){
+    const doctor =await prisma.doctorPatient.findMany({
+      where: {
+        doctorId: doctorId,
+        active: true
+      },
+      orderBy:{createdAt:"asc"},
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                firstname:true,
+                lastname:true,
+                email: true,
+              }
+              
+            },
+          },
+          
+        },
+      },
+    }
+    )
+    return doctor
+  }
 }

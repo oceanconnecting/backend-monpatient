@@ -158,4 +158,22 @@ export async function doctorPatientRoutes(fastify) {
       }
     },
   });
+  fastify.get("/patients/order",{
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    handler: async (request, reply) => {
+      try {
+        // if (!request?.user?.doctor) {
+        //   reply.code(400).send({ error: "User is not a doctor" });
+        //   return;
+        // }
+
+        const patients = await DoctorPatientService.doctorPatientbyorder(
+          request?.user?.doctor?.id
+        );
+        return patients;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    },
+  })
 }

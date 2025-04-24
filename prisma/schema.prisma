@@ -41,7 +41,11 @@ enum TaskStatus {
   COMPLETED
   CANCELLED
 }
-
+enum Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
 
 model User {
   id              String       @id @default(cuid())
@@ -56,6 +60,7 @@ model User {
   gender          String?
   address         String?
   profilePhoto    String?
+  status          Status    @default(ACTIVE)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   isEmailVerified Boolean   @default(false)
@@ -240,6 +245,7 @@ model DoctorPatient {
   startDate   DateTime      @default(now())
   endDate     DateTime?
   active      Boolean       @default(true)
+  createdAt     DateTime       @default(now())
   @@unique([patientId, doctorId])
 }
 

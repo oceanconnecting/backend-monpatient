@@ -6,7 +6,7 @@ A backend service built with Fastify and Prisma.
 
 1. Install dependencies:
 ```bash
-npm install
+yarn install
 ```
 
 2. Configure your database:
@@ -15,12 +15,12 @@ npm install
 
 3. Run Prisma migrations:
 ```bash
-npx prisma migrate dev
+yarn prisma migrate dev
 ```
 
 4. Start the development server:
 ```bash
-npm run dev
+yarn run dev
 ```
 
 The server will start on http://localhost:3000
@@ -29,7 +29,7 @@ The server will start on http://localhost:3000
 
 1. Install Vercel CLI:
 ```bash
-npm i -g vercel
+yarn i -g vercel
 ```
 
 2. Login to Vercel:
