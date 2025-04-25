@@ -381,7 +381,7 @@ export class PatientService {
       return updatedPatient;
     } catch (error) {
       console.error("An error occurred:", error.message);
-      throw new Error('Could not update emergency contact');
+      throw new Error(`Could not update emergency contact${error.message}`);
     }
   }
   static async getmedicalRecorde(patientId){

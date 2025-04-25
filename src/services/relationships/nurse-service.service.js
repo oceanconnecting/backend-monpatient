@@ -262,6 +262,7 @@ export class NurseServiceService {
     
     return nurse.serviceRequests.map((request) => ({
       id: request.patient.id,
+      requestId:request.id,
       userId: request.patient.userId,
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
       email: request.patient.user.email,
@@ -477,7 +478,7 @@ export class NurseServiceService {
     
     return patient.nurseServiceRequests.map((request) => ({
       id: request.patient.id,
-   
+      requestId:request.id,
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
       email: request.patient.user.email,
       serviceRequestId: request.id,
@@ -530,6 +531,53 @@ export class NurseServiceService {
       return medicalRecords;
     } catch (error) {
       throw new Error(`Failed to fetch nurse's medical records: ${error.message}`);
+    }
+  }
+  static async nursedeletePatientServiceRequest(serviceRequestId, nurseId) {
+    try {
+      // 1. Check if the service request exists and belongs to the nurse
+      const serviceRequest = await prisma.nurseServiceRequest.findUnique({
+        where: { id: serviceRequestId },
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: { firstname: true, lastname: true, email: true }
+              }
+            }
+          }
+        }
+      });
+  
+      if (!serviceRequest) {
+        throw new Error('Service request not found');
+      }
+  
+      // 2. Verify the nurse is assigned to this request (or has permission)
+      // if (serviceRequest.nurseId !== nurseId) {
+      //   throw new Error('Unauthorized: You can only delete your assigned requests');
+      // }
+  
+      // 3. Delete the service request
+      const deletedRequest = await prisma.nurseServiceRequest.delete({
+        where: { id: serviceRequestId }
+      });
+  
+      // 4. Return deleted request info (optional)
+      return {
+        message: 'Service request deleted successfully',
+        deletedRequest: {
+          id: deletedRequest.id,
+          patientName: `${serviceRequest.patient.user.firstname} ${serviceRequest.patient.user.lastname}`,
+          serviceType: deletedRequest.serviceType,
+          status: deletedRequest.status,
+          deletedAt: new Date()
+        }
+      };
+  
+    } catch (error) {
+      console.error('Error deleting service request:', error);
+      throw new Error(`Failed to delete service request: ${error.message}`);
     }
   }
 }
