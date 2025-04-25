@@ -488,16 +488,16 @@ export class NurseServiceService {
     }));
   }
 
-  static async nurseVisiting(id){
-      const nurse= await prisma.nurse.findUnique({
-        where:{id},
-        include:{
-          serviceRequests:{
-            where:{serviceType:"visite  "}
-          }
-        }
-      })
-  }
+  // static async nurseVisiting(id){
+  //     const nurse= await prisma.nurse.findUnique({
+  //       where:{id},
+  //       include:{
+  //         serviceRequests:{
+  //           where:{serviceType:"visite  "}
+  //         }
+  //       }
+  //     })
+  // }
   static async nursegetMedicalRecords(nurseId){
     try {
       const medicalRecords = await prisma.medicalRecord.findMany({
