@@ -388,4 +388,11 @@ export async function nurseServiceRoutes(fastify) {
       return requests
     }
   })
+  fastify.get('/medical',{
+    onRequest: [fastify.authenticate, checkRole(['NURSE'])],
+    handler : async(request,reply)=>{
+      const requests=await NurseServiceService.nursegetMedicalRecords(request.user.nurse.id)
+      return requests
+    }
+  })
 }

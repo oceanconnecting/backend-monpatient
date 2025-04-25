@@ -14,7 +14,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseIds: { type: 'array', items: { type: 'string' } },
+          nurseId: { type: 'string' },
           recordDate: { type: 'string', format: 'date-time' }
         }
       },
@@ -28,6 +28,7 @@ export async function medicalRecordsRoutes(fastify, options) {
             treatment: { type: 'string' },
             notes: { type: 'string' },
             doctorId: { type: 'string' },
+            nurseId: { type: 'string' },
             recordDate: { type: 'string', format: 'date-time' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
@@ -56,7 +57,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseIds: { type: 'array', items: { type: 'string' } },
+          nurseId: { type: 'string' },
           recordDate: { type: 'string', format: 'date-time' }
         },
         minProperties: 1
@@ -67,6 +68,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           properties: {
             id: { type: 'string' },
             patientId: { type: 'string' },
+            nurseId:{type:'string'},
             diagnosis: { type: 'string' },
             treatment: { type: 'string' },
             notes: { type: 'string' },
@@ -192,48 +194,6 @@ export async function medicalRecordsRoutes(fastify, options) {
   });
 
   // Get medical records for a specific doctor
-  fastify.get('/doctor/:doctorId', { 
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          skip: { type: 'number', default: 0 },
-          take: { type: 'number', default: 10 }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    try {
-      const { skip = 0, take = 10 } = request.query;
-      const records = await MedicalRecordService.findByDoctorId(request.params.doctorId, { skip, take });
-      reply.send(records);
-    } catch (error) {
-      reply.status(500).send({ error: error.message });
-    }
-  });
-
-  // Get medical records for a specific nurse
-  fastify.get('/nurse/:nurseId', { 
-    onRequest: [fastify.authenticate, checkRole(["NURSE", "ADMIN"])],
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          skip: { type: 'number', default: 0 },
-          take: { type: 'number', default: 10 }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    try {
-      const { skip = 0, take = 10 } = request.query;
-      const records = await MedicalRecordService.findByNurseId(request.params.nurseId, { skip, take });
-      reply.send(records);
-    } catch (error) {
-      reply.status(500).send({ error: error.message });
-    }
-  });
 
   // Search medical records
   fastify.get('/search', { 
@@ -281,8 +241,8 @@ export async function medicalRecordsRoutes(fastify, options) {
       // Automatically assign the creator as doctor or nurse if not specified
       if (userRole === "DOCTOR" && !recordData.doctorId) {
         recordData.doctorId = userId;
-      } else if (userRole === "NURSE" && !recordData.nurseIds) {
-        recordData.nurseIds = [userId];
+      } else if (userRole === "NURSE" && !recordData.nurseId) {
+        recordData.nurseId = userId;
       }
       
       const record = await MedicalRecordService.create(recordData,request);

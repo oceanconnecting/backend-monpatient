@@ -9,7 +9,7 @@ import { chatRoutes } from "../routes/chat/chat.routes.js";
 import { chatPatientNurseRoutes } from "../routes/chat/chat-pationt-nurse.routes.js";
 import { chatPatientNurseDoctorRoutes } from "../routes/chat/chat-pationt-nurse-doctor.js";
 import { patientRoutes } from "../routes/patient.route.js";
-import { websocketRoutes } from "../routes/websocket-routes.js";
+import { websocketRoutes } from "../routes/websocket.routes.js";
 import { profileRoutes } from "../routes/profile.routes.js";
 import { medicalRecordsRoutes } from "../routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "../routes/prescription.routes.js";

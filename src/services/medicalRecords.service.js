@@ -12,14 +12,23 @@ export const MedicalRecordService = {
       // Clean up the data to avoid foreign key constraint errors
       const cleanData = { ...data };
       
+      // Remove direct ID fields that should be relationships
+      const patientId = cleanData.patientId;
+      delete cleanData.patientId;
+      
+      let doctorId = cleanData.doctorId;  // Changed to let
+      delete cleanData.doctorId;
+      
+      let nurseId = cleanData.nurseId;    // Changed to let
+      delete cleanData.nurseId;
+
       // Get doctorId from authenticated user if available
       if (req?.user?.doctor?.id) {
-        cleanData.doctorId = req.user.doctor.id;
-      } else if (cleanData.doctorId) {
-        // If request doesn't contain doctor info but doctorId is provided in data
+        doctorId = req.user.doctor.id;
+      } else if (doctorId) {
         // Verify the doctor exists
         const doctorExists = await prisma.doctor.findUnique({
-          where: { id: cleanData.doctorId }
+          where: { id: doctorId }
         });
         
         if (!doctorExists) {
@@ -28,9 +37,16 @@ export const MedicalRecordService = {
       }
       
       // Check if nurseId exists, if provided
-      if (cleanData.nurseId) {
+      if (req?.user?.nurse?.id) {
+        nurseId = req.user.nurse.id;
+      } else if (nurseId) {
+        // Ensure nurseId is a string, not an array
+        if (Array.isArray(nurseId)) {
+          throw new Error("nurseId must be a single string value, not an array");
+        }
+        
         const nurseExists = await prisma.nurse.findUnique({
-          where: { id: cleanData.nurseId }
+          where: { id: nurseId }
         });
         
         if (!nurseExists) {
@@ -39,20 +55,28 @@ export const MedicalRecordService = {
       }
       
       // Validate that patientId exists (required field)
-      if (!cleanData.patientId) {
+      if (!patientId) {
         throw new Error("Patient ID is required");
       }
       
       const patientExists = await prisma.patient.findUnique({
-        where: { id: cleanData.patientId }
+        where: { id: patientId }
       });
       
       if (!patientExists) {
         throw new Error("Patient with the provided ID does not exist");
       }
 
+      // Prepare the create data object with proper relations
+      const createData = {
+        ...cleanData,
+        patient: { connect: { id: patientId } },
+        ...(doctorId && { doctor: { connect: { id: doctorId } } }),
+        ...(nurseId && { nurse: { connect: { id: nurseId } } })
+      };
+
       const medicalRecord = await prisma.medicalRecord.create({
-        data: cleanData,
+        data: createData,
         include: {
           patient: {
             include: {
@@ -65,7 +89,7 @@ export const MedicalRecordService = {
               }
             }
           },
-          doctor: cleanData.doctorId ? {
+          doctor: doctorId ? {
             include: {
               user: {
                 select: {
@@ -75,7 +99,7 @@ export const MedicalRecordService = {
               }
             }
           } : undefined,
-          nurse: cleanData.nurseId ? {
+          nurse: nurseId ? {
             include: {
               user: {
                 select: {
@@ -87,6 +111,7 @@ export const MedicalRecordService = {
           } : undefined
         }
       });
+      
       return medicalRecord;
     } catch (error) {
       throw new Error(`Failed to create medical record: ${error.message}`);
@@ -250,84 +275,11 @@ export const MedicalRecordService = {
 
   /**
    * Get medical records created by a specific doctor
-   * @param {string} doctorId - Doctor ID
-   * @param {Object} options - Pagination and sorting options
-   * @returns {Promise<Object[]>} List of doctor's medical records
-   */
-  findByDoctorId: async (req, options = { skip: 0, take: 10 }) => {
-    try {
-      if (!req?.user?.doctor?.id) {
-        throw new Error("Authenticated user is not a doctor");
-      }
-      
-      const doctorId = req.user.doctor.id;
-      const medicalRecords = await prisma.medicalRecord.findMany({
-        where: { doctorId },
-        skip: options.skip,
-        take: options.take,
-        orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          }
-        }
-      });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
-    }
-  },
+
 
   /**
    * Get medical records managed by a specific nurse
-   * @param {string} nurseId - Nurse ID
-   * @param {Object} options - Pagination and sorting options
-   * @returns {Promise<Object[]>} List of nurse's medical records
-   */
-  findByNurseId: async (nurseId, options = { skip: 0, take: 10 }) => {
-    try {
-      const medicalRecords = await prisma.medicalRecord.findMany({
-        where: { nurseId },
-        skip: options.skip,
-        take: options.take,
-        orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
-      });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch nurse's medical records: ${error.message}`);
-    }
-  },
+
 
   /**
    * Update a medical record

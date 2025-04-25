@@ -340,4 +340,29 @@ export class DoctorPatientService {
     )
     return doctor
   }
+  static async doctormedicalrecords(doctorId){
+    try {
+      const medicalRecords = await prisma.medicalRecord.findMany({
+        where: { doctorId },
+       
+        orderBy:{ recordDate: 'desc' },
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                }
+              }
+            }
+          }
+        }
+      });
+      return medicalRecords;
+    } catch (error) {
+      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
+    }
+  }
 }

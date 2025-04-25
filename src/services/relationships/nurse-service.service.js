@@ -498,4 +498,38 @@ export class NurseServiceService {
         }
       })
   }
+  static async nursegetMedicalRecords(nurseId){
+    try {
+      const medicalRecords = await prisma.medicalRecord.findMany({
+        where: { nurseId },
+        orderBy: { recordDate: 'desc' },
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                }
+              }
+            }
+          },
+          doctor: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                }
+              }
+            }
+          }
+        }
+      });
+      return medicalRecords;
+    } catch (error) {
+      throw new Error(`Failed to fetch nurse's medical records: ${error.message}`);
+    }
+  }
 }

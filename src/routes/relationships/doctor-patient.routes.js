@@ -175,5 +175,20 @@ export async function doctorPatientRoutes(fastify) {
         reply.code(400).send({ error: error.message });
       }
     },
+  }),
+  fastify.get("/medical-records",{
+    
+    handler: async (request,reply)=>{
+      try {
+      
+
+        const patients = await DoctorPatientService.doctormedicalrecords(
+          request?.user?.doctor?.id
+        );
+        return patients;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    }
   })
 }
