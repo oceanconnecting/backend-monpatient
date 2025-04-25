@@ -16,57 +16,50 @@ export const MedicalRecordService = {
       const patientId = cleanData.patientId;
       delete cleanData.patientId;
       
-      let doctorId = cleanData.doctorId;  // Changed to let
+      let doctorId = cleanData.doctorId;
       delete cleanData.doctorId;
       
-      let nurseId = cleanData.nurseId;    // Changed to let
+      let nurseId = cleanData.nurseId;
       delete cleanData.nurseId;
-
-      // Get doctorId from authenticated user if available
+  
+      // Handle doctor assignment and validation
       if (req?.user?.doctor?.id) {
         doctorId = req.user.doctor.id;
       } else if (doctorId) {
-        // Verify the doctor exists
         const doctorExists = await prisma.doctor.findUnique({
           where: { id: doctorId }
         });
-        
         if (!doctorExists) {
           throw new Error("Doctor with the provided ID does not exist");
         }
       }
       
-      // Check if nurseId exists, if provided
+      // Handle nurse assignment and validation
       if (req?.user?.nurse?.id) {
         nurseId = req.user.nurse.id;
       } else if (nurseId) {
-        // Ensure nurseId is a string, not an array
         if (Array.isArray(nurseId)) {
           throw new Error("nurseId must be a single string value, not an array");
         }
-        
         const nurseExists = await prisma.nurse.findUnique({
           where: { id: nurseId }
         });
-        
         if (!nurseExists) {
           throw new Error("Nurse with the provided ID does not exist");
         }
       }
       
-      // Validate that patientId exists (required field)
+      // Validate patient (required field)
       if (!patientId) {
         throw new Error("Patient ID is required");
       }
-      
       const patientExists = await prisma.patient.findUnique({
         where: { id: patientId }
       });
-      
       if (!patientExists) {
         throw new Error("Patient with the provided ID does not exist");
       }
-
+  
       // Prepare the create data object with proper relations
       const createData = {
         ...cleanData,
@@ -74,7 +67,7 @@ export const MedicalRecordService = {
         ...(doctorId && { doctor: { connect: { id: doctorId } } }),
         ...(nurseId && { nurse: { connect: { id: nurseId } } })
       };
-
+  
       const medicalRecord = await prisma.medicalRecord.create({
         data: createData,
         include: {

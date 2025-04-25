@@ -5,19 +5,19 @@ const defaultPrisma = new PrismaClient()
 export function createAuthMiddleware(fastify, prismaClient = defaultPrisma) {
   return async function authenticate(request, reply) {
     try {
-      const authHeader = request.headers.authorization
+      const authHeader = request.headers.authorization;
       if (!authHeader?.startsWith('Bearer')) {
-        reply.code(401).send({ error: 'No token provided' })
-        return
+        reply.code(401).send({ error: 'No token provided' });
+        return;
       }
 
-      const token = authHeader.replace('Bearer ', '')
+      const token = authHeader.replace('Bearer ', '');
       if (!token) {
-        reply.code(401).send({ error: 'No token provided' })
-        return
+        reply.code(401).send({ error: 'No token provided' });
+        return;
       }
 
-      const decoded = await request.jwtVerify()
+      const decoded = await request.jwtVerify();
       
       // Get full user data with role-specific information
       const user = await prismaClient.user.findUnique({
@@ -29,33 +29,42 @@ export function createAuthMiddleware(fastify, prismaClient = defaultPrisma) {
           pharmacy: true,
           admin: true
         }
-      })
+      });
 
       if (!user) {
-        reply.code(401).send({ error: 'User not found' })
-        return
+        reply.code(401).send({ error: 'User not found' });
+        return;
       }
 
       // Determine user role
-      let role = 'USER'
-      if (user.admin) role = 'ADMIN'
-      else if (user.doctor) role = 'DOCTOR'
-      else if (user.nurse) role = 'NURSE'
-      else if (user.pharmacy) role = 'PHARMACY'
-      else if (user.patient) role = 'PATIENT'
+      let role = 'USER';
+      if (user.admin) role = 'ADMIN';
+      else if (user.doctor) role = 'DOCTOR';
+      else if (user.nurse) role = 'NURSE';
+      else if (user.pharmacy) role = 'PHARMACY';
+      else if (user.patient) role = 'PATIENT';
 
       // Attach the user info to the request
       request.user = {
         id: user.id,
         role: role,
         ...user
-      }
+      };
     } catch (err) {
-      reply.code(401).send({ error: 'Unauthorized' })
+      // You might want to log the error for debugging purposes
+      console.error('Authentication error:', err);
+      
+      // Send appropriate error response based on error type
+      if (err.message.includes('jwt expired')) {
+        reply.code(401).send({ error: 'Token expired' });
+      } else if (err.message.includes('jwt malformed')) {
+        reply.code(401).send({ error: 'Invalid token' });
+      } else {
+        reply.code(401).send({ error: 'Unauthorized' });
+      }
     }
-  }
+  };
 }
-
 export function checkRole(roles) {
   return async (request, reply) => {
     if (!request.user) {
