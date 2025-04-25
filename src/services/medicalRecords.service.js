@@ -1,10 +1,45 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+function getDoctorId(req, submittedDoctorId) {
+  // Use authenticated doctor if available
+  if (req?.user?.doctor?.id) {
+    return req.user.doctor.id;
+  }
+  
+  // Otherwise use submitted ID
+  return submittedDoctorId;
+}
+
+async function getNurseId(req, submittedNurseId) {
+  // Use authenticated nurse if available
+  if (req?.user?.nurse?.id) {
+    return req.user.nurse.id;
+  }
+  
+  // Handle nurse validation if ID provided
+  if (submittedNurseId) {
+    if (Array.isArray(submittedNurseId)) {
+      throw new Error("nurseId must be a single string value, not an array");
+    }
+    
+    const nurseExists = await prisma.nurse.findUnique({
+      where: { id: submittedNurseId }
+    });
+    
+    if (!nurseExists) {
+      throw new Error("Nurse with the provided ID does not exist");
+    }
+    
+    return submittedNurseId;
+  }
+  
+  return null;
+}
 
 export const MedicalRecordService = {
   /**
    * Create a new medical record
-   * @param {Object} data - Medical record data
+ * @param {Object} data - Medical record data
    * @returns {Promise<Object>} Created medical record
    */
   create: async (data, req) => {
@@ -12,44 +47,16 @@ export const MedicalRecordService = {
       // Clean up the data to avoid foreign key constraint errors
       const cleanData = { ...data };
       
-      // Remove direct ID fields that should be relationships
+      // Extract and remove direct ID fields that should be relationships
       const patientId = cleanData.patientId;
+      const submittedDoctorId = cleanData.doctorId;
+      const submittedNurseId = cleanData.nurseId;
+      
       delete cleanData.patientId;
-      
-      let doctorId = cleanData.doctorId;
       delete cleanData.doctorId;
-      
-      let nurseId = cleanData.nurseId;
       delete cleanData.nurseId;
-  
-      // Handle doctor assignment and validation
-      if (req?.user?.doctor?.id) {
-        doctorId = req.user.doctor.id;
-      } else if (doctorId) {
-        const doctorExists = await prisma.doctor.findUnique({
-          where: { id: doctorId }
-        });
-        if (!doctorExists) {
-          throw new Error("Doctor with the provided ID does not exist");
-        }
-      }
       
-      // Handle nurse assignment and validation
-      if (req?.user?.nurse?.id) {
-        nurseId = req.user.nurse.id;
-      } else if (nurseId) {
-        if (Array.isArray(nurseId)) {
-          throw new Error("nurseId must be a single string value, not an array");
-        }
-        const nurseExists = await prisma.nurse.findUnique({
-          where: { id: nurseId }
-        });
-        if (!nurseExists) {
-          throw new Error("Nurse with the provided ID does not exist");
-        }
-      }
-      
-      // Validate patient (required field)
+      // Validate and handle patient data (required field)
       if (!patientId) {
         throw new Error("Patient ID is required");
       }
@@ -59,7 +66,13 @@ export const MedicalRecordService = {
       if (!patientExists) {
         throw new Error("Patient with the provided ID does not exist");
       }
-  
+      
+      // Determine doctorId - combining conditionals to reduce complexity
+      const doctorId = getDoctorId(req, submittedDoctorId);
+      
+      // Determine nurseId - refactored to helper function to reduce complexity
+      const nurseId = await getNurseId(req, submittedNurseId);
+
       // Prepare the create data object with proper relations
       const createData = {
         ...cleanData,
@@ -106,10 +119,14 @@ export const MedicalRecordService = {
       });
       
       return medicalRecord;
-    } catch (error) {
+    } 
+    catch (error) {
       throw new Error(`Failed to create medical record: ${error.message}`);
     }
   },
+
+// Helper functions to reduce complexity in the main function
+
 
   /**
    * Get a medical record by ID
