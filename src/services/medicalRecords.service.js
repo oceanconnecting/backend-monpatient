@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+
+// Helper functions
 function getDoctorId(req, submittedDoctorId) {
   // Use authenticated doctor if available
   if (req?.user?.doctor?.id) {
@@ -36,14 +38,67 @@ async function getNurseId(req, submittedNurseId) {
   return null;
 }
 
+// Standard include object for consistent entity relationships
+const standardInclude = {
+  patient: {
+    include: {
+      user: {
+        select: {
+          firstname: true,
+          lastname: true,
+          email: true,
+        }
+      }
+    }
+  },
+  doctor: {
+    include: {
+      user: {
+        select: {
+          firstname: true,
+          lastname: true,
+        }
+      }
+    }
+  },
+  nurse: {
+    include: {
+      user: {
+        select: {
+          firstname: true,
+          lastname: true,
+        }
+      }
+    }
+  }
+};
+
+// Helper to get conditional includes based on available IDs
+function getConditionalIncludes(doctorId, nurseId) {
+  return {
+    patient: standardInclude.patient,
+    ...(doctorId ? { doctor: standardInclude.doctor } : {}),
+    ...(nurseId ? { nurse: standardInclude.nurse } : {})
+  };
+}
+
+// Standardized error wrapper
+const executeQuery = async (operation, errorMessage) => {
+  try {
+    return await operation();
+  } catch (error) {
+    throw new Error(`${errorMessage}: ${error.message}`);
+  }
+};
+
 export const MedicalRecordService = {
   /**
    * Create a new medical record
- * @param {Object} data - Medical record data
+   * @param {Object} data - Medical record data
    * @returns {Promise<Object>} Created medical record
    */
   create: async (data, req) => {
-    try {
+    return executeQuery(async () => {
       // Clean up the data to avoid foreign key constraint errors
       const cleanData = { ...data };
       
@@ -67,10 +122,8 @@ export const MedicalRecordService = {
         throw new Error("Patient with the provided ID does not exist");
       }
       
-      // Determine doctorId - combining conditionals to reduce complexity
+      // Determine doctorId and nurseId
       const doctorId = getDoctorId(req, submittedDoctorId);
-      
-      // Determine nurseId - refactored to helper function to reduce complexity
       const nurseId = await getNurseId(req, submittedNurseId);
 
       // Prepare the create data object with proper relations
@@ -83,212 +136,47 @@ export const MedicalRecordService = {
   
       const medicalRecord = await prisma.medicalRecord.create({
         data: createData,
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: doctorId ? {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          } : undefined,
-          nurse: nurseId ? {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          } : undefined
-        }
+        include: getConditionalIncludes(doctorId, nurseId)
       });
       
       return medicalRecord;
-    } 
-    catch (error) {
-      throw new Error(`Failed to create medical record: ${error.message}`);
-    }
+    }, "Failed to create medical record");
   },
-
-// Helper functions to reduce complexity in the main function
-
 
   /**
    * Get a medical record by ID
-  * @param {string} id - Medical record ID
+   * @param {string} id - Medical record ID
    * @returns {Promise<Object|null>} Medical record or null if not found
    */
   findById: async (id) => {
-    try {
-      const medicalRecord = await prisma.medicalRecord.findUnique({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.findUnique({
         where: { id },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
-      return medicalRecord;
-    } catch (error) {
-      throw new Error(`Failed to find medical record: ${error.message}`);
-    }
+    }, "Failed to find medical record");
   },
-
 
   /**
    * Find medical records with filters
-  * @param {Object} filters - Filter conditions
+   * @param {Object} filters - Filter conditions
    * @param {Object} options - Pagination and sorting options
    * @returns {Promise<Object[]>} List of medical records
    */
   findMany: async (filters = {}, options = { skip: 0, take: 10 }) => {
-    try {
-      const medicalRecords = await prisma.medicalRecord.findMany({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.findMany({
         where: filters,
         skip: options.skip,
         take: options.take,
         orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch medical records: ${error.message}`);
-    }
+    }, "Failed to fetch medical records");
   },
 
-
   /**
-   * Get medical records for a specific patient
-  * Get medical records created by the authenticated doctor
-   * @param {Object} req - Request object containing authenticated user
-   * @param {Object} options - Pagination and sorting options
-   * @returns {Promise<Object[]>} List of doctor's medical records
-   */
-  findByAuthenticatedDoctor: async (req, options = { skip: 0, take: 10 }) => {
-    try {
-      if (!req?.user?.doctor?.id) {
-        throw new Error("Authenticated user is not a doctor");
-      }
-      
-      const doctorId = req.user.doctor.id;
-      
-      const medicalRecords = await prisma.medicalRecord.findMany({
-        where: { doctorId },
-        skip: options.skip,
-        take: options.take,
-        orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
-      });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
-    }
-  },
-
-
-  /**
-   * Get medical records created by a specific doctor
-
-
-  /**
-   * Get medical records managed by a specific nurse
+   * Get medical records created by the authenticated doctor
 
 
   /**
@@ -298,48 +186,13 @@ export const MedicalRecordService = {
    * @returns {Promise<Object>} Updated medical record
    */
   update: async (id, data) => {
-    try {
-      const updatedRecord = await prisma.medicalRecord.update({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.update({
         where: { id },
         data,
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
-      return updatedRecord;
-    } catch (error) {
-      throw new Error(`Failed to update medical record: ${error.message}`);
-    }
+    }, "Failed to update medical record");
   },
 
   /**
@@ -348,14 +201,11 @@ export const MedicalRecordService = {
    * @returns {Promise<Object>} Deleted medical record
    */
   delete: async (id) => {
-    try {
-      const deletedRecord = await prisma.medicalRecord.delete({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.delete({
         where: { id }
       });
-      return deletedRecord;
-    } catch (error) {
-      throw new Error(`Failed to delete medical record: ${error.message}`);
-    }
+    }, "Failed to delete medical record");
   },
 
   /**
@@ -364,14 +214,11 @@ export const MedicalRecordService = {
    * @returns {Promise<number>} Count of medical records
    */
   count: async (filters = {}) => {
-    try {
-      const count = await prisma.medicalRecord.count({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.count({
         where: filters
       });
-      return count;
-    } catch (error) {
-      throw new Error(`Failed to count medical records: ${error.message}`);
-    }
+    }, "Failed to count medical records");
   },
 
   /**
@@ -381,8 +228,8 @@ export const MedicalRecordService = {
    * @returns {Promise<Object[]>} List of matching medical records
    */
   search: async (searchTerm, options = { skip: 0, take: 10 }) => {
-    try {
-      const medicalRecords = await prisma.medicalRecord.findMany({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.findMany({
         where: {
           OR: [
             { diagnosis: { contains: searchTerm, mode: 'insensitive' } },
@@ -393,44 +240,9 @@ export const MedicalRecordService = {
         skip: options.skip,
         take: options.take,
         orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to search medical records: ${error.message}`);
-    }
+    }, "Failed to search medical records");
   },
 
   /**
@@ -441,8 +253,8 @@ export const MedicalRecordService = {
    * @returns {Promise<Object[]>} List of medical records within date range
    */
   findByDateRange: async (startDate, endDate, options = { skip: 0, take: 10 }) => {
-    try {
-      const medicalRecords = await prisma.medicalRecord.findMany({
+    return executeQuery(async () => {
+      return await prisma.medicalRecord.findMany({
         where: {
           recordDate: {
             gte: startDate,
@@ -452,47 +264,19 @@ export const MedicalRecordService = {
         skip: options.skip,
         take: options.take,
         orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch medical records by date range: ${error.message}`);
-    }
+    }, "Failed to fetch medical records by date range");
   },
+  
+  /**
+   * Get medical records for the authenticated patient
+   * @param {Object} req - Request object containing authenticated user
+   * @param {Object} options - Pagination and sorting options
+   * @returns {Promise<Object[]>} List of patient's medical records
+   */
   findByAuthenticatedPatient: async (req, options = { skip: 0, take: 10 }) => {
-    try {
+    return executeQuery(async () => {
       if (!req?.user?.patient?.id) {
         throw new Error("Authenticated user is not a patient");
       }
@@ -504,38 +288,7 @@ export const MedicalRecordService = {
         skip: options.skip,
         take: options.take,
         orderBy: options.orderBy || { recordDate: 'desc' },
-        include: {
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          nurse: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          },
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
+        include: standardInclude
       });
 
       // Return empty array if no records found
@@ -544,7 +297,7 @@ export const MedicalRecordService = {
       }
 
       // Map the results to concatenate names and structure the response
-      const mappedRecords = medicalRecords.map(record => ({
+      return medicalRecords.map(record => ({
         id: record.id,
         recordDate: record.recordDate,
         diagnosis: record.diagnosis,
@@ -554,10 +307,10 @@ export const MedicalRecordService = {
           id: record.doctor.id,
           fullName: `${record.doctor.user.firstname} ${record.doctor.user.lastname}`
         } : null,
-        nurse: record.nurse ? record.nurse.map(nurse => ({
-          id: nurse.id,
-          fullName: `${nurse.user.firstname} ${nurse.user.lastname}`
-        })) : [],
+        nurse: record.nurse ? {
+          id: record.nurse.id,
+          fullName: `${record.nurse.user.firstname} ${record.nurse.user.lastname}`
+        } : null,
         patient: record.patient ? {
           id: record.patient.id,
           fullName: `${record.patient.user.firstname} ${record.patient.user.lastname}`
@@ -565,10 +318,6 @@ export const MedicalRecordService = {
         createdAt: record.createdAt,
         updatedAt: record.updatedAt
       }));
-
-      return mappedRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch patient's medical records: ${error.message}`);
-    }
+    }, "Failed to fetch patient's medical records");
   },
 };
