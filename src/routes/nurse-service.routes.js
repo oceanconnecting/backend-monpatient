@@ -53,6 +53,46 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   });
+  fastify.get('/visite',{
+    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    handler: async (request, reply) => {
+      try {
+        const requests = await NurseServiceService.getNurseVisits(
+          request.user.nurse.id
+        );
+        return requests;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    },
+  })
+  fastify.put('/visite/:visitId', {
+    schema: createVisitSchema,
+    preValidation: fastify.authenticate,
+    handler: async (request, reply) => {
+      try {
+        const { visitId } = request.params;
+        const nurseId = request.user.nurse.id;
+        
+        if (!nurseId) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: 'Only nurses can update visits'
+          });
+        }
+        
+        const visit = await NurseServiceService.updateVisit(nurseId, visitId, request.body);
+        return reply.status(200).send(visit);
+      } catch (error) {
+        console.error('Update visit error:', error);
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: error.message
+        });
+      }
+    }
+  });
+
   fastify.post("/request", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {

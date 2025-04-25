@@ -610,4 +610,72 @@ export class NurseServiceService {
   
     return createVisit;
   }
+  static async getNurseVisits(nurseId, otherFilters = {}) {
+    // Build the query with nurseId as primary filter
+    const where = {
+      nurseId: nurseId
+    };
+    
+    // Apply additional filters if provided
+    if (otherFilters.patientId) where.patientId = otherFilters.patientId;
+    if (otherFilters.visitId) where.id = otherFilters.visitId;
+    
+    // Query nurse visits with relations
+    const visits = await prisma.nurseVisit.findMany({
+      where,
+      include: {
+        nurse: true,
+        patient: true
+      },
+    });
+    
+    return visits;
+  }
+  
+  static async updateVisit(nurseId, visitId, updateData) {
+    // Verify the visit exists and belongs to the nurse
+    const existingVisit = await prisma.nurseVisit.findFirst({
+      where: { 
+        id: visitId,
+        nurseId: nurseId
+      }
+    });
+    
+    if (!existingVisit) {
+      throw new Error('Nurse visit not found or not authorized');
+    }
+    
+    // Update the visit
+    const updatedVisit = await prisma.nurseVisit.update({
+      where: { id: visitId },
+      data: updateData,
+      include: {
+        nurse: true,
+        patient: true
+      }
+    });
+    
+    return updatedVisit;
+  }
+  
+  static async deleteVisit(nurseId, visitId) {
+    // Verify the visit exists and belongs to the nurse
+    const existingVisit = await prisma.nurseVisit.findFirst({
+      where: { 
+        id: visitId,
+        nurseId: nurseId
+      }
+    });
+    
+    if (!existingVisit) {
+      throw new Error('Nurse visit not found or not authorized');
+    }
+    
+    // Delete the visit
+    await prisma.nurseVisit.delete({
+      where: { id: visitId }
+    });
+    
+    return { success: true, message: 'Nurse visit deleted successfully' };
+  }
 }
