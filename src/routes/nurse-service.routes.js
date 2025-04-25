@@ -2,7 +2,57 @@ import { NurseServiceService } from "../services/relationships/nurse-service.ser
 import { checkRole } from "../middleware/auth.middleware.js";
 
 export async function nurseServiceRoutes(fastify) {
+  
   // Patient creates a service request
+  const createVisitSchema = {
+    body: {
+      type: 'object',
+      required: ['patientId', 'notes'],
+      properties: {
+        patientId: { type: 'string' },
+        notes: { type: 'string' }
+      }
+    },
+    response: {
+      201: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          nurseId: { type: 'string' },
+          patientId: { type: 'string' },
+          notes: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' }
+        }
+      }
+    }
+  }
+  fastify.post('/create-visite', {
+    schema: createVisitSchema,
+    preValidation: fastify.authenticate,
+    handler: async (request, reply) => {
+      try {
+        const { patientId, notes } = request.body;
+        const nurseId = request.user.nurse.id;
+        
+        if (!nurseId) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: 'Only nurses can create visits'
+          });
+        }
+        
+        const visit = await NurseServiceService.createVisit(nurseId, patientId, notes);
+        
+        return reply.status(201).send(visit);
+      } catch (error) {
+        console.error('Create visit error:', error);
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: error.message
+        });
+      }
+    }
+  });
   fastify.post("/request", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
@@ -443,4 +493,5 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   );
+
 }

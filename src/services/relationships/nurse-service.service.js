@@ -580,4 +580,34 @@ export class NurseServiceService {
       throw new Error(`Failed to delete service request: ${error.message}`);
     }
   }
+  static async createVisit(nurseId, patientId, notes) {
+    // First find the accepted nurse service request
+    const nurseService = await prisma.nurseServiceRequest.findFirst({
+      where: { 
+        nurseId: nurseId,
+        patientId: patientId,
+        status: "ACCEPTED" 
+      },
+      include: {
+        nurse: true,    // Include nurse relation
+        patient: true   // Include patient relation
+      }
+    });
+    
+    if (!nurseService) {
+      throw new Error('No accepted service request found for this nurse and patient');
+    }
+  
+    // Create the nurse visit record
+    const createVisit = await prisma.nurseVisit.create({
+      data: {
+        nurseId: nurseId,
+        patientId: patientId,
+     
+        notes: notes
+      }
+    });
+  
+    return createVisit;
+  }
 }

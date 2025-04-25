@@ -441,7 +441,7 @@ export class PatientService {
     
     return { doctors: mappedDoctors, nurses: mappedNurses, allStaff };
   }
-  
+  //search doctor and nurse by name
   static async searchDoctorsAndNursesByName(searchName) {
     // First get all doctors and nurses
     const { allStaff } = await this.getAllDoctorsAndNurses();
@@ -466,4 +466,6 @@ export class PatientService {
     
     return searchResults;
   }
+  // cretae vite nurse
+
 }

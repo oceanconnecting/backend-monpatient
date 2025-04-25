@@ -120,4 +120,5 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  
 }
