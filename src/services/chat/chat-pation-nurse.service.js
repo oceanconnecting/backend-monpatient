@@ -23,7 +23,10 @@ export class ChatServicePatientNurse {
     try {
       return JSON.parse(message.toString());
     } catch (error) {
-      throw new Error("Invalid message format");
+      // Handle the error appropriately
+      console.error("An error occurred:", error.message);
+      // You could add more specific error handling logic here
+      throw new Error(`Invalid message format: ${error.message}`);
     }
   }
 

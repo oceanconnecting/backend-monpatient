@@ -124,11 +124,11 @@ export class ChatServicePatientNurseDoctor {
           message: "Cannot join room: unauthorized",
         });
       }
-    } catch (error) {
+    }catch (error) {
       this.sendRoomMessage(connection, "error", roomId, {
-        message: "Failed to join room",
+          message: "Failed to join room"
       });
-    }
+  }
   }
 
   joinRoom(userId, roomId) {
