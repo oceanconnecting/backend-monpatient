@@ -122,5 +122,5 @@ export default async (req, res) => {
     res.end("Internal Server Error");
   }
 };
-
+export const maxDuration = 10 * 1000; // 10 seconds
 export { buildApp, prisma };
