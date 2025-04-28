@@ -313,7 +313,7 @@ export class NurseServiceService {
         notes: record.notes,
         diagnosis: record.diagnosis,
         treatment: record.treatment,
-        doctorId: record.doctorId,
+        doctorId: record.doctorId
     })),
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,

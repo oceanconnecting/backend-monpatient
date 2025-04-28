@@ -63,11 +63,11 @@ export async function patientRoutes(fastify) {
     },
   });
 
-  fastify.put("/emergency-contact/:id", {
+  fastify.put("/emergency-contact", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
       try {
-        const emergencyContact = await PatientService.updateEmergencyContact(request.params.id, request.body);
+        const emergencyContact = await PatientService.updateEmergencyContact(request.user.patient.id, request.body);
         reply.code(200).send(emergencyContact);
       } catch (error) {
         reply.code(500).send(error);
