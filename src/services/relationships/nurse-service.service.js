@@ -289,35 +289,49 @@ export class NurseServiceService {
         }
       }
     });
-    
-    return nurse.serviceRequests.map((request) => ({
-      id: request.patient.id,
-      requestId:request.id,
-      userId: request.patient.userId,
-      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
-      email: request.patient.user.email,
-      allergies: request.patient.allergies,
-      emergencyContactName: request.patient.emergencyContactName,
-      emergencyContactNumber: request.patient.emergencyContactPhone,
-      serviceRequestId: request.id,
-      status: request.status,
-      serviceType: request.serviceType,
-      nurseVisits: nurse.nurseVisits.map((visit) => ({
-        visitId: visit.id,
-        visitDate: visit.visitDate,
-        notes: visit.notes,
-      })),
-      medicalRecords: nurse.medicalRecords.map((record) => ({
-        recordId: record.id,
-        recordDate: record.recordDate,
-        notes: record.notes,
-        diagnosis: record.diagnosis,
-        treatment: record.treatment,
-        doctorId: record.doctorId
-    })),
-      createdAt: request.createdAt,
-      preferredDate: request.preferredDate,
-    }));
+  
+    return nurse.serviceRequests.map((request) => {
+      // Filter nurse visits for this specific patient
+      const patientVisits = nurse.nurseVisits.filter(
+        visit => visit.patient.id === request.patient.id
+      );
+      
+      // Filter medical records for this specific patient
+      const patientRecords = nurse.medicalRecords.filter(
+        record => record.patient.id === request.patient.id
+      );
+  
+      return {
+        id: request.patient.id,
+        requestId: request.id,
+        userId: request.patient.userId,
+        name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+        email: request.patient.user.email,
+        allergies: request.patient.allergies,
+        emergencyContactName: request.patient.emergencyContactName,
+        emergencyContactNumber: request.patient.emergencyContactPhone,
+        serviceRequestId: request.id,
+        status: request.status,
+        serviceType: request.serviceType,
+        nurseVisits: patientVisits.map((visit) => ({
+          visitId: visit.id,
+          visitDate: visit.visitDate,
+          notes: visit.notes,
+        })),
+        nurseVisitsCount: patientVisits.length,
+        medicalRecords: patientRecords.map((record) => ({
+          recordId: record.id,
+          recordDate: record.recordDate,
+          notes: record.notes,
+          diagnosis: record.diagnosis,
+          treatment: record.treatment,
+          doctorId: record.doctorId,
+        })),
+        medicalRecordsCount: patientRecords.length,
+        createdAt: request.createdAt,
+        preferredDate: request.preferredDate,
+      };
+    });
   }
 
   static async searchPatient(nurseId, name = '', page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc') {
