@@ -108,19 +108,8 @@ if (process.env.NODE_ENV !== "test") {
 
 // For serverless environments
 export default async (req, res) => {
-  try {
-    // Connect to database first
-    await connectToDatabase();
-    
-    const fastify = await buildApp();
-    await fastify.ready();
-    fastify.server.emit("request", req, res);
-  } catch (error) {
-    console.error("Error in serverless function:", error);
-    await prisma.$disconnect();
-    res.statusCode = 500;
-    res.end("Internal Server Error");
-  }
+  const fastify = await buildApp();
+  await fastify.ready();
+  fastify.server.emit("request", req, res);
 };
-export const maxDuration = 10 * 1000; // 10 seconds
 export { buildApp, prisma };
