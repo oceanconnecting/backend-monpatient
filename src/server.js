@@ -1,9 +1,12 @@
-// server.js
 import Fastify from "fastify";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 // Load environment variables early
 dotenv.config();
+
+// Create Prisma client instance
+const prisma = new PrismaClient();
 
 // Import configuration modules
 import { configurePlugins } from "./config/plugins.js";
@@ -13,6 +16,20 @@ import { configureErrorHandlers } from "./config/errorHandlers.js";
 import { configureWebsockets } from "./config/websockets.js";
 import { configureSecurityFeatures } from "./config/security.js";
 import { configurePerformanceOptimizations } from "./config/performance.js";
+
+// Database connection function
+async function connectToDatabase() {
+  try {
+    // Test the connection by executing a simple query
+    await prisma.$connect();
+    console.log("Connected to database successfully");
+    return true;
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    throw error;
+  }
+}
+
 // Store connected clients and their user info - consider moving to dedicated module
 const connectedClients = new Map();
 
@@ -31,10 +48,17 @@ async function buildApp() {
       },
     },
   });
-  
+
+  // Add prisma to fastify instance
+  fastify.decorate('prisma', prisma);
+
+  // Register a hook to close Prisma when the server shuts down
+  fastify.addHook('onClose', async (instance) => {
+    await instance.prisma.$disconnect();
+  });
+
   // Performance optimizations
   await configurePerformanceOptimizations(fastify);
-
   // Apply configurations in specific order
   await configureSecurityFeatures(fastify);
   await configurePlugins(fastify);
@@ -59,6 +83,10 @@ async function buildApp() {
 // Start server
 const start = async () => {
   try {
+    // Connect to database first
+    await connectToDatabase();
+    
+    // Then build and start the server
     const fastify = await buildApp();
     const port = process.env.PORT || 3000;
     await fastify.listen({
@@ -68,6 +96,7 @@ const start = async () => {
     fastify.log.info(`Server running at http://0.0.0.0:${port}`);
   } catch (err) {
     console.error("Error starting server:", err);
+    await prisma.$disconnect();
     process.exit(1);
   }
 };
@@ -79,9 +108,19 @@ if (process.env.NODE_ENV !== "test") {
 
 // For serverless environments
 export default async (req, res) => {
-  const fastify = await buildApp();
-  await fastify.ready();
-  fastify.server.emit("request", req, res);
+  try {
+    // Connect to database first
+    await connectToDatabase();
+    
+    const fastify = await buildApp();
+    await fastify.ready();
+    fastify.server.emit("request", req, res);
+  } catch (error) {
+    console.error("Error in serverless function:", error);
+    await prisma.$disconnect();
+    res.statusCode = 500;
+    res.end("Internal Server Error");
+  }
 };
 
-export { buildApp };
+export { buildApp, prisma };

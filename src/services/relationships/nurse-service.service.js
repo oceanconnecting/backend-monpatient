@@ -256,6 +256,36 @@ export class NurseServiceService {
               }
             }
           }
+        },
+        nurseVisits: {
+          include: {
+            patient: {
+              include: {
+                user: {
+                  select: {
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                  }
+                }
+              }
+            }
+          }
+        },
+        medicalRecords: {
+          include: {
+            patient: {
+              include: {
+                user: {
+                  select: {
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                  }
+                }
+              }
+            }
+          }
         }
       }
     });
@@ -266,9 +296,25 @@ export class NurseServiceService {
       userId: request.patient.userId,
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
       email: request.patient.user.email,
+      allergies: request.patient.allergies,
+      emergencyContactName: request.patient.emergencyContactName,
+      emergencyContactNumber: request.patient.emergencyContactPhone,
       serviceRequestId: request.id,
-      serviceType: request.serviceType,
       status: request.status,
+      serviceType: request.serviceType,
+      nurseVisits: nurse.nurseVisits.map((visit) => ({
+        visitId: visit.id,
+        visitDate: visit.visitDate,
+        notes: visit.notes,
+      })),
+      medicalRecords: nurse.medicalRecords.map((record) => ({
+        recordId: record.id,
+        recordDate: record.recordDate,
+        notes: record.notes,
+        diagnosis: record.diagnosis,
+        treatment: record.treatment,
+        doctorId: record.doctorId,
+    })),
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,
     }));
