@@ -423,10 +423,19 @@ export class PatientService {
           },
         },
         serviceRequests:{
-          select:{
-            rating:true,
-            feedback:true
-          }
+          include: {
+            patient: {
+              include: {
+                user: {
+                  select: {
+                    firstname: true,
+                    lastname: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
         }
       },
     });
@@ -440,7 +449,13 @@ export class PatientService {
     const mappedNurses = nurses.map(nurse => ({
       ...nurse,
       role: 'nurse',
-      numberserviceRequests:nurse.serviceRequests.length,
+      serviceRequests: nurse.serviceRequests.map(request => ({
+        rating: request.rating,
+        feedback: request.feedback,
+        firstName: request.patient.user.firstname,
+        lastName: request.patient.user.lastname,
+      })),
+      numberFeedbacks:nurse.serviceRequests.length,
       name: `${nurse.user.firstname} ${nurse.user.lastname}`,
     }));
   
