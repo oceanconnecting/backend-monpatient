@@ -281,10 +281,10 @@ export class PatientService {
       return {
         relationId: relation.id,
         status: relation.status,
-        doctorId: relation.doctorId,
+        nurseId: relation.nurseId,
         patientId: relation.patientId,
-        doctor: {
-          ...relation.doctor,
+        nurse: {
+          ...relation.nurse,
           fullName: nurseFullName,
           user: relation.nurse.user
         }
