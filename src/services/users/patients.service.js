@@ -229,11 +229,64 @@ export class PatientService {
           ...relation.doctor,
           fullName: doctorFullName,
           user: relation.doctor.user
+        }
+      };
+    });
+    
+    console.log(`Returning ${formattedResults.length} formatted results`);
+    return formattedResults;
+  }
+  static async getnurseOfpatient(id) {
+    console.log(`Getting doctors for patient ID: ${id}`);
+    
+    const nurserPatientRequests = await prisma.nurseServiceRequest.findMany({
+      where: {
+        patientId: id
+      },
+      include: {
+        nurse: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true
+              }
+            }
+          }
         },
         patient: {
-          ...relation.patient,
-          fullName: patientFullName,
-          user: relation.patient.user
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    console.log(`Found ${nurserPatientRequests.length} doctor-patient relationships`);
+    
+    // Map and concatenate data
+    const formattedResults = nurserPatientRequests.map(relation => {
+      console.log(`Processing relation ID: ${relation.id}`);
+      
+      const nurseFullName = `${relation.nurse.user.firstname} ${relation.nurse.user.lastname}`;
+     
+      
+      return {
+        relationId: relation.id,
+        status: relation.status,
+        doctorId: relation.doctorId,
+        patientId: relation.patientId,
+        doctor: {
+          ...relation.doctor,
+          fullName: nurseFullName,
+          user: relation.nurse.user
         }
       };
     });

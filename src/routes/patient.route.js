@@ -13,6 +13,17 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  fastify.get("/nurses", {
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    handler: async (request, reply) => {
+      try {
+        const doctors = await PatientService.getnurseOfpatient(request?.user?.patient?.id);
+        reply.code(200).send(doctors);
+      } catch (error) {
+        reply.code(500).send(error);
+      }
+    },
+  });
   fastify.get("/doctors/all", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -25,7 +36,7 @@ export async function patientRoutes(fastify) {
     },
   });
 
-  fastify.get("/nurses", {
+  fastify.get("/nurses/all", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
       try {
