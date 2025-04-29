@@ -36,7 +36,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-
+  // 
   fastify.get("/pharmacies", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -50,7 +50,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-  
+  // This route allows patients to view their appointments
   fastify.get("/emergency-contact", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -62,7 +62,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-
+  // This route allows patients to update their emergency contact
   fastify.put("/emergency-contact", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -74,7 +74,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-  
+  // This route allows patients to send a request for medicine
   fastify.post("/order-medicine", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -86,6 +86,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  // This route allows patients to view their medical records
   fastify.get("/medical-record", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -101,6 +102,8 @@ export async function patientRoutes(fastify) {
       }
     }
   });
+  //search for doctors and nurses by name
+  // This route allows patients to search for doctors and nurses by name
   fastify.get("/search", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     handler: async (request, reply) => {
@@ -120,5 +123,4 @@ export async function patientRoutes(fastify) {
       }
     },
   });
-  
 }

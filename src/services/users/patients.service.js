@@ -422,6 +422,12 @@ export class PatientService {
             dateOfBirth: true,
           },
         },
+        serviceRequests:{
+          select:{
+            rating:true,
+            feedback:true
+          }
+        }
       },
     });
   
@@ -434,6 +440,7 @@ export class PatientService {
     const mappedNurses = nurses.map(nurse => ({
       ...nurse,
       role: 'nurse',
+      numberserviceRequests:nurse.serviceRequests.length,
       name: `${nurse.user.firstname} ${nurse.user.lastname}`,
     }));
   
@@ -467,5 +474,5 @@ export class PatientService {
     return searchResults;
   }
   // cretae vite nurse
-
+  
 }

@@ -539,6 +539,8 @@ export class NurseServiceService {
     return patient.nurseServiceRequests.map((request) => ({
       id: request.patient.id,
       requestId:request.id,
+      emergencyContactName: request.patient.emergencyContactName,
+      emergencyContactPhone: request.patient.emergencyContactPhone,
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
       email: request.patient.user.email,
       serviceRequestId: request.id,
