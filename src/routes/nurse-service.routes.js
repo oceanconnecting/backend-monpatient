@@ -236,29 +236,23 @@ export async function nurseServiceRoutes(fastify) {
     },
   });
   // Patient rates completed service
-  fastify.put("/rate/:requestId", {
+  fastify.put("/rate", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
-      params: {
-        type: "object",
-        required: ["requestId"],
-        properties: {
-          requestId: { type: "string" },
-        },
-      },
       body: {
         type: "object",
-        required: ["rating"],
+        required: ["rating", "requestId"],
         properties: {
           rating: { type: "integer", minimum: 1, maximum: 5 },
-          feedback: { type: "string" },
-        },
-      },
+          requestId: { type: "string" },
+          feedback: { type: "string" }
+        }
+      }
     },
     handler: async (request, reply) => {
       try {
         const result = await NurseServiceService.rateService(
-          request.params.requestId,
+          request.body.requestId,
           request.user.patient.id,
           request.body.rating,
           request.body.feedback
@@ -267,7 +261,7 @@ export async function nurseServiceRoutes(fastify) {
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
   // Patient views their service requests
   fastify.get("/patient/requests", {

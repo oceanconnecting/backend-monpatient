@@ -168,16 +168,16 @@ export class NurseServiceService {
         patientId: patientId,
         status: 'ACCEPTED'
       }
-    })
-
+    });
+    
     if (!request) {
-      throw new Error('Completed service request not found')
+      throw new Error('Accepted service request not found');
     }
-
+    
     if (rating < 1 || rating > 5) {
-      throw new Error('Rating must be between 1 and 5')
+      throw new Error('Rating must be between 1 and 5');
     }
-
+    
     // Update the service request with rating and feedback
     const updatedRequest = await prisma.nurseServiceRequest.update({
       where: { id: requestId },
@@ -185,8 +185,8 @@ export class NurseServiceService {
         rating,
         feedback
       }
-    })
-
+    });
+    
     // Update nurse's average rating
     const nurseRequests = await prisma.nurseServiceRequest.findMany({
       where: {
@@ -196,18 +196,18 @@ export class NurseServiceService {
       select: {
         rating: true
       }
-    })
-
-    const averageRating = nurseRequests.reduce((acc, curr) => acc + curr.rating, 0) / nurseRequests.length
-
+    });
+    
+    const averageRating = nurseRequests.reduce((acc, curr) => acc + curr.rating, 0) / nurseRequests.length;
+    
     await prisma.nurse.update({
       where: { id: request.nurseId },
       data: {
         rating: averageRating
       }
-    })
-
-    return updatedRequest
+    });
+    
+    return updatedRequest;
   }
 
   static async getPatientRequests(patientId) {
