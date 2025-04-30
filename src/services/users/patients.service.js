@@ -309,12 +309,60 @@ export class PatientService {
     const formatdata=doctors.map(doctor=>{
       const fullName=`${doctor.user.firstname} ${doctor.user.lastname}`
       return{
+        id:doctor.id,
         name:fullName,
         specialization:doctor.specialization,
         email:doctor.user.email
       }
     })
     return formatdata
+  }
+  static async getDoctorById(id) {
+    const doctor = await prisma.doctor.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            firstname: true,
+            lastname: true,
+            profilePhoto: true,
+            telephoneNumber: true,
+            email: true
+          }
+        }
+      }
+    });
+    
+    if (!doctor) return null;
+    
+    return {
+      id: doctor.id,
+      name: `${doctor.user.firstname} ${doctor.user.lastname}`,
+      email: doctor.user.email,
+      telephoneNumber: doctor.user.telephoneNumber,
+      specialization: doctor.specialization,
+      professionalLicenseNumber: doctor.professionalLicenseNumber,
+      profilePhoto: doctor.user.profilePhoto,
+      medicalDiploma: doctor.medicalDiploma,
+      hospitalAffiliation: doctor.hospitalAffiliation,
+    };
+  }
+  
+  static async getNurseById(id) {
+    return await prisma.nurse.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            firstname: true,
+            lastname: true,
+          }
+        }
+      }
+    });
   }
   static async getAllnurses() {
     return await prisma.nurse.findMany(
@@ -542,5 +590,5 @@ export class PatientService {
     return searchResults;
   }
   // cretae vite nurse
-  
+
 }

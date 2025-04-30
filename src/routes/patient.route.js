@@ -134,4 +134,27 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  fastify.get('/doctors/:id', async (request, reply) => {
+    
+    const doctor = await PatientService.getDoctorById(request.params.id);
+    
+    if (!doctor) {
+      return reply.code(404).send({ message: 'Doctor not found' });
+    }
+    
+    return doctor;
+  });
+  
+  // Nurse route
+  fastify.get('/nurses/:id', async (request, reply) => {
+    const { id } = request.params ;
+    
+    const nurse = await PatientService.getNurseById(id);
+    
+    if (!nurse) {
+      return reply.code(404).send({ message: 'Nurse not found' });
+    }
+    
+    return nurse;
+  });
 }
