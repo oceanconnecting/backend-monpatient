@@ -218,7 +218,6 @@ export class PatientService {
       console.log(`Processing relation ID: ${relation.id}`);
       
       const doctorFullName = `${relation.doctor.user.firstname} ${relation.doctor.user.lastname}`;
-      const patientFullName = `${relation.patient.user.firstname} ${relation.patient.user.lastname}`;
       
       return {
         relationId: relation.id,
@@ -342,12 +341,10 @@ export class PatientService {
       telephoneNumber: doctor.user.telephoneNumber,
       specialization: doctor.specialization,
       hospitalAffiliation: doctor.hospitalAffiliation,
-      medicalDiploma: doctor.medicalDiploma,
       experience: doctor.experience,
       professionalLicenseNumber: doctor.professionalLicenseNumber,
       profilePhoto: doctor.user.profilePhoto,
       medicalDiploma: doctor.medicalDiploma,
-      hospitalAffiliation: doctor.hospitalAffiliation,
     };
   }
   

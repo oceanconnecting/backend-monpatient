@@ -125,6 +125,7 @@ export class ChatServicePatientNurseDoctor {
         });
       }
     }catch (error) {
+      console.error("Error joining room:", error);
       this.sendRoomMessage(connection, "error", roomId, {
           message: "Failed to join room"
       });
