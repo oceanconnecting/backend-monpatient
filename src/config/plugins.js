@@ -10,9 +10,7 @@ import googleOAuth2 from "../plugin/google-oauth.js";
 export async function configurePlugins(fastify) {
   // Register CORS with environment-specific configuration
   await fastify.register(fastifyCors, {
-    origin: process.env.NODE_ENV === "production"
-      ? process.env.ALLOWED_ORIGINS?.split(",") || true
-      : true,
+    origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,

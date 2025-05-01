@@ -88,7 +88,18 @@ export class PrescriptionService {
     if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
       throw new Error('Prescription must include at least one item');
     }
+    const doctorPatientRelation = await prisma.doctorPatient.findUnique({
+      where: {
+        patientId_doctorId: {
+          patientId: data.patientId,
+          doctorId: doctorId
+        }
+      }
+    });
     
+    if (!doctorPatientRelation || !doctorPatientRelation.active) {
+      throw new Error('No active relationship exists between this doctor and patient');
+    }
     // Create the prescription with items stored in the Json field
     const prescription = await prisma.prescription.create({
       data: {

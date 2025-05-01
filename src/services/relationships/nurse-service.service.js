@@ -495,7 +495,7 @@ export class NurseServiceService {
     const patient = await prisma.patient.findUnique({
       where: { id: id },
       include: {
-        nurseServiceRequests: {
+        nurseServiceRequests : {
           where: { status: 'ACCEPTED' },
           include: {
             patient: {
@@ -510,6 +510,10 @@ export class NurseServiceService {
         }
       }
     });
+    if (!patient) {
+      console.error('Patient not found');
+      throw new Error('Patient not found');
+    }
     
     return patient.nurseServiceRequests.map((request) => ({
       id: request.patient.id,
@@ -523,7 +527,8 @@ export class NurseServiceService {
       status: request.status,
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,
-    }));
+    })
+  );
   }
 
   // static async nurseVisiting(id){
