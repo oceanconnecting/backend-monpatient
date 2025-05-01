@@ -21,8 +21,6 @@ export async function doctorRoutes(fastify) {
       }
     },
   });
- 
-
   fastify.get("/", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {
@@ -34,23 +32,6 @@ export async function doctorRoutes(fastify) {
       }
     },
   });
-
-  fastify.get("/:id", {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
-    handler: async (request, reply) => {
-      try {
-        const id = request.params.id;
-        const doctor = await DoctorService.getDoctorById(id);
-        if (!doctor) {
-          return reply.code(404).send({ error: "Doctor not found" });
-        }
-        return doctor;
-      } catch (error) {
-        reply.code(500).send({ error: error.message });
-      }
-    },
-  });
-
   fastify.post("/", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {
@@ -62,7 +43,6 @@ export async function doctorRoutes(fastify) {
       }
     },
   });
-
   fastify.put("/:id", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {

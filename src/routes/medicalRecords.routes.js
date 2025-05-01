@@ -14,7 +14,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseId: { type: 'string' },
+        
           recordDate: { type: 'string', format: 'date-time' }
         }
       },
@@ -28,7 +28,7 @@ export async function medicalRecordsRoutes(fastify, options) {
             treatment: { type: 'string' },
             notes: { type: 'string' },
             doctorId: { type: 'string' },
-            nurseId: { type: 'string' },
+        
             recordDate: { type: 'string', format: 'date-time' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
@@ -57,7 +57,7 @@ export async function medicalRecordsRoutes(fastify, options) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-          nurseId: { type: 'string' },
+       
           recordDate: { type: 'string', format: 'date-time' }
         },
         minProperties: 1
@@ -68,7 +68,6 @@ export async function medicalRecordsRoutes(fastify, options) {
           properties: {
             id: { type: 'string' },
             patientId: { type: 'string' },
-            nurseId:{type:'string'},
             diagnosis: { type: 'string' },
             treatment: { type: 'string' },
             notes: { type: 'string' },
@@ -158,7 +157,7 @@ export async function medicalRecordsRoutes(fastify, options) {
 
   // Get medical record by ID
   fastify.get('/:id', { 
-    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "NURSE", "ADMIN"])] 
+    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "ADMIN"])] 
   }, async (request, reply) => {
     try {
       const record = await MedicalRecordService.findById(request.params.id);
@@ -173,7 +172,7 @@ export async function medicalRecordsRoutes(fastify, options) {
 
   // Get medical records for a specific patient
   fastify.get('/patient/:patientId', { 
-    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "NURSE", "ADMIN"])],
+    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "ADMIN"])],
     schema: {
       querystring: {
         type: 'object',
@@ -196,8 +195,8 @@ export async function medicalRecordsRoutes(fastify, options) {
   // Get medical records for a specific doctor
 
   // Search medical records
-  fastify.get('/search', { 
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE", "ADMIN"])],
+  fastify.get('/search', {
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
     schema: medicalRecordSchemas.searchMedicalRecords
   }, async (request, reply) => {
     try {
@@ -211,7 +210,7 @@ export async function medicalRecordsRoutes(fastify, options) {
 
   // Get medical records by date range
   fastify.get('/date-range', { 
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE", "ADMIN"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
     schema: medicalRecordSchemas.dateRangeQuery
   }, async (request, reply) => {
     try {
@@ -229,7 +228,7 @@ export async function medicalRecordsRoutes(fastify, options) {
 
   // Create a new medical record
   fastify.post('/', {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
     try {
@@ -238,11 +237,9 @@ export async function medicalRecordsRoutes(fastify, options) {
       
       const recordData = { ...request.body };
       
-      // Automatically assign the creator as doctor or nurse if not specified
+      // Automatically assign the creator as doctor  if not specified
       if (userRole === "DOCTOR" && !recordData.doctorId) {
-        recordData.doctorId = userId;
-      } else if (userRole === "NURSE" && !recordData.nurseId) {
-        recordData.nurseId = userId;
+         recordData.doctorId = userId;
       }
       
       const record = await MedicalRecordService.create(recordData,request);
@@ -258,7 +255,7 @@ export async function medicalRecordsRoutes(fastify, options) {
 
   // Update a medical record
   fastify.put('/:id', {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR", "NURSE"])],
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     schema: medicalRecordSchemas.updateMedicalRecord
   }, async (request, reply) => {
     try {

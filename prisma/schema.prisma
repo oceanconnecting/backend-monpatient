@@ -121,7 +121,6 @@ model Nurse {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String         @unique
   nurseVisits   NurseVisit[]
-  medicalRecords MedicalRecord[] 
   serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
@@ -354,8 +353,7 @@ model MedicalRecord {
   recordDate  DateTime  @default(now())  // Date of the medical encounter
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  nurseId     String?
-  nurse      Nurse?   @relation(fields: [nurseId], references: [id])
+
   doctor      Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId    String?
 }

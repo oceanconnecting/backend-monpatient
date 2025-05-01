@@ -101,15 +101,11 @@ export const MedicalRecordService = {
     return executeQuery(async () => {
       // Clean up the data to avoid foreign key constraint errors
       const cleanData = { ...data };
-      
       // Extract and remove direct ID fields that should be relationships
       const patientId = cleanData.patientId;
       const submittedDoctorId = cleanData.doctorId;
-      const submittedNurseId = cleanData.nurseId;
-      
       delete cleanData.patientId;
-      delete cleanData.doctorId;
-      delete cleanData.nurseId;
+      // Keep doctorId in the cleanData object
       
       // Validate and handle patient data (required field)
       if (!patientId) {
@@ -122,21 +118,20 @@ export const MedicalRecordService = {
         throw new Error("Patient with the provided ID does not exist");
       }
       
-      // Determine doctorId and nurseId
+      // Determine doctorId
       const doctorId = getDoctorId(req, submittedDoctorId);
-      const nurseId = await getNurseId(req, submittedNurseId);
-
+      
       // Prepare the create data object with proper relations
       const createData = {
         ...cleanData,
         patient: { connect: { id: patientId } },
-        ...(doctorId && { doctor: { connect: { id: doctorId } } }),
-        ...(nurseId && { nurse: { connect: { id: nurseId } } })
+        ...(doctorId && { doctor: { connect: { id: doctorId } } })
+        // Removed nurse connection
       };
-  
+      
       const medicalRecord = await prisma.medicalRecord.create({
         data: createData,
-        include: getConditionalIncludes(doctorId, nurseId)
+        include: getConditionalIncludes(doctorId) // Updated to only include doctorId
       });
       
       return medicalRecord;

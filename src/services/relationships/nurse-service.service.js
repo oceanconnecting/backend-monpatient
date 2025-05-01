@@ -272,21 +272,6 @@ export class NurseServiceService {
             }
           }
         },
-        medicalRecords: {
-          include: {
-            patient: {
-              include: {
-                user: {
-                  select: {
-                    firstname: true,
-                    lastname: true,
-                    email: true,
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     });
   
@@ -296,10 +281,8 @@ export class NurseServiceService {
         visit => visit.patient.id === request.patient.id
       );
       
-      // Filter medical records for this specific patient
-      const patientRecords = nurse.medicalRecords.filter(
-        record => record.patient.id === request.patient.id
-      );
+  
+  
   
       return {
         id: request.patient.id,
@@ -319,15 +302,7 @@ export class NurseServiceService {
           notes: visit.notes,
         })),
         nurseVisitsCount: patientVisits.length,
-        medicalRecords: patientRecords.map((record) => ({
-          recordId: record.id,
-          recordDate: record.recordDate,
-          notes: record.notes,
-          diagnosis: record.diagnosis,
-          treatment: record.treatment,
-          doctorId: record.doctorId,
-        })),
-        medicalRecordsCount: patientRecords.length,
+  
         createdAt: request.createdAt,
         preferredDate: request.preferredDate,
       };
@@ -418,7 +393,7 @@ export class NurseServiceService {
   
       // Format the response data
       const patients = serviceRequests.map((request) => ({
-        id: request.patient.id,
+        id: request?.patientId,
         userId: request.patient.userId,
         name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
         email: request.patient.user.email,
@@ -561,40 +536,7 @@ export class NurseServiceService {
   //       }
   //     })
   // }
-  static async nursegetMedicalRecords(nurseId){
-    try {
-      const medicalRecords = await prisma.medicalRecord.findMany({
-        where: { nurseId },
-        orderBy: { recordDate: 'desc' },
-        include: {
-          patient: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                }
-              }
-            }
-          },
-          doctor: {
-            include: {
-              user: {
-                select: {
-                  firstname: true,
-                  lastname: true,
-                }
-              }
-            }
-          }
-        }
-      });
-      return medicalRecords;
-    } catch (error) {
-      throw new Error(`Failed to fetch nurse's medical records: ${error.message}`);
-    }
-  }
+
   static async nursedeletePatientServiceRequest(serviceRequestId, nurseId) {
     try {
       // 1. Check if the service request exists and belongs to the nurse
