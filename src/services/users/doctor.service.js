@@ -12,7 +12,7 @@ export class DoctorService {
             email: true,
             telephoneNumber: true,
             gender: true,
-            address: true,
+         
             profilePhoto: true,
             dateOfBirth: true,
           },
@@ -66,7 +66,6 @@ export class DoctorService {
         telephoneNumber: userData.telephoneNumber,
         dateOfBirth: userData.dateOfBirth,
         gender: userData.gender,
-        address: userData.address,
         profilePhoto: userData.profilePhoto,
         doctor: {
           update: {
@@ -88,7 +87,7 @@ export class DoctorService {
         telephoneNumber: userData.telephoneNumber,
         dateOfBirth: userData.dateOfBirth,
         gender: userData.gender,
-        address: userData.address,
+      
         profilePhoto: userData.profilePhoto,
         doctor: {
           create: {
@@ -156,7 +155,7 @@ export class DoctorService {
             email: true,
             telephoneNumber: true,
             gender: true,
-            address: true,
+          
             profilePhoto: true,
             dateOfBirth: true,
           },

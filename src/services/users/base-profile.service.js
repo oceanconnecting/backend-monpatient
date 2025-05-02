@@ -43,7 +43,7 @@ export class BaseProfileService {
         telephoneNumber: profileData.telephoneNumber,
         dateOfBirth: profileData.dateOfBirth,
         gender:profileData.gender,
-        address:profileData.address
+       
         // other common fields
       }
     });
@@ -91,6 +91,63 @@ export class BaseProfileService {
     } catch (error) {
       console.error('Cloudinary upload error:', error);
       throw new Error('Failed to upload profile picture');
+    }
+  }
+  async deleteProfilePicture(userId) {
+    try {
+      // Delete from Cloudinary
+      await cloudinary.uploader.destroy(`user-${userId}`, { resource_type: 'image' });
+
+      // Remove profile picture URL from database
+      return prisma.user.update({
+        where: { id: userId },
+        data: { profilePhoto: null }
+      });
+    } catch (error) {
+      console.error('Cloudinary delete error:', error);
+      throw new Error('Failed to delete profile picture');
+    }
+  }
+  async uploadlocation(id) {
+    try {
+      const location = await prisma.location.findUnique({
+        where: { id },
+        include: {
+          pharmacy: { include: { user: true } },
+          doctor: { include: { user: true } },
+          patient: { include: { user: true } },
+        },
+      });
+
+      if (!location) {
+        throw new Error("Location not found");
+      }
+
+      return {
+        id: location.id,
+        date: location.date,
+        details: location.details,
+        approved: location.approved,
+        patient: {
+          id: location.patient.id,
+          name: `${location.patient.user.firstname} ${location.patient.user.lastname}`,
+          email: location.patient.user.email,
+        },
+        doctor: {
+          id: location.doctor.id,
+          name: `${location.doctor.user.firstname} ${location.doctor.user.lastname}`,
+          email: location.doctor.user.email,
+        },
+        pharmacy: location.pharmacy
+          ? {
+              id: location.pharmacy.id,
+              name: `${location.pharmacy.user.firstname} ${location.pharmacy.user.lastname}`,
+              email: location.pharmacy.user.email,
+            }
+          : null,
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch locations: ${error.message}`);
     }
   }
 }

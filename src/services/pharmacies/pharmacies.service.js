@@ -98,7 +98,6 @@ export class PharmacyService {
           telephoneNumber: userData.telephoneNumber,
           dateOfBirth: userData.dateOfBirth,
           gender: userData.gender,
-          address: userData.address,
           profilePhoto: userData.profilePhoto,
           pharmacy: {
             create: {

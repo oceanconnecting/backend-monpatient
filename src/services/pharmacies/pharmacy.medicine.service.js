@@ -85,7 +85,6 @@ export const PharmacyMedicinesService = {
         pharmacy: {
           select: {
             name: true,
-            address: true,
             phone: true
           }
         }
@@ -155,7 +154,7 @@ export const PharmacyMedicinesService = {
         pharmacy: {
           select: {
             pharmacyName:true,
-            pharmacyAddress:true,
+          
             pharmacyLicenseNumber:true
           
           }
@@ -186,7 +185,6 @@ export const PharmacyMedicinesService = {
         pharmacy: {
           select: {
             name: true,
-            address: true
           }
         }
       }

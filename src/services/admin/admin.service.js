@@ -18,7 +18,7 @@ export class AdminService {
         telephoneNumber: true,
         dateOfBirth: true,
         gender: true,
-        address: true,
+    
         createdAt: true,
         updatedAt: true,
       },
@@ -94,7 +94,6 @@ export class AdminService {
             id: true,
             pharmacyName: true,
             pharmacyLicenseNumber: true,
-            pharmacyAddress: true,
             contactName: true,
             openingHours: true,
             deliveryOptions: true,
@@ -297,7 +296,6 @@ export class AdminService {
       telephoneNumber: user.telephoneNumber,
       dateOfBirth: user.dateOfBirth,
       gender: user.gender,
-      address: user.address,
       profilePhoto: user.profilePhoto,
       role: user.role,
       createdAt: user.createdAt,
@@ -357,7 +355,6 @@ export class AdminService {
         telephoneNumber: data.telephoneNumber,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
-        address: data.address,
         profilePhoto: data.profilePhoto, // Default to true if not provided
       },
       include: {

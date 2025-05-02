@@ -385,7 +385,7 @@ export async function nurseServiceRoutes(fastify) {
                   name: { type: "string" },
                   email: { type: "string" },
                   gender: { type: "string" },
-                  address: { type: "string", nullable: true },
+                
                   profilePhoto: { type: "string", nullable: true },
                   telephoneNumber: { type: "string", nullable: true },
                   dateOfBirth: {

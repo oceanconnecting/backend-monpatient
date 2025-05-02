@@ -378,7 +378,7 @@ export class NurseServiceService {
                   email: true,
                   telephoneNumber: true,
                   gender: true,
-                  address: true,
+                 
                   profilePhoto: true,
                   dateOfBirth: true,
                 },
@@ -398,7 +398,6 @@ export class NurseServiceService {
         name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
         email: request.patient.user.email,
         gender: request.patient.user.gender,
-        address: request.patient.user.address,
         profilePhoto: request.patient.user.profilePhoto,
         telephoneNumber: request.patient.user.telephoneNumber,
         dateOfBirth: request.patient.user.dateOfBirth,
@@ -465,7 +464,7 @@ export class NurseServiceService {
                 email: true,
                 telephoneNumber: true,
                 gender: true,
-                address: true,
+            
                 profilePhoto: true,
                 dateOfBirth: true,
               }

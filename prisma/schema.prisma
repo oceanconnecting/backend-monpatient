@@ -58,7 +58,7 @@ model User {
   dateOfBirth     DateTime?
   googleId        String? 
   gender          String?
-  address         String?
+  
   profilePhoto    String?
   status          Status    @default(ACTIVE)
   createdAt       DateTime  @default(now())
@@ -76,7 +76,27 @@ model User {
   @@index([email])
   @@index([role])
 }
+model Location {
+  id        String    @id @default(cuid())
+  address   String?
+  long      String?
+  lat       String?
+  date      DateTime?
+  details   String?
+  approved  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  nurseId  String?    @unique
+  nurse    Nurse?   @relation(fields: [nurseId], references: [id])
+  patientId String?   @unique
+  patient   Patient?  @relation(fields: [patientId], references: [id])
 
+  doctorId  String?   @unique
+  doctor    Doctor?   @relation(fields: [doctorId], references: [id])
+  
+  pharmacyId String?  @unique
+  pharmacy   Pharmacy? @relation(fields: [pharmacyId], references: [id])
+}
 model InsuranceInfo {
   id String @id @default(cuid())
   type String?
@@ -103,6 +123,7 @@ model Patient {
   nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
   chatRooms     ChatRoom[]     @relation("PatientChats")
   scheduledTasks  Schedule[] 
+  location Location?
   insuranceInfoId String? @unique  // Add this field for the relation
   insuranceInfo InsuranceInfo? @relation(fields: [insuranceInfoId], references: [id])
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
@@ -121,6 +142,7 @@ model Nurse {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String         @unique
   nurseVisits   NurseVisit[]
+  location Location?
   serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
@@ -145,7 +167,8 @@ model Doctor {
   isDeleted Boolean @default(false)
   patients        DoctorPatient[]        @relation("DoctorPatients")
   patientRequests DoctorPatientRequest[] @relation("DoctorRequests")
-  medicalRecords  MedicalRecord[]       
+  medicalRecords  MedicalRecord[]  
+  location Location?     
   prescriptions   Prescription[]         @relation("DoctorPrescriptions")
   chatRooms       ChatRoom[]     @relation("DoctorChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[] 
@@ -254,11 +277,11 @@ model Pharmacy {
   userId          String            @unique
   pharmacyName    String?
   pharmacyLicenseNumber String?
-  pharmacyAddress String?
   contactName     String?
   openingHours    String?
   deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
+  location Location?
   medicines       Medicine[]
   orders Order[]
 }

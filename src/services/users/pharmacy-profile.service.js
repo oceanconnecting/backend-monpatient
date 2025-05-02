@@ -9,7 +9,7 @@ export class PharmacyProfileService extends BaseProfileService {
       where: { userId },
       select: {
         pharmacyName: true,
-        pharmacyAddress: true,
+    
         contactName: true,
         openingHours: true,
         deliveryOptions: true,

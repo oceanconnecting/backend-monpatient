@@ -108,7 +108,7 @@ export async function profileRoutes(fastify, options) {
           telephoneNumber: { type: 'string' },
           dateOfBirth: { type: 'string',format: 'date-time' },
           gender: { type: 'string' },
-          address: { type: 'string' },
+      
 
           // Add other updatable fields
         }
@@ -164,7 +164,7 @@ export async function profileRoutes(fastify, options) {
     }
   });
 // Add insurance info update route for patients
-fastify.put('/insurance', {
+  fastify.put('/insurance', {
   onRequest: [fastify.authenticate, checkRole(['PATIENT'])],
   schema: {
     body: {
@@ -211,7 +211,7 @@ fastify.put('/insurance', {
       reply.code(error.statusCode || 500).send({ error: error.message });
     }
   }
-});
+  });
   // Profile picture upload
   fastify.post('/upload', {
     onRequest: [fastify.authenticate]
