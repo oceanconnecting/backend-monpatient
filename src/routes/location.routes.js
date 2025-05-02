@@ -210,7 +210,6 @@ async function locationRoutes(fastify, options) {
     },
     handler: async (request, reply) => {
       try {
-        const { id } = request.params;
         const location = await LocationService.updateNurseLocation(request.user.nurse.id, request.body);
         return reply.code(200).send(location);
       } catch (error) {
@@ -277,7 +276,7 @@ async function locationRoutes(fastify, options) {
     },
     handler: async (request, reply) => {
       try {
-        const { id } = request.params;
+        
         const location = await LocationService.getDoctorLocation(request.user.doctor.id);
         
         if (!location) {
@@ -292,7 +291,7 @@ async function locationRoutes(fastify, options) {
   });
 
   // Update doctor location
-  fastify.put('/doctors/:id', {
+  fastify.put('/doctors', {
     onRequest: [checkRole('doctor')],
     schema: {
       params: locationParamsSchema,
@@ -303,7 +302,7 @@ async function locationRoutes(fastify, options) {
     },
     handler: async (request, reply) => {
       try {
-        const { id } = request.params;
+        const  id  = request.user.doctor.id;
         const location = await LocationService.updateDoctorLocation(id, request.body);
         return reply.code(200).send(location);
       } catch (error) {
@@ -371,7 +370,7 @@ async function locationRoutes(fastify, options) {
   });
 
   // Update pharmacy location
-  fastify.put('/pharmacies/:id', {
+  fastify.put('/pharmacies', {
     onRequest: [fastify.authenticate, checkRole(["PHARMACY"])],
     schema: {
       body: locationBodySchema,
@@ -395,7 +394,6 @@ async function locationRoutes(fastify, options) {
     onRequest: [fastify.authenticate, checkRole(["PHARMACY"])],
     handler: async (request, reply) => {
       try {
-        const { id } = request.params;
         await LocationService.deletePharmacyLocation(request.user.pharmacy.id);
         return reply.code(204).send();
       } catch (error) {
