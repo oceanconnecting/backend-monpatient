@@ -222,12 +222,24 @@ async function locationRoutes(fastify, options) {
   // Delete nurse location
   fastify.delete('/nurses', {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-
+    
     handler: async (request, reply) => {
       try {
-        const id = request.user.nurse.id;
-        await LocationService.deleteNurseLocation(id);
-        return reply.code(204).send();
+        const nurseId = request.user.nurse.id; // Assuming nurse ID is in auth token
+        
+        const result = await LocationService.deleteNurseLocation(nurseId);
+        
+        if (result.success) {
+          return reply.code(200).send({
+            message: result.message
+          });
+          // Or for no content:
+          // return reply.code(204).send();
+        } else {
+          return reply.code(404).send({
+            error: result.message
+          });
+        }
       } catch (error) {
         return handleError(request, reply, error, 'Failed to delete nurse location');
       }

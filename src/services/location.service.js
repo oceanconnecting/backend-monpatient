@@ -105,9 +105,23 @@ export const LocationService = {
   },
 
   async deleteNurseLocation(id) {
-    return prisma.location.delete({
-      where: { nurseId: id }
-    });
+    try {
+      await prisma.location.delete({
+        where: { nurseId: id }
+      });
+      return { 
+        success: true, 
+        message: 'Nurse location deleted successfully' 
+      };
+    } catch (error) {
+      if (error.code === 'P2025') { // Prisma's "Record not found" error
+        return { 
+          success: false, 
+          message: 'Nurse location not found' 
+        };
+      }
+      throw error; // Re-throw other errors
+    }
   },
 
   // Doctor location services
