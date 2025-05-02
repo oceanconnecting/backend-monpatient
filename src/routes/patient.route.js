@@ -157,4 +157,6 @@ export async function patientRoutes(fastify) {
     
     return nurse;
   });
+  //location route
+ 
 }

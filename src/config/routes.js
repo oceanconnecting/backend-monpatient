@@ -14,6 +14,7 @@ import { profileRoutes } from "../routes/profile.routes.js";
 import { medicalRecordsRoutes } from "../routes/medicalRecords.routes.js";
 import { prescriptionRoutes } from "../routes/prescription.routes.js";
 import { doctorRoutes } from "../routes/doctor.routes.js";
+import locationRoutes from "../routes/location.routes.js";
 import { pharmacyMedicinesRoutes } from "../routes/pharmacy/pharmacy.medicine.route.js";
 import pharmacyPerscriptionRoutes from "../routes/pharmacy/pharmacy.prescription.route.js";
 import pharmacyOrdersRoutes from "../routes/pharmacy/Order.Pharmacy.Route.js";
@@ -41,7 +42,9 @@ export async function configureRoutes(fastify) {
       { routes: nurseServiceRoutes, prefix: `${apiPrefix}/nurse-service` },
       
     ],
-    
+    location: [
+      { routes: locationRoutes, prefix: `${apiPrefix}/location` },
+    ],
     communications: [
       { routes: notificationRoutes, prefix: `${apiPrefix}/notifications` },
       { routes: chatRoutes, prefix: `${apiPrefix}/chat` },

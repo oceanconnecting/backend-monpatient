@@ -416,18 +416,5 @@ export class PatientService {
     return searchResults;
   }
   // cretae location
-  static async createLocation(id,data) {
-    const { latitude, longitude, address } = data;
-    
-    const location = await prisma.location.create({
-      data: {
-        patientId: id,
-        latitude,
-        longitude,
-        address,
-      }
-    });
-    
-    return location;
-  }
+
 }
