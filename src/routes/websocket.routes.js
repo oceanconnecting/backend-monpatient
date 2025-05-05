@@ -2,7 +2,7 @@ import { ChatServicePatientNurseDoctor } from "../services/chat/chat-pationt-nur
 import { ChatService } from "../services/chat/chat.service.js";
 import { ChatServicePatientNurse } from "../services/chat/chat-pation-nurse.service.js";
 
-export async function websocketRoutes(fastify, options) {
+export async function websocketRoutes(fastify) {
 
   const chatServicePatientNurseDoctor = new ChatServicePatientNurseDoctor(fastify);
   const chatService = new ChatService(fastify);
@@ -22,7 +22,7 @@ export async function websocketRoutes(fastify, options) {
   });
 
   // New test route for checking WebSocket functionality
-  fastify.get('/test', { websocket: true }, (connection, req) => {
+  fastify.get('/test', { websocket: true }, (connection) => {
     console.log('New test connection established');
 
     // Listen for messages using connection.on (not connection.socket.on)

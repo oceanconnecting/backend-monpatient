@@ -32,7 +32,7 @@ export class AdminService {
       const roleData = user[user.role.toLowerCase()] || {};
 
       // Remove role-specific fields from the base user object
-      const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user;
+      const {  ...baseUser } = user;
 
       // Merge base user data with role-specific data
       return {
@@ -119,7 +119,7 @@ export class AdminService {
     const roleSpecificData = roleKey && user[roleKey] ? user[roleKey] : {};
 
     // Remove all role-specific fields from the base user
-    const { patient, nurse, doctor, pharmacy, admin, ...baseUser } = user;
+    const {  ...baseUser } = user;
 
     // Return combined data
     return {
@@ -234,7 +234,7 @@ export class AdminService {
     // Get the role-specific data
     const roleSpecificData = updatedUser[updatedUser.role.toLowerCase()];
     // Remove all role fields
-    const { patient, nurse, doctor, pharmacy, admin, ...baseUser } =
+    const { ...baseUser } =
       updatedUser;
     // Return combined data
     return {

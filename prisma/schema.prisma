@@ -58,7 +58,6 @@ model User {
   dateOfBirth     DateTime?
   googleId        String? 
   gender          String?
-  
   profilePhoto    String?
   status          Status    @default(ACTIVE)
   createdAt       DateTime  @default(now())

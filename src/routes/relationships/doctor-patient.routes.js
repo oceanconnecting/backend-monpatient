@@ -158,7 +158,7 @@ export async function doctorPatientRoutes(fastify) {
       }
     },
   });
-  fastify.get("/requests", {
+  fastify.get("/request", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {
       try {

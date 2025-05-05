@@ -90,7 +90,7 @@ export class AuthService {
     return bcryptjs.compare(password, hash);
   }
   static async formatUserResponse(user) {
-    const { password, ...userBase } = user; // Exclude 'password' without assigning it
+    const {  ...userBase } = user; // Exclude 'password' without assigning it
     const roleData = user[user.role.toLowerCase()];
 
     return {
