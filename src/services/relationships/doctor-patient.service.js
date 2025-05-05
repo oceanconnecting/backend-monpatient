@@ -309,7 +309,9 @@ export class DoctorPatientService {
           include: {
             user: {
               select: {
-                email: true
+                email: true,
+                firstname: true,
+                lastname: true
               }
             },
             medicalRecord: true

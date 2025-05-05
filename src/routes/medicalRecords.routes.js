@@ -232,17 +232,8 @@ export async function medicalRecordsRoutes(fastify) {
     schema: medicalRecordSchemas.createMedicalRecord
   }, async (request, reply) => {
     try {
-      const userId = request.user.id;
-      const userRole = request.user.role;
-      
-      const recordData = { ...request.body };
-      
-      // Automatically assign the creator as doctor  if not specified
-      if (userRole === "DOCTOR" && !recordData.doctorId) {
-         recordData.doctorId = userId;
-      }
-      
-      const record = await MedicalRecordService.create(recordData,request);
+      // Don't pass userId directly - the service will extract it from request.user
+      const record = await MedicalRecordService.create(request.body, request);
       reply.status(201).send(record);
     } catch (error) {
       if (error.message.includes('Failed to create')) {

@@ -81,8 +81,8 @@ export const MedicalRecordService = {
       const patientId = cleanData.patientId;
       const submittedDoctorId = cleanData.doctorId;
       delete cleanData.patientId;
-      // Keep doctorId in the cleanData object
-      
+      delete cleanData.doctorId; // Also remove doctorId from cleanData
+  
       // Validate and handle patient data (required field)
       if (!patientId) {
         throw new Error("Patient ID is required");
@@ -93,23 +93,21 @@ export const MedicalRecordService = {
       if (!patientExists) {
         throw new Error("Patient with the provided ID does not exist");
       }
-      
+  
       // Determine doctorId
       const doctorId = getDoctorId(req, submittedDoctorId);
-      
+  
       // Prepare the create data object with proper relations
       const createData = {
         ...cleanData,
         patient: { connect: { id: patientId } },
         ...(doctorId && { doctor: { connect: { id: doctorId } } })
-        // Removed nurse connection
       };
-      
+  
       const medicalRecord = await prisma.medicalRecord.create({
         data: createData,
-        include: getConditionalIncludes(doctorId) // Updated to only include doctorId
+        include: getConditionalIncludes(doctorId)
       });
-      
       return medicalRecord;
     }, "Failed to create medical record");
   },
