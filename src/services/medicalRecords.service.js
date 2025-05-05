@@ -12,31 +12,7 @@ function getDoctorId(req, submittedDoctorId) {
   return submittedDoctorId;
 }
 
-async function getNurseId(req, submittedNurseId) {
-  // Use authenticated nurse if available
-  if (req?.user?.nurse?.id) {
-    return req.user.nurse.id;
-  }
-  
-  // Handle nurse validation if ID provided
-  if (submittedNurseId) {
-    if (Array.isArray(submittedNurseId)) {
-      throw new Error("nurseId must be a single string value, not an array");
-    }
-    
-    const nurseExists = await prisma.nurse.findUnique({
-      where: { id: submittedNurseId }
-    });
-    
-    if (!nurseExists) {
-      throw new Error("Nurse with the provided ID does not exist");
-    }
-    
-    return submittedNurseId;
-  }
-  
-  return null;
-}
+
 
 // Standard include object for consistent entity relationships
 const standardInclude = {

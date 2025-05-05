@@ -299,6 +299,28 @@ export class DoctorPatientService {
       }
     })
   }
+  static async getAllRequests(doctorId) {
+    return prisma.doctorPatientRequest.findMany({
+      where: {
+        doctorId: doctorId
+      },
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                email: true
+              }
+            },
+            medicalRecord: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+  }
 
   static async endDoctorPatientRelationship(patientId, doctorId) {
     return prisma.doctorPatient.update({

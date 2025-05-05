@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 import { v4 as uuidv4 } from 'uuid'; 
-export async function profileRoutes(fastify, options) {
+export async function profileRoutes(fastify) {
   // Decorate fastify with profile services
   fastify.decorate('profileServices', {
     DOCTOR: (db) => new DoctorProfileService(db),

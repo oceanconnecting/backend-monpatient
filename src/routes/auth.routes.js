@@ -139,7 +139,6 @@ export async function authRoutes(fastify) {
       }
     },
   });
-  
   // Google OAuth callback handler
   fastify.get("/login/google/callback", async function (request, reply) {
     try {

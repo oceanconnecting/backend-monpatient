@@ -1,8 +1,9 @@
 // location.routes.js
 import { LocationService } from './../services/location.service.js';
 import { checkRole } from '../middleware/auth.middleware.js';
-
-async function locationRoutes(fastify, options) {
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+async function locationRoutes(fastify) {
   // Schema definitions for reuse
   const locationBodySchema = {
     type: 'object',

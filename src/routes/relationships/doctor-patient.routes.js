@@ -158,6 +158,24 @@ export async function doctorPatientRoutes(fastify) {
       }
     },
   });
+  fastify.get("/requests", {
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    handler: async (request, reply) => {
+      try {
+        if (!request.user.doctor) {
+          reply.code(400).send({ error: "User is not a doctor" });
+          return;
+        }
+
+        const pendingRequests = await DoctorPatientService.getAllRequests(
+          request.user.doctor.id
+        );
+        return pendingRequests;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    },
+  });
   fastify.get("/patients/order", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     handler: async (request, reply) => {

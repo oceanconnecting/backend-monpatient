@@ -1,7 +1,7 @@
 import { checkRole } from "../middleware/auth.middleware.js";
 import { PrescriptionService } from "../services/prescription.service.js";
 
-export async function prescriptionRoutes(fastify, options) {
+export async function prescriptionRoutes(fastify) {
   // Get all prescriptions
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],

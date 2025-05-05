@@ -86,8 +86,8 @@ model Location {
   approved  Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  nurseId  String?    @unique
-  nurse    Nurse?   @relation(fields: [nurseId], references: [id])
+  nurseId   String?   @unique
+  nurse     Nurse?   @relation(fields: [nurseId], references: [id])
   patientId String?   @unique
   patient   Patient?  @relation(fields: [patientId], references: [id])
 

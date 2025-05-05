@@ -469,7 +469,7 @@ export async function nurseServiceRoutes(fastify) {
         return result;
       } catch (error) {
         request.log.error("Patient search failed:", error);
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error) {
           reply.code(400).send({ error: "Database error occurred" });
         } else {
           reply.code(500).send({ error: "Internal server error" });
@@ -494,7 +494,8 @@ export async function nurseServiceRoutes(fastify) {
 
   fastify.get("/patient/:patientId", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    handler: async (request, reply) => {
+    handler: async (request
+    ) => {
       const requests = await NurseServiceService.nursePatientsbyPatientId(
         request.params.patientId
       );

@@ -501,14 +501,23 @@ export class NurseServiceService {
               include: {
                 user: {
                   select: { firstname: true, lastname: true, email: true }
+                },
+                location:{
+                  select: {
+                    lat: true,
+                    long: true,
+                    address: true,
+                    details: true,
+                    approved: true,
+                  }
                 }
               }
             },
-           
           }
         }
       }
     });
+    
     if (!patient) {
       console.error('Patient not found');
       throw new Error('Patient not found');
@@ -516,7 +525,8 @@ export class NurseServiceService {
     
     return patient.nurseServiceRequests.map((request) => ({
       id: request.patient.id,
-      requestId:request.id,
+      requestId: request.id,
+    
       emergencyContactName: request.patient.emergencyContactName,
       emergencyContactPhone: request.patient.emergencyContactPhone,
       name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
@@ -526,8 +536,12 @@ export class NurseServiceService {
       status: request.status,
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,
-    })
-  );
+      longitude: request.patient.location?.long || null,
+      latitude: request.patient.location?.lat || null,
+      adress: request.patient.location?.address || null,
+      details: request.patient.location?.details || null,
+      approved: request.patient.location?.approved || null,
+    }));
   }
 
   // static async nurseVisiting(id){
@@ -541,7 +555,7 @@ export class NurseServiceService {
   //     })
   // }
 
-  static async nursedeletePatientServiceRequest(serviceRequestId, nurseId) {
+  static async nursedeletePatientServiceRequest(serviceRequestId) {
     try {
       // 1. Check if the service request exists and belongs to the nurse
       const serviceRequest = await prisma.nurseServiceRequest.findUnique({

@@ -1,7 +1,7 @@
 import { MedicalRecordService } from '../services/medicalRecords.service.js';
 import { checkRole } from '../middleware/auth.middleware.js';
 
-export async function medicalRecordsRoutes(fastify, options) {
+export async function medicalRecordsRoutes(fastify) {
   // Medical Record Schemas
   const medicalRecordSchemas = {
     createMedicalRecord: {

@@ -29,6 +29,7 @@ export async function configurePlugins(fastify) {
   // JWT authentication
   await fastify.register(jwt, {
     secret: process.env.JWT_SECRET,
+    decode: { complete: true },
     sign: {
       expiresIn: process.env.JWT_EXPIRATION || "20d",
     },
