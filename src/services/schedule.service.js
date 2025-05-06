@@ -420,100 +420,147 @@ class ScheduleService {
 
   /**
    * Update schedule details
+ * Update schedule details
    * @param {string} scheduleId - ID of the schedule to update
    * @param {Object} scheduleData - Updated schedule data
    * @returns {Promise<Object>} Updated schedule
    */
   async updateSchedule(scheduleId, scheduleData) {
     try {
-      const data = {};
+      // Prepare the data for update
+      const data = this._prepareScheduleUpdateData(scheduleData);
       
-      // Only update fields that are provided
-      if (scheduleData.title !== undefined) data.title = scheduleData.title;
-      if (scheduleData.description !== undefined) data.description = scheduleData.description;
-      if (scheduleData.startTime !== undefined) data.startTime = new Date(scheduleData.startTime);
-      if (scheduleData.endTime !== undefined) data.endTime = new Date(scheduleData.endTime);
-      if (scheduleData.status !== undefined) data.status = scheduleData.status;
-      if (scheduleData.isRecurring !== undefined) data.isRecurring = scheduleData.isRecurring;
-      if (scheduleData.recurrencePattern !== undefined) data.recurrencePattern = scheduleData.recurrencePattern;
-
-      // Handle relationship updates
-      if (scheduleData.doctorId !== undefined) {
-        if (scheduleData.doctorId) {
-          data.doctor = { connect: { id: scheduleData.doctorId } };
-        } else {
-          data.doctor = { disconnect: true };
-        }
-      }
-
-      if (scheduleData.nurseId !== undefined) {
-        if (scheduleData.nurseId) {
-          data.nurse = { connect: { id: scheduleData.nurseId } };
-        } else {
-          data.nurse = { disconnect: true };
-        }
-      }
-
-      if (scheduleData.patientId !== undefined) {
-        if (scheduleData.patientId) {
-          data.patient = { connect: { id: scheduleData.patientId } };
-        } else {
-          data.patient = { disconnect: true };
-        }
-      }
-
-      if (scheduleData.taskId !== undefined) {
-        if (scheduleData.taskId) {
-          data.task = { connect: { id: scheduleData.taskId } };
-        } else {
-          data.task = { disconnect: true };
-        }
-      }
-
+      // Update the schedule
       const updatedSchedule = await prisma.schedule.update({
-        where: {
-          id: scheduleId
-        },
+        where: { id: scheduleId },
         data,
-        include: {
-          doctor: {
-            include: {
-              user: true
-            }
-          },
-          nurse: {
-            include: {
-              user: true
-            }
-          },
-          patient: true,
-          task: true
-        }
+        include: this._getScheduleIncludeOptions()
       });
 
-      // Create notifications about schedule updates if there are significant changes
-      const significantChanges = scheduleData.startTime || scheduleData.endTime || scheduleData.status;
-      
-      if (significantChanges && updatedSchedule.nurseId) {
-        await prisma.notification.create({
-          data: {
-            userId: updatedSchedule.nurse.userId,
-            type: 'SCHEDULE_UPDATED',
-            title: 'Schedule Updated',
-            message: `The schedule "${updatedSchedule.title}" has been updated.`,
-            metadata: {
-              scheduleId: updatedSchedule.id,
-              startTime: updatedSchedule.startTime,
-              endTime: updatedSchedule.endTime
-            }
-          }
-        });
-      }
+      // Create notifications if needed
+      await this._createScheduleUpdateNotifications(updatedSchedule, scheduleData);
 
       return updatedSchedule;
     } catch (error) {
       console.error(`Error updating schedule with ID ${scheduleId}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Prepare data object for schedule update
+   * @private
+   * @param {Object} scheduleData - Data to update
+   * @returns {Object} Prisma-compatible update data object
+   */
+  _prepareScheduleUpdateData(scheduleData) {
+    const data = {};
+    
+    // Handle basic fields
+    this._updateBasicFields(data, scheduleData);
+    
+    // Handle relationship fields
+    this._updateRelationshipFields(data, scheduleData);
+    
+    return data;
+  }
+
+  /**
+   * Update basic schedule fields
+   * @private
+   * @param {Object} data - Data object to modify
+   * @param {Object} scheduleData - Source data
+   */
+  _updateBasicFields(data, scheduleData) {
+    const basicFields = [
+      { key: 'title', transform: null },
+      { key: 'description', transform: null },
+      { key: 'startTime', transform: (val) => new Date(val) },
+      { key: 'endTime', transform: (val) => new Date(val) },
+      { key: 'status', transform: null },
+      { key: 'isRecurring', transform: null },
+      { key: 'recurrencePattern', transform: null }
+    ];
+
+    for (const field of basicFields) {
+      if (scheduleData[field.key] !== undefined) {
+        data[field.key] = field.transform 
+          ? field.transform(scheduleData[field.key]) 
+          : scheduleData[field.key];
+      }
+    }
+  }
+
+  /**
+   * Update relationship fields
+   * @private
+   * @param {Object} data - Data object to modify
+   * @param {Object} scheduleData - Source data
+   */
+  _updateRelationshipFields(data, scheduleData) {
+    const relationFields = [
+      { key: 'doctorId', relationName: 'doctor' },
+      { key: 'nurseId', relationName: 'nurse' },
+      { key: 'patientId', relationName: 'patient' },
+      { key: 'taskId', relationName: 'task' }
+    ];
+
+    for (const field of relationFields) {
+      if (scheduleData[field.key] !== undefined) {
+        data[field.relationName] = scheduleData[field.key]
+          ? { connect: { id: scheduleData[field.key] } }
+          : { disconnect: true };
+      }
+    }
+  }
+
+  /**
+   * Get standard include options for schedule queries
+   * @private
+   * @returns {Object} Prisma include options
+   */
+  _getScheduleIncludeOptions() {
+    return {
+      doctor: {
+        include: {
+          user: true
+        }
+      },
+      nurse: {
+        include: {
+          user: true
+        }
+      },
+      patient: true,
+      task: true
+    };
+  }
+
+  /**
+   * Create notifications for schedule updates if needed
+   * @private
+   * @param {Object} updatedSchedule - The updated schedule
+   * @param {Object} scheduleData - The data that was updated
+   * @returns {Promise<void>}
+   */
+  async _createScheduleUpdateNotifications(updatedSchedule, scheduleData) {
+    // Check if there are significant changes that require notification
+    const significantChanges = scheduleData.startTime || scheduleData.endTime || scheduleData.status;
+    
+    if (significantChanges && updatedSchedule.nurseId) {
+      await prisma.notification.create({
+        data: {
+          userId: updatedSchedule.nurse.userId,
+          type: 'SCHEDULE_UPDATED',
+          title: 'Schedule Updated',
+          message: `The schedule "${updatedSchedule.title}" has been updated.`,
+          metadata: {
+            scheduleId: updatedSchedule.id,
+            startTime: updatedSchedule.startTime,
+            endTime: updatedSchedule.endTime
+          }
+        }
+      });
     }
   }
 
@@ -620,7 +667,13 @@ class ScheduleService {
       };
       
       // Calculate dates based on recurrence pattern
-      while (currentDate <= end) {
+      // Add a safety mechanism to prevent infinite loops
+      const MAX_ITERATIONS = 365; // Maximum number of iterations to prevent infinite loops
+      let iteration = 0;
+      
+      while (currentDate <= end && iteration < MAX_ITERATIONS) {
+        iteration++;
+        
         const startTime = setTime(currentDate, startHour, startMinute);
         const endTime = setTime(currentDate, endHour, endMinute);
         
@@ -647,6 +700,8 @@ class ScheduleService {
         schedules.push(schedule);
         
         // Advance to next occurrence based on pattern
+        const oldDate = new Date(currentDate); // Store the previous date for validation
+        
         switch (recurrencePattern) {
           case 'DAILY':
             currentDate.setDate(currentDate.getDate() + 1);
@@ -664,6 +719,17 @@ class ScheduleService {
             // For custom patterns, default to daily
             currentDate.setDate(currentDate.getDate() + 1);
         }
+        
+        // Safety check: ensure the date is actually advancing
+        if (currentDate <= oldDate) {
+          console.warn(`Date not advancing properly for pattern ${recurrencePattern}. Breaking loop.`);
+          break;
+        }
+      }
+      
+      // Log warning if we hit the max iterations
+      if (iteration >= MAX_ITERATIONS) {
+        console.warn(`Maximum number of iterations (${MAX_ITERATIONS}) reached when creating recurring schedules. This may indicate an issue with the recurrence pattern or date range.`);
       }
       
       return schedules;

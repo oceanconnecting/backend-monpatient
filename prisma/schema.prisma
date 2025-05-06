@@ -215,7 +215,7 @@ model Schedule {
   recurrencePattern String? // e.g., "DAILY", "WEEKLY", "MONTHLY"
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-    appointment        Appointment?
+  appointment        Appointment?
 }
 
 model NurseServiceRequest {

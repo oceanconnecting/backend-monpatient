@@ -97,7 +97,8 @@ export class PrescriptionService {
       }
     });
     
-    if (!doctorPatientRelation || !doctorPatientRelation.active) {
+    if (!doctorPatientRelation?.active) {
+      console.log('Doctor-Patient relationship not active');
       throw new Error('No active relationship exists between this doctor and patient');
     }
     // Create the prescription with items stored in the Json field
