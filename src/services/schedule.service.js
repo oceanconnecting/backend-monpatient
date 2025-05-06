@@ -629,115 +629,99 @@ class ScheduleService {
    */
   async createRecurringSchedules(taskId, recurringData) {
     try {
-      const task = await prisma.task.findUnique({
-        where: {
-          id: taskId
-        },
-        include: {
-          doctor: true,
-          nurse: true
-        }
-      });
-
-      if (!task) {
-        throw new Error(`Task with ID ${taskId} not found`);
-      }
-
-      const {
-        startDate,
-        endDate,
-        recurrencePattern,
-        timeSlot,
-        patientId
-      } = recurringData;
-
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const [startHour, startMinute] = timeSlot.start.split(':').map(Number);
-      const [endHour, endMinute] = timeSlot.end.split(':').map(Number);
-      
-      const schedules = [];
-      const currentDate = new Date(start);
-      
-      // Function to set time on a date
-      const setTime = (date, hours, minutes) => {
-        const newDate = new Date(date);
-        newDate.setHours(hours, minutes, 0, 0);
-        return newDate;
-      };
-      
-      // Calculate dates based on recurrence pattern
-      // Add a safety mechanism to prevent infinite loops
-      const MAX_ITERATIONS = 365; // Maximum number of iterations to prevent infinite loops
-      let iteration = 0;
-      
-      while (currentDate <= end && iteration < MAX_ITERATIONS) {
-        iteration++;
-        
-        const startTime = setTime(currentDate, startHour, startMinute);
-        const endTime = setTime(currentDate, endHour, endMinute);
-        
-        // Create schedule for this date
-        const scheduleData = {
-          title: `${task.details.substring(0, 30)}${task.details.length > 30 ? '...' : ''}`,
-          description: task.details,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-          doctorId: task.doctorId,
-          nurseId: task.nurseId,
-          taskId: task.id,
-          isRecurring: true,
-          recurrencePattern,
-          status: 'SCHEDULED'
-        };
-        
-        // Add patient if provided
-        if (patientId) {
-          scheduleData.patientId = patientId;
-        }
-        
-        const schedule = await this.createSchedule(scheduleData);
-        schedules.push(schedule);
-        
-        // Advance to next occurrence based on pattern
-        const oldDate = new Date(currentDate); // Store the previous date for validation
-        
-        switch (recurrencePattern) {
-          case 'DAILY':
-            currentDate.setDate(currentDate.getDate() + 1);
-            break;
-          case 'WEEKLY':
-            currentDate.setDate(currentDate.getDate() + 7);
-            break;
-          case 'BIWEEKLY':
-            currentDate.setDate(currentDate.getDate() + 14);
-            break;
-          case 'MONTHLY':
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            break;
-          default:
-            // For custom patterns, default to daily
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        
-        // Safety check: ensure the date is actually advancing
-        if (currentDate <= oldDate) {
-          console.warn(`Date not advancing properly for pattern ${recurrencePattern}. Breaking loop.`);
-          break;
-        }
-      }
-      
-      // Log warning if we hit the max iterations
-      if (iteration >= MAX_ITERATIONS) {
-        console.warn(`Maximum number of iterations (${MAX_ITERATIONS}) reached when creating recurring schedules. This may indicate an issue with the recurrence pattern or date range.`);
-      }
-      
-      return schedules;
-    } catch (error) {
-      console.error('Error creating recurring schedules:', error);
-      throw error;
+   const task = await prisma.task.findUnique({
+   where: {
+   id: taskId
+    },
+   include: {
+   doctor: true,
+   nurse: true
     }
-  }
+    });
+   if (!task) {
+   throw new Error(`Task with ID ${taskId} not found`);
+    }
+   const {
+   startDate,
+   endDate,
+   recurrencePattern,
+   timeSlot,
+   patientId
+    } = recurringData;
+   const start = new Date(startDate);
+   const end = new Date(endDate);
+   const [startHour, startMinute] = timeSlot.start.split(':').map(Number);
+   const [endHour, endMinute] = timeSlot.end.split(':').map(Number);
+   const schedules = [];
+   const currentDate = new Date(start);
+   // Function to set time on a date
+   const setTime = (date, hours, minutes) => {
+   const newDate = new Date(date);
+   newDate.setHours(hours, minutes, 0, 0);
+   return newDate;
+    };
+   // Calculate dates based on recurrence pattern
+   // Add a safety mechanism to prevent infinite loops
+   const MAX_ITERATIONS = 365; // Maximum number of iterations to prevent infinite loops
+   let iteration = 0;
+   while (currentDate <= end && iteration < MAX_ITERATIONS) {
+   iteration++;
+   const startTime = setTime(currentDate, startHour, startMinute);
+   const endTime = setTime(currentDate, endHour, endMinute);
+   // Create schedule for this date
+   const scheduleData = {
+   title: `${task.details.substring(0, 30)}${task.details.length > 30 ? '...' : ''}`,
+   description: task.details,
+   startTime: startTime.toISOString(),
+   endTime: endTime.toISOString(),
+   doctorId: task.doctorId,
+   nurseId: task.nurseId,
+   taskId: task.id,
+   isRecurring: true,
+   recurrencePattern,
+   status: 'SCHEDULED'
+    };
+   // Add patient if provided
+   if (patientId) {
+   scheduleData.patientId = patientId;
+    }
+   const schedule = await this.createSchedule(scheduleData);
+   schedules.push(schedule);
+   // Advance to next occurrence based on pattern
+   const oldDate = new Date(currentDate); // Store the previous date for validation
+   switch (recurrencePattern) {
+   case 'DAILY':
+   currentDate.setDate(currentDate.getDate() + 1);
+   break;
+   case 'WEEKLY':
+   currentDate.setDate(currentDate.getDate() + 7);
+   break;
+   case 'BIWEEKLY':
+   currentDate.setDate(currentDate.getDate() + 14);
+   break;
+   case 'MONTHLY':
+   currentDate.setMonth(currentDate.getMonth() + 1);
+   break;
+   default:
+   // For custom patterns, default to daily
+   currentDate.setDate(currentDate.getDate() + 1);
+    }
+   // Safety check: ensure the date is actually advancing
+   if (currentDate <= oldDate) {
+   console.warn(`Date not advancing properly for pattern ${recurrencePattern}. Breaking loop.`);
+   break;
+    }
+    }
+   // Log warning if we hit the max iterations
+   if (iteration >= MAX_ITERATIONS) {
+   console.warn(`Maximum number of iterations (${MAX_ITERATIONS}) reached when creating recurring schedules. This may indicate an issue with the recurrence pattern or date range.`);
+    }
+   return schedules;
+    } catch (error) {
+   console.error('Error creating recurring schedules:', error);
+   throw error;
+    }
+    }
 
   /**
    * Get schedule statistics
