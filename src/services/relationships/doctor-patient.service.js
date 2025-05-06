@@ -245,6 +245,9 @@ export class DoctorPatientService {
           include: {
             user: {
               select: {
+                firstname:true,
+                lastname:true,
+                telephoneNumber:true,
                 email: true,
                 createdAt: true
               }
@@ -258,14 +261,16 @@ export class DoctorPatientService {
   static async getDoctorPatients(doctorId) {
     return prisma.doctorPatient.findMany({
       where: {
-        doctorId: doctorId,
-        active: true
+        doctorId: doctorId
       },
       include: {
         patient: {
           include: {
             user: {
               select: {
+                firstname:true,
+                lastname:true,
+                telephoneNumber:true,
                 email: true,
                 createdAt: true
               }
@@ -274,6 +279,36 @@ export class DoctorPatientService {
         }
       }
     })
+  }
+  static async getDoctorPatientById(doctorId, patientId) {
+    return prisma.doctorPatient.findFirst({
+      where: {
+        doctorId: doctorId,
+        patientId: patientId,
+      },
+      include: {
+        patient: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+                telephoneNumber: true,
+                email: true,
+                createdAt: true,
+              }
+            },
+            location: {
+              select: {
+                lat: true,
+                long: true,
+                address: true
+              }
+            },
+          }
+        }
+      }
+    });
   }
 
   static async getPendingRequests(doctorId) {
@@ -389,4 +424,5 @@ export class DoctorPatientService {
       throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
     }
   }
+
 }

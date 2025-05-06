@@ -118,6 +118,41 @@ export async function doctorPatientRoutes(fastify) {
       }
     },
   });
+  fastify.get("/patients/:patientId", {
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    schema: {
+      params: {
+        type: "object",
+        required: ["patientId"],
+        properties: {
+          patientId: { type: "string" },
+        },
+      },
+    },
+    handler: async (request, reply) => {
+      try {
+        if (!request.user.doctor) {
+          return reply.code(403).send({ error: "User is not a doctor" });
+        }
+        
+        const patient = await DoctorPatientService.getDoctorPatientById(
+          request.user.doctor.id,
+          request.params.patientId
+        );
+        
+        if (!patient) {
+          return reply.code(404).send({ 
+            error: "Patient not found or not associated with this doctor" 
+          });
+        }
+        
+        return patient;
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: "Internal server error" });
+      }
+    },
+  });
 
   // Get patient's doctors
   fastify.get("/doctors", {

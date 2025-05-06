@@ -146,11 +146,29 @@ model Nurse {
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   doctors     Doctor[]    @relation("DoctorNurses") 
-  doctorNurses    DoctorNurse[]
-  scheduledTasks  Schedule[] 
-  tasks       Task[]
+  scheduledTasks  Schedule[]
 }
-
+model Appointment {
+  id                 String    @id @default(cuid())
+  schedule           Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  scheduleId         String    @unique  // One-to-one relation with Schedule
+  
+  // Appointment-specific fields
+  appointmentType    String?   // e.g., "Follow-up", "Initial Consultation", "Check-up"
+  cancelReason       String?
+  isVirtual          Boolean   @default(false)  // For telemedicine appointments
+  meetingLink        String?   // Link for virtual appointments
+  reminderSent       Boolean   @default(false)
+  
+  // Optional relation to medical record if created during appointment
+  medicalRecord      MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+  medicalRecordId    String?
+  
+  // Additional metadata specific to appointments
+  cancelledAt        DateTime?
+  
+  @@index([scheduleId])
+}
 model Doctor {
   id              String           @id @default(cuid())
   specialization  String?
@@ -163,44 +181,21 @@ model Doctor {
   user            User          @relation(fields: [userId], references: [id])
   userId          String           @unique
   deletedAt       DateTime?
-  isDeleted Boolean @default(false)
+  isDeleted       Boolean @default(false)
   patients        DoctorPatient[]        @relation("DoctorPatients")
   patientRequests DoctorPatientRequest[] @relation("DoctorRequests")
   medicalRecords  MedicalRecord[]  
-  location Location?     
+  location        Location?     
   prescriptions   Prescription[]         @relation("DoctorPrescriptions")
   chatRooms       ChatRoom[]     @relation("DoctorChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[] 
   nurses          Nurse[]     @relation("DoctorNurses") 
-  doctorNurses    DoctorNurse[]
-  tasks           Task[]  
   scheduledTasks  Schedule[]     
 }
 
-model DoctorNurse {
-  id        String   @id @default(cuid())
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
-  doctorId  String
-  nurse     Nurse    @relation(fields: [nurseId], references: [id])
-  nurseId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  @@unique([doctorId, nurseId])
-}
 
-model Task {
-  id          String       @id @default(cuid())
-  doctor      Doctor      @relation(fields: [doctorId], references: [id])
-  doctorId    String
-  nurse       Nurse       @relation(fields: [nurseId], references: [id])
-  nurseId     String
-  details     String
-  status      TaskStatus  @default(PENDING)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  completedAt DateTime?
-  scheduledTasks  Schedule[] 
-}
+
+
 
 model Schedule {
   id          String       @id @default(cuid())
@@ -210,18 +205,17 @@ model Schedule {
   nurseId     String?
   patient     Patient?     @relation(fields: [patientId], references: [id])
   patientId   String?
-  task        Task?        @relation(fields: [taskId], references: [id])
   taskId      String?
   title       String
   description String?
   startTime   DateTime
   endTime     DateTime
   status      String       @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
-  location    String?
   isRecurring Boolean      @default(false)
   recurrencePattern String? // e.g., "DAILY", "WEEKLY", "MONTHLY"
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+    appointment        Appointment?
 }
 
 model NurseServiceRequest {
@@ -375,7 +369,7 @@ model MedicalRecord {
   recordDate  DateTime  @default(now())  // Date of the medical encounter
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
+  appointment   Appointment[]
   doctor      Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId    String?
 }
