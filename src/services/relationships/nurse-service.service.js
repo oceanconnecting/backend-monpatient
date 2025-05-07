@@ -513,6 +513,17 @@ export class NurseServiceService {
                 }
               }
             },
+            nurse:{
+             include:{
+              location:{
+                select:{
+                  lat: true,
+                  long: true,
+                  address: true,
+                }
+              }
+             }
+            }
           }
         }
       }
@@ -541,6 +552,9 @@ export class NurseServiceService {
       adress: request.patient.location?.address || null,
       details: request.patient.location?.details || null,
       approved: request.patient.location?.approved || null,
+      nurseLongitude: request.nurse.location?.long || null,
+      nurseLatitude: request.nurse.location?.lat || null,
+      nurseAddress: request.nurse.location?.address || null,
     }));
   }
 
