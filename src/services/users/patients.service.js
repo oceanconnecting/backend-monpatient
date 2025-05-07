@@ -154,7 +154,15 @@ export class PatientService {
             telephoneNumber: true,
             email: true
           }
-        }
+          
+        },
+        location:{
+          select:{
+            lat:true,
+            long:true,
+            address:true,
+
+        }}
       }
     });
     
@@ -171,6 +179,9 @@ export class PatientService {
       professionalLicenseNumber: doctor.professionalLicenseNumber,
       profilePhoto: doctor.user.profilePhoto,
       medicalDiploma: doctor.medicalDiploma,
+      latitude: doctor?.location?.lat,
+      longitude: doctor?.location?.long,
+      address: doctor?.location?.address
     };
   }
   
@@ -186,7 +197,14 @@ export class PatientService {
             firstname: true,
             lastname: true,
           }
-        }
+        },
+        location:{
+          select:{
+            lat:true,
+            long:true,
+            address:true,
+
+        }}
       }
     });
   }

@@ -558,17 +558,6 @@ export class NurseServiceService {
     }));
   }
 
-  // static async nurseVisiting(id){
-  //     const nurse= await prisma.nurse.findUnique({
-  //       where:{id},
-  //       include:{
-  //         serviceRequests:{
-  //           where:{serviceType:"visite  "}
-  //         }
-  //       }
-  //     })
-  // }
-
   static async nursedeletePatientServiceRequest(serviceRequestId) {
     try {
       // 1. Check if the service request exists and belongs to the nurse

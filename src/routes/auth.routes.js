@@ -244,20 +244,32 @@ export async function authRoutes(fastify) {
       try {
         const user = await prisma.user.findUnique({
           where: { id: request.user.id },
-          include: {
+          select: {
+            // User fields you want to include
+            id: true,
+            email: true,
+            firstname: true,
+            lastname: true,
+            profilePhoto: true,
+            role: true,
+            isEmailVerified: true,
+            telephoneNumber: true,
+            dateOfBirth: true,
+            gender: true,
+            // Include relations but NOT password
             patient: true,
-            nurse: true,
+            nurse: true,  
             doctor: true,
             pharmacy: true,
             admin: true,
-          },
+          }
         });
-
+        
         if (!user) {
           reply.code(404).send({ error: "User not found" });
           return;
         }
-
+        
         return AuthService.formatUserResponse(user);
       } catch (error) {
         fastify.log.error(error);

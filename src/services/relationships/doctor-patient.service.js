@@ -321,12 +321,22 @@ export class DoctorPatientService {
                 long: true,
                 address: true
               }
+            },
+            prescriptions: {
+              where: { patientId: patientId },
+              select: {
+                id: true,
+                date: true,
+                details: true,
+                approved: true,
+                // Add any other prescription fields you need
+              }
             }
           }
         }
       }
     });
-
+  
     if (result) {
       // Add concatenated data for patient
       if (result.patient?.location) {
@@ -336,7 +346,7 @@ export class DoctorPatientService {
           `Lng: ${result.patient.location.long}`
         ].filter(Boolean).join(', ');
       }
-
+  
       // Add concatenated data for doctor
       if (result.doctor?.location) {
         result.doctor.location.fullAddress = [
@@ -345,19 +355,40 @@ export class DoctorPatientService {
           `Lng: ${result.doctor.location.long}`
         ].filter(Boolean).join(', ');
       }
-
-      // You could also add a combined name field if needed
+  
+      // Add combined name field if needed
       if (result.patient?.user) {
         result.patient.user.fullName = `${result.patient.user.firstname} ${result.patient.user.lastname}`.trim();
       }
-
+      
       if (result.doctor?.user) {
         result.doctor.user.fullName = `${result.doctor.user.firstname} ${result.doctor.user.lastname}`.trim();
       }
+  
+      // Handle prescriptions properly
+      if (result.doctor?.prescriptions && result.doctor.prescriptions.length > 0) {
+        // Create a formatted string for each prescription
+        const formattedPrescriptions = result.doctor.prescriptions.map(prescription => {
+          return `${prescription.id} ${prescription.details}${prescription.approved ? ', Approved' : ''}`.trim();
+        });
+        
+        // Store the formatted prescription strings
+        result.doctor.prescriptionSummaries = formattedPrescriptions.join(' | ');
+        
+        // Count active prescriptions if needed
+        // Assuming you have an endDate field (add it to the select above if needed)
+        // const now = new Date();
+        // result.doctor.activePrescriptionCount = result.doctor.prescriptions.filter(
+        //   p => !p.endDate || new Date(p.endDate) > now
+        // ).length;
+      } else {
+        result.doctor.prescriptionSummaries = "";
+        // result.doctor.activePrescriptionCount = 0;
+      }
     }
-
+    
     return result;
-}
+  }
 
   static async getPendingRequests(doctorId) {
     return prisma.doctorPatientRequest.findMany({

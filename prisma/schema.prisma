@@ -150,9 +150,7 @@ model Nurse {
 }
 model Appointment {
   id                 String    @id @default(cuid())
-
-  
-  // Appointment-specific fields
+  date               DateTime  
   appointmentType    String?   // e.g., "Follow-up", "Initial Consultation", "Check-up"
   cancelReason       String?
   isVirtual          Boolean   @default(false)  // For telemedicine appointments
