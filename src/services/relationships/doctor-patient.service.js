@@ -281,7 +281,7 @@ export class DoctorPatientService {
     })
   }
   static async getDoctorPatientById(doctorId, patientId) {
-    return prisma.doctorPatient.findFirst({
+    const result = await prisma.doctorPatient.findFirst({
       where: {
         doctorId: doctorId,
         patientId: patientId,
@@ -306,10 +306,58 @@ export class DoctorPatientService {
               }
             },
           }
+        },
+        doctor: {
+          include: {
+            user: {
+              select: {
+                firstname: true,
+                lastname: true,
+              }
+            },
+            location: {
+              select: {
+                lat: true,
+                long: true,
+                address: true
+              }
+            }
+          }
         }
       }
     });
-  }
+
+    if (result) {
+      // Add concatenated data for patient
+      if (result.patient?.location) {
+        result.patient.location.fullAddress = [
+          result.patient.location.address,
+          `Lat: ${result.patient.location.lat}`,
+          `Lng: ${result.patient.location.long}`
+        ].filter(Boolean).join(', ');
+      }
+
+      // Add concatenated data for doctor
+      if (result.doctor?.location) {
+        result.doctor.location.fullAddress = [
+          result.doctor.location.address,
+          `Lat: ${result.doctor.location.lat}`,
+          `Lng: ${result.doctor.location.long}`
+        ].filter(Boolean).join(', ');
+      }
+
+      // You could also add a combined name field if needed
+      if (result.patient?.user) {
+        result.patient.user.fullName = `${result.patient.user.firstname} ${result.patient.user.lastname}`.trim();
+      }
+
+      if (result.doctor?.user) {
+        result.doctor.user.fullName = `${result.doctor.user.firstname} ${result.doctor.user.lastname}`.trim();
+      }
+    }
+
+    return result;
+}
 
   static async getPendingRequests(doctorId) {
     return prisma.doctorPatientRequest.findMany({

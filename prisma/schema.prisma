@@ -150,8 +150,7 @@ model Nurse {
 }
 model Appointment {
   id                 String    @id @default(cuid())
-  schedule           Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  scheduleId         String    @unique  // One-to-one relation with Schedule
+
   
   // Appointment-specific fields
   appointmentType    String?   // e.g., "Follow-up", "Initial Consultation", "Check-up"
@@ -167,7 +166,6 @@ model Appointment {
   // Additional metadata specific to appointments
   cancelledAt        DateTime?
   
-  @@index([scheduleId])
 }
 model Doctor {
   id              String           @id @default(cuid())
@@ -196,7 +194,6 @@ model Doctor {
 
 
 
-
 model Schedule {
   id          String       @id @default(cuid())
   doctor      Doctor?      @relation(fields: [doctorId], references: [id])
@@ -215,7 +212,7 @@ model Schedule {
   recurrencePattern String? // e.g., "DAILY", "WEEKLY", "MONTHLY"
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  appointment        Appointment?
+
 }
 
 model NurseServiceRequest {
