@@ -490,12 +490,12 @@ export class NurseServiceService {
       });
     });
   }
-  static async nursePatientsbyPatientId(id) {
+  static async nursePatientsbyPatientId(id,nurseId) {
     const patient = await prisma.patient.findUnique({
       where: { id: id },
       include: {
         nurseServiceRequests : {
-          where: { status: 'ACCEPTED' },
+          where: { status: 'ACCEPTED', nurseId: nurseId },
           include: {
             patient: {
               include: {

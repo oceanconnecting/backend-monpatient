@@ -497,7 +497,8 @@ export async function nurseServiceRoutes(fastify) {
     handler: async (request
     ) => {
       const requests = await NurseServiceService.nursePatientsbyPatientId(
-        request.params.patientId
+        request.params.patientId,
+        request?.user?.nurse?.id
       );
       return requests;
     },
