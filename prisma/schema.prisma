@@ -157,8 +157,7 @@ model Appointment {
   reminderSent       Boolean   @default(false)
   
   // Optional relation to medical record if created during appointment
-  medicalRecord      MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
-  medicalRecordId    String?
+  medicalRecord      MedicalRecord[]
   doctor            Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId          String?
   patient           Patient?  @relation(fields: [patientId], references: [id])
@@ -367,7 +366,8 @@ model MedicalRecord {
   recordDate  DateTime  @default(now())  // Date of the medical encounter
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  appointment   Appointment[]
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  appointmentId String?
   doctor      Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId    String?
 }

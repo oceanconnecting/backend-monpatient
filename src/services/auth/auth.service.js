@@ -285,10 +285,50 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        patient: true,
-        nurse: true,
-        doctor: true,
-        pharmacy: true,
+        patient: {
+          include:{
+            location:{
+              select:{
+                lat:true,
+                long:true,
+                address:true
+              }
+            }
+          }
+        },
+        nurse:  {
+          include:{
+            location:{
+              select:{
+                lat:true,
+                long:true,
+                address:true
+              }
+            }
+          }
+        },
+        doctor:  {
+          include:{
+            location:{
+              select:{
+                lat:true,
+                long:true,
+                address:true
+              }
+            }
+          }
+        },
+        pharmacy:  {
+          include:{
+            location:{
+              select:{
+                lat:true,
+                long:true,
+                address:true
+              }
+            }
+          }
+        },
         admin: true,
       },
     });
