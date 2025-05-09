@@ -89,10 +89,8 @@ model Location {
   nurse     Nurse?   @relation(fields: [nurseId], references: [id])
   patientId String?   @unique
   patient   Patient?  @relation(fields: [patientId], references: [id])
-
   doctorId  String?   @unique
   doctor    Doctor?   @relation(fields: [doctorId], references: [id])
-  
   pharmacyId String?  @unique
   pharmacy   Pharmacy? @relation(fields: [pharmacyId], references: [id])
 }
@@ -128,6 +126,7 @@ model Patient {
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
   chatRoomPatients ChatRoomPatientNurse[] @relation("PatientChats")
   orders Order[]
+  appointments Appointment[]
 }
 
 model Nurse {
@@ -160,7 +159,10 @@ model Appointment {
   // Optional relation to medical record if created during appointment
   medicalRecord      MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
   medicalRecordId    String?
-  
+  doctor            Doctor?   @relation(fields: [doctorId], references: [id])
+  doctorId          String?
+  patient           Patient?  @relation(fields: [patientId], references: [id])
+  patientId         String?
   // Additional metadata specific to appointments
   cancelledAt        DateTime?
   
@@ -186,7 +188,8 @@ model Doctor {
   chatRooms       ChatRoom[]     @relation("DoctorChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[] 
   nurses          Nurse[]     @relation("DoctorNurses") 
-  scheduledTasks  Schedule[]     
+  scheduledTasks  Schedule[]    
+  appointments     Appointment[] 
 }
 
 

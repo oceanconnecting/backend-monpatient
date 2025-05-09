@@ -228,7 +228,7 @@ export class ChatServicePatientNurseDoctor {
       },
     });
   }
-
+  
   async sendMessage(roomId, senderId, senderRole, content) {
     // Validate sender role
     if (senderRole !== 'PATIENT' && senderRole !== 'NURSE') {

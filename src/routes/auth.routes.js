@@ -257,10 +257,50 @@ export async function authRoutes(fastify) {
             dateOfBirth: true,
             gender: true,
             // Include relations but NOT password
-            patient: true,
-            nurse: true,  
-            doctor: true,
-            pharmacy: true,
+            patient: {
+              include:{
+                location: {
+                  select:{
+                    lat:true,
+                    long:true,
+                    address:true,
+                  }
+                },
+              }
+            },
+            nurse:  {
+              include:{
+                location: {
+                  select:{
+                    lat:true,
+                    long:true,
+                    address:true,
+                  }
+                },
+              }
+            },
+            doctor:  {
+              include:{
+                location: {
+                  select:{
+                    lat:true,
+                    long:true,
+                    address:true,
+                  }
+                },
+              }
+            },
+            pharmacy:  {
+              include:{
+                location: {
+                  select:{
+                    lat:true,
+                    long:true,
+                    address:true,
+                  }
+                },
+              }
+            },
             admin: true,
           }
         });

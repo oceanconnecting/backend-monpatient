@@ -1,7 +1,7 @@
 import { ChatServicePatientNurseDoctor } from "../../services/chat/chat-pationt-nurse-doctor.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
 
-export async function chatPatientNurseDoctorRoutes(fastify, options) {
+export async function chatPatientNurseDoctorRoutes(fastify, ) {
   const chatService = new ChatServicePatientNurseDoctor(fastify.io);
 
   // Helper method for error handling

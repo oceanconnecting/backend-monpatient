@@ -134,6 +134,7 @@ export async function patientRoutes(fastify) {
       }
     },
   });
+  // This route allows patients to view their appointments
   fastify.get('/doctors/:id', async (request, reply) => {
     
     const doctor = await PatientService.getDoctorById(request.params.id);

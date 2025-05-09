@@ -2,7 +2,7 @@
 import fp from "fastify-plugin";
 import oauthPlugin from "@fastify/oauth2";
 
-export default fp(async function (fastify, opts) {
+export default fp(async function (fastify) {
   // Log the OAuth configuration
 
   console.log(

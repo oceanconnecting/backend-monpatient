@@ -1,6 +1,6 @@
 import { ChatService } from '../../services/chat/chat.service.js'
 
-export async function chatRoutes(fastify, options) {
+export async function chatRoutes(fastify) {
   const chatService = new ChatService(fastify)
   
   // HTTP API Routes
@@ -147,7 +147,7 @@ export async function chatRoutes(fastify, options) {
     // Verify token and get user
     try {
       const decoded = fastify.jwt.verify(token);
-      const userId = decoded.id;
+      const userId = decoded.user.id;
       console.log(`WebSocket connected: User ${userId}`);
       
       // Handle incoming messages

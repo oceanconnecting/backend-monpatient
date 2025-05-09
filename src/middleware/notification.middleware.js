@@ -9,7 +9,7 @@ const prisma = new PrismaClient({
 export function createNotificationMiddleware(fastify, options = {}) {
   const debug = options.debug ?? (process.env.NODE_ENV === 'development')
   const logPerformance = options.logPerformance ?? true
-  const excludePaths = options.excludePaths ?? ['/health']
+  const excludePaths = options.excludePaths ?? ['/health','/api/auth/me']
   const batchInterval = options.batchInterval ?? 1000 // ms to batch notifications
 
   // Storage for notification batch processing

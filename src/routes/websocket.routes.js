@@ -12,7 +12,7 @@ export async function websocketRoutes(fastify) {
   fastify.get('/patient-nurse-doctor', { websocket: true }, (connection, req) => {
     chatServicePatientNurseDoctor.handleConnection(connection, req);
   });
-
+  
   fastify.get('/chat', { websocket: true }, (connection, req) => {
     chatService.handleConnection(connection, req);
   });

@@ -18,7 +18,7 @@ import locationRoutes from "../routes/location.routes.js";
 import { pharmacyMedicinesRoutes } from "../routes/pharmacy/pharmacy.medicine.route.js";
 import pharmacyPerscriptionRoutes from "../routes/pharmacy/pharmacy.prescription.route.js";
 import pharmacyOrdersRoutes from "../routes/pharmacy/Order.Pharmacy.Route.js";
-
+import { registerAppointmentRoutes } from "../routes/appointment.routes.js";
 export async function configureRoutes(fastify) {
   const apiPrefix = "/api";
   
@@ -44,6 +44,9 @@ export async function configureRoutes(fastify) {
     ],
     location: [
       { routes: locationRoutes, prefix: `${apiPrefix}/location` },
+    ],
+    registerAppointmentRoutes: [
+      { routes: registerAppointmentRoutes, prefix: `${apiPrefix}/appointments` },
     ],
     communications: [
       { routes: notificationRoutes, prefix: `${apiPrefix}/notifications` },

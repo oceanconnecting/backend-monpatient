@@ -657,7 +657,7 @@ export class NurseServiceService {
     return visits;
   }
   
-  static async updateVisit(nurseId, visitId, updateData) {
+  static async updateVisit(nurseId, visitId, updateData) { 
     // Verify the visit exists and belongs to the nurse
     const existingVisit = await prisma.nurseVisit.findFirst({
       where: { 
