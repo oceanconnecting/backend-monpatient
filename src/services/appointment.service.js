@@ -162,7 +162,7 @@ export class AppointmentService {
       throw new Error("Failed to update reminder status");
     }
   }
-
+ 
   /**
    * Get upcoming appointments that need reminders
    */

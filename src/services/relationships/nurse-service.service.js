@@ -285,8 +285,8 @@ export class NurseServiceService {
   
   
       return {
-        id: request.patient.id,
-        requestId: request.id,
+        id: request.id,
+        patientId: request.patient.id,
         userId: request.patient.userId,
         name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
         email: request.patient.user.email,

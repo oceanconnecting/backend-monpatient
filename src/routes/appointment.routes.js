@@ -16,7 +16,6 @@ export function registerAppointmentRoutes(fastify) {
             isVirtual: { type: 'boolean', default: false },
             meetingLink: { type: ['string', 'null'] },
             reminderSent: { type: 'boolean', default: false },
-            medicalRecordId: { type: ['string', 'null'] },
             patientId: { type: 'string' },
             cancelledAt: { type: ['string', 'null'], format: 'date-time' }
           }
@@ -32,7 +31,6 @@ export function registerAppointmentRoutes(fastify) {
               isVirtual: { type: 'boolean' },
               meetingLink: { type: ['string', 'null'] },
               reminderSent: { type: 'boolean' },
-              medicalRecordId: { type: ['string', 'null'] },
               doctorId: { type: 'string' },
               patientId: { type: 'string' },
               cancelledAt: { type: ['string', 'null'], format: 'date-time' }

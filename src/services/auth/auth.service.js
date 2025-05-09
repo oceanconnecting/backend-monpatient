@@ -281,6 +281,68 @@ export class AuthService {
       throw new Error("Email verification failed: " + error.message);
     }
   }
+  static async resetPassword(email) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const token = generateToken();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: token,
+          passwordResetExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      await this.sendResetPasswordEmail(email, token);
+    } catch (error) {
+      console.error("Failed to reset password:", error);
+      throw new Error("Password reset failed: " + error.message);
+    }
+  }
+  static async sendResetPasswordEmail(email, token) {
+    try {
+      // Create a transporter using SMTP settings (Zoho example)
+      const transporter = nodemailer.createTransport({
+        host: "smtp.zoho.com", // Zoho's SMTP server
+        port: 465, // SSL port
+        secure: true, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER, // Your Zoho Mail address
+          pass: process.env.SMTP_PASSWORD, // Your Zoho Mail password or app-specific password
+        },
+      });
+  
+      // Email content
+      const mailOptions = {
+        from: "team@oceanconnecting.dev", // Sender address
+        to: email, // Recipient address
+        subject: "Reset Your Password", // Subject line
+        text: `Use this token to reset your password: ${token}`, // Plain text body
+        html: `
+          <h1>Monpatient</h1>
+          <p>You requested a password reset. Use the link below to reset your password:</p>
+          <a href="https://localhost:5173/auth/reset-password?token=${token}">Reset Password</a>
+          <p>This link will expire in 24 hours.</p>
+          <p>If you did not request a password reset, please ignore this email.</p>
+        `, // HTML body
+      };
+  
+      // Send the email
+      await transporter.sendMail(mailOptions);
+      console.log("Password reset email sent successfully");
+      return { message: "Password reset email sent successfully" };
+    } catch (error) {
+      console.error("Failed to send password reset email:", error);
+      throw new Error("Failed to send password reset email: " + error.message);
+    }
+  } // Your Zoho Mail address (e.g.,
   static async login(email, password) {
     const user = await prisma.user.findUnique({
       where: { email },
