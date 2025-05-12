@@ -127,7 +127,35 @@ export class AppointmentService {
       throw new Error("Failed to cancel appointment");
     }
   }
-
+  // doctorGetAppointment
+async doctorGetAppointment(doctorId) {
+  try {
+    const appointment = await prisma.appointment.findMany({
+      where: {
+        doctorId: doctorId,
+      },
+      include: {
+        
+        patient: {
+          include: {
+            user: {
+              select:{
+                firstname: true,
+                lastname: true,
+                email: true,
+              }
+            },
+          },
+        },
+        medicalRecord:true
+      }
+    });
+    return appointment;
+  } catch (error) {
+    console.error(`Error getting doctor appointment with ID ${doctorId}:`, error);
+    throw new Error("Failed to get doctor appointment");
+  }
+}
   /**
    * Delete an appointment permanently
    */

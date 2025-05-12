@@ -14,7 +14,7 @@ export async function medicalRecordsRoutes(fastify) {
           treatment: { type: 'string' },
           notes: { type: 'string' },
           doctorId: { type: 'string' },
-        
+          appointmentId: { type: 'string' },
           recordDate: { type: 'string', format: 'date-time' }
         }
       },
@@ -28,7 +28,7 @@ export async function medicalRecordsRoutes(fastify) {
             treatment: { type: 'string' },
             notes: { type: 'string' },
             doctorId: { type: 'string' },
-        
+            appointmentId: { type: 'string' },
             recordDate: { type: 'string', format: 'date-time' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }

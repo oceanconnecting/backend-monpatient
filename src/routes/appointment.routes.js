@@ -228,4 +228,15 @@ export function registerAppointmentRoutes(fastify) {
         return reply.code(500).send({ error: error.message });
       }
     });
+    fastify.get('/doctor', {
+      onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN'])]
+    }, async (request, reply) => {
+      try {
+        const doctorId  = request.user.doctor.id;
+        const appointments = await appointmentService.doctorGetAppointment(doctorId);
+        return reply.send(appointments);
+      } catch (error) {
+        return reply.code(500).send({ error: error.message });
+      }
+    });
   }

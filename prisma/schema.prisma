@@ -271,7 +271,7 @@ model Pharmacy {
   openingHours    String?
   deliveryOptions String?
   prescriptions   Prescription[] @relation("PharmacyPrescriptions")
-  location Location?
+  location        Location?
   medicines       Medicine[]
   orders Order[]
 }
@@ -370,6 +370,11 @@ model MedicalRecord {
   appointmentId String?
   doctor      Doctor?   @relation(fields: [doctorId], references: [id])
   doctorId    String?
+   @@index([patientId])
+  @@index([doctorId])
+  @@index([appointmentId])
+  @@index([recordDate])
+  @@index([createdAt])
 }
 
 model Report {
