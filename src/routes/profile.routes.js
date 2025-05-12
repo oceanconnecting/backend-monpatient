@@ -81,7 +81,10 @@ export async function profileRoutes(fastify) {
             
             // Pharmacy fields
             pharmacyLicense: { type: 'string', nullable: true },
-            operatingHours: { type: 'string', nullable: true }
+            operatingHours: { type: 'string', nullable: true },
+            lat: { type: 'number', nullable: true },
+            long: { type: 'number', nullable: true },
+            address: { type: 'string', nullable: true },
           }
         }
       }
