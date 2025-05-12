@@ -100,7 +100,7 @@ export async function profileRoutes(fastify) {
   });
 
   // Common update route
-  fastify.put('/', {
+fastify.put('/', {
     onRequest: [fastify.authenticate],
     schema: {
       body: {
@@ -109,14 +109,48 @@ export async function profileRoutes(fastify) {
           firstname: { type: 'string', minLength: 2 },
           lastname: { type: 'string', minLength: 2 },
           telephoneNumber: { type: 'string' },
-          dateOfBirth: { type: 'string',format: 'date-time' },
+          dateOfBirth: { type: 'string', format: 'date-time' },
           lat: { type: 'number' },
           long: { type: 'number' },
           address: { type: 'string' },
           gender: { type: 'string' },
-      
-
           // Add other updatable fields
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            firstname: { type: 'string' },
+            lastname: { type: 'string' },
+            telephoneNumber: { type: 'string' },
+            dateOfBirth: { type: 'string', format: 'date-time' },
+            lat: { type: 'number' },
+            long: { type: 'number' },
+            address: { type: 'string' },
+            gender: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        500: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
         }
       }
     },
