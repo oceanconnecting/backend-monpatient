@@ -349,7 +349,7 @@ export class AuthService {
       include: {
         patient: {
           include:{
-            location:{
+            user:{
               select:{
                 lat:true,
                 long:true,
@@ -360,7 +360,7 @@ export class AuthService {
         },
         nurse:  {
           include:{
-            location:{
+            user:{
               select:{
                 lat:true,
                 long:true,
@@ -371,7 +371,7 @@ export class AuthService {
         },
         doctor:  {
           include:{
-            location:{
+            user:{
               select:{
                 lat:true,
                 long:true,
@@ -382,7 +382,7 @@ export class AuthService {
         },
         pharmacy:  {
           include:{
-            location:{
+            user:{
               select:{
                 lat:true,
                 long:true,

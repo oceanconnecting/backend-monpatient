@@ -128,7 +128,7 @@ export class AppointmentService {
     }
   }
   // doctorGetAppointment
-async doctorGetAppointment(doctorId) {
+ async doctorGetAppointment(doctorId) {
   try {
     const appointment = await prisma.appointment.findMany({
       where: {
@@ -155,14 +155,14 @@ async doctorGetAppointment(doctorId) {
     console.error(`Error getting doctor appointment with ID ${doctorId}:`, error);
     throw new Error("Failed to get doctor appointment");
   }
-}
+ }
   /**
    * Delete an appointment permanently
    */
-  async deleteAppointment(id) {
+  async deleteAppointment(id,doctorId) {
     try {
       await prisma.appointment.delete({
-        where: { id },
+        where: { id,doctorId },
       });
       
       return { success: true };
@@ -190,7 +190,22 @@ async doctorGetAppointment(doctorId) {
       throw new Error("Failed to update reminder status");
     }
   }
- 
+ async cencelAppointment(id, cancelReason,doctorId) {
+    try {
+      const appointment = await prisma.appointment.update({
+        where: { id,doctorId },
+        data: {
+          cancelReason,
+          cancelledAt: new Date(),
+        },
+      });
+      
+      return appointment;
+    } catch (error) {
+      console.error(`Error cancelling appointment with ID ${id}:`, error);
+      throw new Error("Failed to cancel appointment");
+    }
+  }
   /**
    * Get upcoming appointments that need reminders
    */

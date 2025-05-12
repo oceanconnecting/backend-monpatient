@@ -107,6 +107,9 @@ export async function profileRoutes(fastify) {
           lastname: { type: 'string', minLength: 2 },
           telephoneNumber: { type: 'string' },
           dateOfBirth: { type: 'string',format: 'date-time' },
+          lat: { type: 'number' },
+          long: { type: 'number' },
+          address: { type: 'string' },
           gender: { type: 'string' },
       
 
@@ -279,4 +282,6 @@ export async function profileRoutes(fastify) {
 
     // Similarly for other roles...
   }, { prefix: '/role-specific' });
+  // Location upload route
+ 
 }

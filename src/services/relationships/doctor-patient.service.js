@@ -296,11 +296,7 @@ export class DoctorPatientService {
                 telephoneNumber: true,
                 email: true,
                 createdAt: true,
-              }
-            },
-            location: {
-              select: {
-                lat: true,
+                 lat: true,
                 long: true,
                 address: true
               }
@@ -313,11 +309,7 @@ export class DoctorPatientService {
               select: {
                 firstname: true,
                 lastname: true,
-              }
-            },
-            location: {
-              select: {
-                lat: true,
+                 lat: true,
                 long: true,
                 address: true
               }
@@ -339,20 +331,20 @@ export class DoctorPatientService {
   
     if (result) {
       // Add concatenated data for patient
-      if (result.patient?.location) {
-        result.patient.location.fullAddress = [
-          result.patient.location.address,
-          `Lat: ${result.patient.location.lat}`,
-          `Lng: ${result.patient.location.long}`
+      if (result.patient?.user) {
+        result.patient.user.fullAddress = [
+          result.patient.user.address,
+          `Lat: ${result.patient.user.lat}`,
+          `Lng: ${result.patient.user.long}`
         ].filter(Boolean).join(', ');
       }
   
       // Add concatenated data for doctor
-      if (result.doctor?.location) {
-        result.doctor.location.fullAddress = [
-          result.doctor.location.address,
-          `Lat: ${result.doctor.location.lat}`,
-          `Lng: ${result.doctor.location.long}`
+      if (result.doctor?.user) {
+        result.doctor.user.fullAddress = [
+          result.doctor.user.address,
+          `Lat: ${result.doctor.user.lat}`,
+          `Lng: ${result.doctor.user.long}`
         ].filter(Boolean).join(', ');
       }
   

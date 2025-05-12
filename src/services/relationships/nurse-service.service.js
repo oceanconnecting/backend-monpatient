@@ -36,7 +36,7 @@ export class NurseServiceService {
           description: requestData.description,
           preferredDate: new Date(requestData.preferredDate),
           urgency: requestData.urgency,
-          location: requestData.location
+        
         },
         include: {
           patient: true,
@@ -500,22 +500,14 @@ export class NurseServiceService {
             patient: {
               include: {
                 user: {
-                  select: { firstname: true, lastname: true, email: true }
+                  select: { firstname: true, lastname: true, email: true,lat:true,long:true,address:true }
                 },
-                location:{
-                  select: {
-                    lat: true,
-                    long: true,
-                    address: true,
-                    details: true,
-                    approved: true,
-                  }
-                }
+                
               }
             },
             nurse:{
              include:{
-              location:{
+              user:{
                 select:{
                   lat: true,
                   long: true,
@@ -547,14 +539,12 @@ export class NurseServiceService {
       status: request.status,
       createdAt: request.createdAt,
       preferredDate: request.preferredDate,
-      longitude: request.patient.location?.long || null,
-      latitude: request.patient.location?.lat || null,
-      adress: request.patient.location?.address || null,
-      details: request.patient.location?.details || null,
-      approved: request.patient.location?.approved || null,
-      nurseLongitude: request.nurse.location?.long || null,
-      nurseLatitude: request.nurse.location?.lat || null,
-      nurseAddress: request.nurse.location?.address || null,
+      longitude: request.patient.user?.long || null,
+      latitude: request.patient.user?.lat || null,
+      adress: request.patient.user?.address || null,
+      nurseLongitude: request.nurse.user?.long || null,
+      nurseLatitude: request.nurse.user?.lat || null,
+      nurseAddress: request.nurse.user?.address || null,
     }));
   }
 

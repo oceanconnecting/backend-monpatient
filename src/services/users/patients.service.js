@@ -152,17 +152,13 @@ export class PatientService {
             lastname: true,
             profilePhoto: true,
             telephoneNumber: true,
-            email: true
-          }
-          
-        },
-        location:{
-          select:{
+            email: true,
             lat:true,
             long:true,
             address:true,
-
-        }}
+          }
+          
+        }
       }
     });
     
@@ -179,9 +175,9 @@ export class PatientService {
       professionalLicenseNumber: doctor.professionalLicenseNumber,
       profilePhoto: doctor.user.profilePhoto,
       medicalDiploma: doctor.medicalDiploma,
-      latitude: doctor?.location?.lat,
-      longitude: doctor?.location?.long,
-      address: doctor?.location?.address
+      latitude: doctor?.user?.lat,
+      longitude: doctor?.user?.long,
+      address: doctor?.user?.address
     };
   }
   
@@ -196,15 +192,11 @@ export class PatientService {
             role: true,
             firstname: true,
             lastname: true,
-          }
-        },
-        location:{
-          select:{
-            lat:true,
+             lat:true,
             long:true,
             address:true,
-
-        }}
+          }
+        },
       }
     });
   }
@@ -433,6 +425,6 @@ export class PatientService {
     
     return searchResults;
   }
-  // cretae location
+  // cretae user
 
 }

@@ -259,51 +259,11 @@ export async function authRoutes(fastify) {
             telephoneNumber: true,
             dateOfBirth: true,
             gender: true,
+            lat: true,
+            long: true,
+            address: true,
             // Include relations but NOT password
-            patient: {
-              include:{
-                location: {
-                  select:{
-                    lat:true,
-                    long:true,
-                    address:true,
-                  }
-                },
-              }
-            },
-            nurse:  {
-              include:{
-                location: {
-                  select:{
-                    lat:true,
-                    long:true,
-                    address:true,
-                  }
-                },
-              }
-            },
-            doctor:  {
-              include:{
-                location: {
-                  select:{
-                    lat:true,
-                    long:true,
-                    address:true,
-                  }
-                },
-              }
-            },
-            pharmacy:  {
-              include:{
-                location: {
-                  select:{
-                    lat:true,
-                    long:true,
-                    address:true,
-                  }
-                },
-              }
-            },
+           
             admin: true,
           }
         });
