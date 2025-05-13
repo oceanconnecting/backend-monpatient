@@ -1,48 +1,38 @@
 // config/performance.js
 import fastifyCompress from "@fastify/compress";
+import fastifyCaching from "@fastify/caching";
 
 export async function configurePerformanceOptimizations(fastify) {
   // Adjust server timeouts for long-running requests
   fastify.server.keepAliveTimeout = 65000; // Increase from Node.js default (5s)
-  fastify.server.headersTimeout = 66000;   // Should be > keepAliveTimeout
-  
+  fastify.server.headersTimeout = 66000; // Should be > keepAliveTimeout
+
   // Enable response compression with better settings for large responses
   await fastify.register(fastifyCompress, {
     threshold: 1024, // Only compress responses larger than 1KB
     encodings: ['gzip', 'deflate'],
-    global: false,    // Don't compress everything automatically
-  
+    global: false, // Don't compress everything automatically
   });
-  
+
+  // Add caching to improve response times and reduce server load
+  await fastify.register(fastifyCaching, {
+    privacy: 'public',
+    expiresIn: 300, // Cache responses for 5 minutes by default
+    cache: {
+      // Optional: configure a custom cache store (default is in-memory)
+      size: 1000, // Maximum number of items in cache
+      ttl: 300000, // TTL in milliseconds (5 minutes)
+    },
+    // Don't cache everything automatically - routes will need to opt-in
+    // by setting a Cache-Control header in their responses
+    global: false
+  });
+
   // Adjust body size limits for larger requests/responses
   fastify.register(import('@fastify/formbody'), {
     bodyLimit: 10 * 1024 * 1024 // 10MB limit
   });
-  
-  // Cache control headers for static assets
-  fastify.addHook('onSend', (request, reply, payload, done) => {
-    // Set appropriate cache headers based on route type
-    const path = request.routerPath || request.url;
-    if (path.includes('/static/') || path.endsWith('.js') || path.endsWith('.css')) {
-      // Static assets - cache for longer periods
-      reply.header('Cache-Control', 'public, max-age=86400, immutable'); // 24 hours
-    } else if (request.method === 'GET' && !path.includes('/api/')) {
-      // Other GET requests that are not API calls - modest caching
-      reply.header('Cache-Control', 'public, max-age=300'); // 5 minutes
-    } else {
-      // Dynamic API responses - no caching
-      reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
-    }
-    
-    // For API endpoints that return large data
-    if (path.includes('/api/pharmacy/medicines')) {
-      // Set chunked transfer encoding for potentially large responses
-      reply.header('Transfer-Encoding', 'chunked');
-    }
-    
-    done(null, payload);
-  });
-  
+
   // Disable extensive logging in production
   if (process.env.NODE_ENV === 'production') {
     fastify.addHook('onRequest', (request, reply, done) => {
@@ -53,14 +43,14 @@ export async function configurePerformanceOptimizations(fastify) {
       done();
     });
   }
-  
+
   // Configure keep-alive connections with more appropriate values
   fastify.addHook('onRequest', (request, reply, done) => {
     reply.header('Connection', 'keep-alive');
     reply.header('Keep-Alive', 'timeout=60, max=1000'); // Increased timeout to 60s
     done();
   });
-  
+
   // Add hook for monitoring potentially slow routes
   // fastify.addHook('onResponse', (request, reply, done) => {
   //   const responseTime = reply.getResponseTime();
