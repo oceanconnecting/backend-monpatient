@@ -243,6 +243,11 @@ export async function authRoutes(fastify) {
   // Protected route example
   fastify.get("/me", {
     onRequest: [fastify.authenticate],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const user = await prisma.user.findUnique({

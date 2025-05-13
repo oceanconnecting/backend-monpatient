@@ -4,6 +4,11 @@ import { checkRole } from "../middleware/auth.middleware.js";
 export async function doctorRoutes(fastify) {
   // Search doctors by name - no authentication required
   fastify.get("/search", {
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const { name } = request.query;

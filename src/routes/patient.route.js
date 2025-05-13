@@ -4,6 +4,11 @@ import { PatientService } from "../services/users/patients.service.js";
 export async function patientRoutes(fastify) {
   fastify.get("/doctors", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const doctors = await PatientService.getDoctorsOfPatient(request.user.patient.id);
@@ -15,6 +20,11 @@ export async function patientRoutes(fastify) {
   });
   fastify.get("/nurses", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const doctors = await PatientService.getnurseOfpatient(request?.user?.patient?.id);
@@ -26,6 +36,11 @@ export async function patientRoutes(fastify) {
   });
   fastify.get("/doctors/all", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const doctors = await PatientService.getAllDoctors();
@@ -38,6 +53,11 @@ export async function patientRoutes(fastify) {
 
   fastify.get("/nurses/all", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const nurses = await PatientService.getAllnurses(request.user.id);
@@ -50,6 +70,11 @@ export async function patientRoutes(fastify) {
   // 
   fastify.get("/pharmacies", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const pharmacies = await PatientService.getAllpharmacies(
@@ -64,6 +89,11 @@ export async function patientRoutes(fastify) {
   // This route allows patients to view their appointments
   fastify.get("/emergency-contact", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const emergencyContact = await PatientService.getEmergencyContact(request?.user?.patient.id);
@@ -100,6 +130,11 @@ export async function patientRoutes(fastify) {
   // This route allows patients to view their medical records
   fastify.get("/medical-record", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const medicalRecord = await PatientService.getmedicalRecorde(request.user.patient.id);
@@ -117,6 +152,11 @@ export async function patientRoutes(fastify) {
   // This route allows patients to search for doctors and nurses by name
   fastify.get("/search", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const { searchName } = request.query; // Changed from 'name' to 'searchName'

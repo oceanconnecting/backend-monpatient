@@ -5,6 +5,11 @@ export async function prescriptionRoutes(fastify) {
   // Get all prescriptions
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const prescriptions = await PrescriptionService.getAllPrescriptions();
@@ -18,6 +23,11 @@ export async function prescriptionRoutes(fastify) {
   // Get prescription by ID
   fastify.get('/:id', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY'])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const prescription = await PrescriptionService.getPrescriptionById(request.params.id);
@@ -94,6 +104,11 @@ export async function prescriptionRoutes(fastify) {
   // Get prescriptions by patient ID
   fastify.get('/patient/:patientId', {
     onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'PHARMACY','PATIENT'])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const prescriptions = await PrescriptionService.getPrescriptionsByPatientId(request.params.patientId);

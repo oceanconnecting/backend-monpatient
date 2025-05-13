@@ -4,6 +4,11 @@ import { PharmacyService } from "../services/pharmacies/pharmacies.service.js";
 export async function pharmacyRoutes(fastify) {
   fastify.get("/", {
     preHandler: fastify.authenticate,
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const pharmacies = await PharmacyService.getAllPharmacies();
@@ -16,6 +21,11 @@ export async function pharmacyRoutes(fastify) {
 
   fastify.get("/medicine",{
   preHandler: fastify.authenticate,
+  config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
   handler: async (request, reply) => {
     try {
       const pharmacies = await PharmacyService.pharcygetMedicine(request.user.pharmacy.id);
@@ -28,6 +38,11 @@ export async function pharmacyRoutes(fastify) {
   
   fastify.get('/:id', {
     preHandler: fastify.authenticate,
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const id = request.params.id;

@@ -55,6 +55,11 @@ export async function nurseServiceRoutes(fastify) {
   });
   fastify.get('/visite',{
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const requests = await NurseServiceService.getNurseVisits(
@@ -163,6 +168,11 @@ export async function nurseServiceRoutes(fastify) {
   // Nurse views available service requests
   fastify.get("/available", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const requests = await NurseServiceService.getAvailableRequests(
@@ -266,6 +276,11 @@ export async function nurseServiceRoutes(fastify) {
   // Patient views their service requests
   fastify.get("/patient/requests", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const requests = await NurseServiceService.getPatientRequests(
@@ -280,6 +295,11 @@ export async function nurseServiceRoutes(fastify) {
   // Nurse views their service requests
   fastify.get("/requests", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const requests = await NurseServiceService.getNurseRequests(
@@ -294,6 +314,11 @@ export async function nurseServiceRoutes(fastify) {
   // Nurse views their patients
   fastify.get("/patients", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const patients = await NurseServiceService.nursePatients(
@@ -332,6 +357,11 @@ export async function nurseServiceRoutes(fastify) {
   // Nurse searches for a patient
   fastify.get("/patient/search", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       querystring: {
         type: "object",
@@ -480,6 +510,11 @@ export async function nurseServiceRoutes(fastify) {
   // Nurse views their requests
   fastify.get("/", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const requests = await NurseServiceService.getRequests(
@@ -494,6 +529,11 @@ export async function nurseServiceRoutes(fastify) {
 
   fastify.get("/patient/:patientId", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request
     ) => {
       const requests = await NurseServiceService.nursePatientsbyPatientId(
