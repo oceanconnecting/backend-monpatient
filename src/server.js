@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
-
+import fastifyCaching from "@fastify/caching";
 // Load environment variables early
 dotenv.config();
 
@@ -66,7 +66,10 @@ async function buildApp() {
   await configureWebsockets(fastify, connectedClients);
   await configureRoutes(fastify);
   await configureErrorHandlers(fastify);
-
+ await fastify.register(fastifyCaching, {
+    expiresIn: 1000 * 60 * 5, // 5 minutes (adjust as needed)
+    privacy: 'public', // or 'private' depending on your needs
+  });
   // Health check route
   fastify.get("/health", async () => {
     return {

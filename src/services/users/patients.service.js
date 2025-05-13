@@ -175,9 +175,9 @@ export class PatientService {
       professionalLicenseNumber: doctor.professionalLicenseNumber,
       profilePhoto: doctor.user.profilePhoto,
       medicalDiploma: doctor.medicalDiploma,
-      latitude: doctor?.user?.lat,
-      longitude: doctor?.user?.long,
-      address: doctor?.user?.address
+      lat: doctor?.user?.lat,
+      log: doctor?.user?.long,
+      addres: doctor?.user?.address
     };
   }
   

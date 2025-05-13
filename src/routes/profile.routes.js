@@ -29,6 +29,11 @@ export async function profileRoutes(fastify) {
   // Route for common profile operations
   fastify.get('/', {
     onRequest: [fastify.authenticate],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       response: {
         200: {

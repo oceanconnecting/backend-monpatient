@@ -100,26 +100,38 @@ export async function doctorPatientRoutes(fastify) {
   });
 
   // Get doctor's patients
-  fastify.get("/patients", {
-    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
-    handler: async (request, reply) => {
-      try {
-        if (!request.user.doctor) {
-          reply.code(400).send({ error: "User is not a doctor" });
-          return;
-        }
-
-        const patients = await DoctorPatientService.getDoctorPatients(
-          request.user.doctor.id
-        );
-        return patients;
-      } catch (error) {
-        reply.code(400).send({ error: error.message });
+ fastify.get("/patients", {
+  onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+  
+  config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
+  handler: async (request, reply) => {
+    try {
+      if (!request.user.doctor) {
+        reply.code(400).send({ error: "User is not a doctor" });
+        return;
       }
-    },
-  });
+      
+      const patients = await DoctorPatientService.getDoctorPatients(
+        request.user.doctor.id
+      );
+      
+      return patients;
+    } catch (error) {
+      reply.code(400).send({ error: error.message });
+    }
+  },
+});
   fastify.get("/patients/:patientId", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       params: {
         type: "object",
@@ -157,6 +169,11 @@ export async function doctorPatientRoutes(fastify) {
   // Get patient's doctors
   fastify.get("/doctors", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         if (!request.user.patient) {
@@ -177,6 +194,11 @@ export async function doctorPatientRoutes(fastify) {
   // Get pending requests for doctor
   fastify.get("/requests/pending", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         if (!request.user.doctor) {
@@ -195,6 +217,11 @@ export async function doctorPatientRoutes(fastify) {
   });
   fastify.get("/requests", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         if (!request.user.doctor) {
@@ -213,6 +240,11 @@ export async function doctorPatientRoutes(fastify) {
   });
   fastify.get("/patients/order", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         if (!request?.user?.doctor) {
@@ -230,6 +262,12 @@ export async function doctorPatientRoutes(fastify) {
   })
   
   fastify.get("/medical-records", {
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     handler: async (request, reply) => {
       try {
         const patients = await DoctorPatientService.doctormedicalrecords(

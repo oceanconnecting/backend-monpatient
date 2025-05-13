@@ -113,6 +113,11 @@ export async function medicalRecordsRoutes(fastify) {
   // Get all medical records (Admin only)
   fastify.get('/', { 
     onRequest: [fastify.authenticate, checkRole(["ADMIN"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       querystring: {
         type: 'object',
@@ -133,6 +138,11 @@ export async function medicalRecordsRoutes(fastify) {
   });
   fastify.get('/patient', { 
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       querystring: {
         type: 'object',
@@ -157,7 +167,13 @@ export async function medicalRecordsRoutes(fastify) {
 
   // Get medical record by ID
   fastify.get('/:id', { 
-    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "ADMIN"])] 
+    onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "ADMIN"])] ,
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
+    
   }, async (request, reply) => {
     try {
       const record = await MedicalRecordService.findById(request.params.id);
@@ -173,6 +189,11 @@ export async function medicalRecordsRoutes(fastify) {
   // Get medical records for a specific patient
   fastify.get('/patient/:patientId', { 
     onRequest: [fastify.authenticate, checkRole(["PATIENT", "DOCTOR", "ADMIN"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: {
       querystring: {
         type: 'object',
@@ -197,6 +218,11 @@ export async function medicalRecordsRoutes(fastify) {
   // Search medical records
   fastify.get('/search', {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: medicalRecordSchemas.searchMedicalRecords
   }, async (request, reply) => {
     try {
@@ -211,6 +237,11 @@ export async function medicalRecordsRoutes(fastify) {
   // Get medical records by date range
   fastify.get('/date-range', { 
     onRequest: [fastify.authenticate, checkRole(["DOCTOR", "ADMIN"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
     schema: medicalRecordSchemas.dateRangeQuery
   }, async (request, reply) => {
     try {
@@ -278,7 +309,12 @@ export async function medicalRecordsRoutes(fastify) {
 
   // Count medical records (Admin only)
   fastify.get('/count', { 
-    onRequest: [fastify.authenticate, checkRole(["ADMIN"])]
+    onRequest: [fastify.authenticate, checkRole(["ADMIN"])],
+    config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
   }, async (request, reply) => {
     try {
       const count = await MedicalRecordService.count();
