@@ -216,7 +216,7 @@ export function registerAppointmentRoutes(fastify) {
   
     // Get appointments that need reminders
     fastify.get('/need-reminders', {
-      onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN', 'SYSTEM'])]
+      onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN'])]
     }, async (request, reply) => {
       try {
         const { hoursAhead } = request.query;

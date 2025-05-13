@@ -177,7 +177,7 @@ export class PatientService {
       medicalDiploma: doctor.medicalDiploma,
       lat: doctor?.user?.lat,
       log: doctor?.user?.long,
-      addres: doctor?.user?.address
+      address: doctor?.user?.address
     };
   }
   
