@@ -135,7 +135,7 @@ export async function authRoutes(fastify) {
         path: "/",
         httpOnly: true,
         secure: true, // ensure HTTPS in production
-        sameSite: "strict", // Adjust based on your needs
+        sameSite: "none", // Adjust based on your needs
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       });
         return { user, token };
