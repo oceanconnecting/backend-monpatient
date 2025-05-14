@@ -198,10 +198,6 @@ export const MedicalRecordService = {
   },
 
   /**
-   * Get medical records created by the authenticated doctor
-
-
-  /**
    * Update a medical record
 
    */

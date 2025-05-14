@@ -35,7 +35,7 @@ export async function notificationRoutes(fastify) {
     }
   }
   //Get all notifications
-  fastify.get('/', {
+  fastify.get('/',  {
     onRequest: [fastify.authenticate],
     preValidation: [checkRole(['PATIENT', 'NURSE', 'DOCTOR', 'PHARMACY', 'ADMIN'])],
     handler: async (request, reply) => {

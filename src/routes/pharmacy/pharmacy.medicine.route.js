@@ -1,7 +1,7 @@
 import { PharmacyMedicinesService } from "../../services/pharmacies/pharmacy.medicine.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
 
-export async function pharmacyMedicinesRoutes(fastify, options) {
+export async function pharmacyMedicinesRoutes(fastify) {
   // Get pharmacy's medicines with pagination and sorting
   fastify.get('/', {
     onRequest: [fastify.authenticate, checkRole('PHARMACY')],
