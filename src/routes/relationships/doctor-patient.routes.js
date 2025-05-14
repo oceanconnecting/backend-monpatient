@@ -100,7 +100,7 @@ export async function doctorPatientRoutes(fastify) {
   });
 
   // Get doctor's patients
- fastify.get("/patients", {
+  fastify.get("/patients", {
   onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
   
   config: {
@@ -124,7 +124,7 @@ export async function doctorPatientRoutes(fastify) {
       reply.code(400).send({ error: error.message });
     }
   },
-});
+  });
   fastify.get("/patients/:patientId", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
     config: {

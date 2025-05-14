@@ -2,7 +2,7 @@
 import { PharmacyService } from "../../services/pharmacies/pharmacies.service.js";
 import { checkRole } from "../../middleware/auth.middleware.js";
 
-export default async function pharmacyOrdersRoutes(fastify, options) {
+export default async function pharmacyOrdersRoutes(fastify) {
   // Shared handler for order status transitions
 
   // Transition from Pending → Processing
