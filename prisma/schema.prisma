@@ -211,7 +211,7 @@ model NurseServiceRequest {
   description String
   preferredDate DateTime
   urgency     String        //"Low", "Medium", "High"
-  location    String        // Patient's preferred location for service
+  location    String?       // Patient's preferred location for service
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   completedAt DateTime?
