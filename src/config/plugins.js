@@ -6,7 +6,7 @@ import multipart from "@fastify/multipart";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyHelmet from "@fastify/helmet";
 import googleOAuth2 from "../plugin/google-oauth.js";
-
+import fastifyCookie from "@fastify/cookie";
 export async function configurePlugins(fastify) {
   // Register CORS with environment-specific configuration
   await fastify.register(fastifyCors, {
@@ -37,7 +37,10 @@ export async function configurePlugins(fastify) {
 
   // WebSocket support
   await fastify.register(websocket);
-
+await fastify.register(fastifyCookie, {
+  secret: process.env.COOKIE_SECRET, // Use a secure secret for signing cookies
+  parseOptions: {}, // options for parsing cookies
+});
   // Rate limiting
   await fastify.register(fastifyRateLimit, {
     max: process.env.RATE_LIMIT_MAX || 100,
