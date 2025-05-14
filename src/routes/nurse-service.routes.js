@@ -6,6 +6,11 @@ export async function nurseServiceRoutes(fastify) {
   // Get nurse dashboard stats
   fastify.get('/dashboard-stats', {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    config: {
+      cache: {
+        expiresIn: 300000 // 5 minutes in milliseconds
+      }
+    },
     handler: async (request, reply) => {
       try {
         const stats = await NurseServiceService.getNurseDashboardStats(
