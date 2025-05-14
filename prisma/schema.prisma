@@ -105,7 +105,6 @@ model Patient {
   nurseServiceRequests NurseServiceRequest[] @relation("PatientNurseRequests")
   chatRooms     ChatRoom[]     @relation("PatientChats")
   scheduledTasks  Schedule[] 
-
   insuranceInfoId String? @unique  // Add this field for the relation
   insuranceInfo InsuranceInfo? @relation(fields: [insuranceInfoId], references: [id])
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]
