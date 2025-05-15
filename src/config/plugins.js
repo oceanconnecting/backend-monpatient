@@ -9,16 +9,15 @@ import googleOAuth2 from "../plugin/google-oauth.js";
 import fastifyCookie from "@fastify/cookie";
 export async function configurePlugins(fastify) {
   // Register CORS with environment-specific configuration
-  await fastify.register(fastifyCors, {
-    origin: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    exposedHeaders: ["Authorization"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
-
+await fastify.register(fastifyCors, {
+  origin: ["http://localhost:5173"], // Replace with your actual frontend domains
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"], // Added Cookie header
+  credentials: true,
+  exposedHeaders: ["Authorization", "Set-Cookie"], // Added Set-Cookie header
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+});
   // File upload handling
   await fastify.register(multipart, {
     limits: {
