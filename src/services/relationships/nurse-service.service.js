@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 
 export class NurseServiceService {
   // NEW METHOD: Get dashboard stats for a nurse
-static async getNurseDashboardStats(nurseId) {
+  static async getNurseDashboardStats(nurseId) {
   try {
     // Get total patients count (patients with ACCEPTED requests for this nurse)
     const totalPatientsCount = await prisma.patient.count({
@@ -113,7 +113,7 @@ static async getNurseDashboardStats(nurseId) {
     console.error('Error fetching nurse dashboard stats:', error);
     throw error;
   }
-}
+  }
 
   // UPDATED METHOD: Get available requests with pagination
   static async getAvailableRequests(nurseId, page = 1, limit = 10) {

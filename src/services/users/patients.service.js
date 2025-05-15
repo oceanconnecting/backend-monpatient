@@ -10,7 +10,8 @@ export class PatientService {
     
     const nurserPatientRequests = await prisma.nurseServiceRequest.findMany({
       where: {
-        patientId: id
+        patientId: id,
+        status:"ACCEPTED"
       },
       include: {
         nurse: {
