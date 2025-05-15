@@ -2,15 +2,49 @@ import { NurseServiceService } from "../services/relationships/nurse-service.ser
 import { checkRole } from "../middleware/auth.middleware.js";
 
 export async function nurseServiceRoutes(fastify) {
-  
+  // Common schema definitions
+  const paginationSchema = {
+    page: { type: 'integer', minimum: 1, default: 1 },
+    limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+  };
+
+  const cacheConfig = {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  };
+
+  const errorResponses = {
+    400: {
+      type: "object",
+      properties: {
+        error: { type: "string" }
+      }
+    },
+    401: {
+      type: "object",
+      properties: {
+        error: { type: "string" }
+      }
+    },
+    403: {
+      type: "object",
+      properties: {
+        error: { type: "string" }
+      }
+    },
+    500: {
+      type: "object",
+      properties: {
+        error: { type: "string" }
+      }
+    }
+  };
+
   // Get nurse dashboard stats
   fastify.get('/dashboard-stats', {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
+    config: cacheConfig,
     handler: async (request, reply) => {
       try {
         const stats = await NurseServiceService.getNurseDashboardStats(
@@ -23,8 +57,8 @@ export async function nurseServiceRoutes(fastify) {
     }
   });
 
-  // Patient creates a service request
-  const createVisitSchema = {
+  // Visit management routes
+  const visitSchema = {
     body: {
       type: 'object',
       required: ['patientId', 'notes'],
@@ -43,12 +77,13 @@ export async function nurseServiceRoutes(fastify) {
           notes: { type: 'string' },
           createdAt: { type: 'string', format: 'date-time' }
         }
-      }
+      },
+      ...errorResponses
     }
   };
 
   fastify.post('/create-visite', {
-    schema: createVisitSchema,
+    schema: visitSchema,
     preValidation: fastify.authenticate,
     handler: async (request, reply) => {
       try {
@@ -63,7 +98,6 @@ export async function nurseServiceRoutes(fastify) {
         }
         
         const visit = await NurseServiceService.createVisit(nurseId, patientId, notes);
-        
         return reply.status(201).send(visit);
       } catch (error) {
         console.error('Create visit error:', error);
@@ -75,15 +109,13 @@ export async function nurseServiceRoutes(fastify) {
     }
   });
 
-  // Get nurse visits with pagination
   fastify.get('/visite', {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     schema: {
       querystring: {
         type: 'object',
         properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
+          ...paginationSchema,
           patientId: { type: 'string' },
           visitId: { type: 'string' },
           dateFrom: { type: 'string', format: 'date' },
@@ -91,11 +123,7 @@ export async function nurseServiceRoutes(fastify) {
         }
       }
     },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
+    config: cacheConfig,
     handler: async (request, reply) => {
       try {
         const { page = 1, limit = 10, ...otherFilters } = request.query;
@@ -109,11 +137,11 @@ export async function nurseServiceRoutes(fastify) {
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
   fastify.put('/visite/:visitId', {
-    schema: createVisitSchema,
+    schema: visitSchema,
     preValidation: fastify.authenticate,
     handler: async (request, reply) => {
       try {
@@ -139,6 +167,7 @@ export async function nurseServiceRoutes(fastify) {
     }
   });
 
+  // Service request routes
   fastify.post("/request", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
@@ -158,8 +187,7 @@ export async function nurseServiceRoutes(fastify) {
           description: { type: "string" },
           preferredDate: { type: "string", format: "date-time" },
           urgency: { type: "string", enum: ["Low", "Medium", "High"] },
-       
-        },
+        }
       },
       response: {
         201: {
@@ -170,9 +198,10 @@ export async function nurseServiceRoutes(fastify) {
             patientId: { type: "string" },
             nurseId: { type: "string" },
             serviceType: { type: "string" },
-          },
+          }
         },
-      },
+        ...errorResponses
+      }
     },
     handler: async (request, reply) => {
       try {
@@ -200,42 +229,109 @@ export async function nurseServiceRoutes(fastify) {
           message: "An unexpected error occurred",
         });
       }
-    },
+    }
   });
 
-  // Nurse views available service requests with pagination
+  // Consolidated request routes with role and filter parameters
+  const getRequestsHandler = async (request, reply, role) => {
+    try {
+      const { page = 1, limit = 10, status = null } = request.query;
+      let requests;
+      
+      if (role === "NURSE") {
+        const nurseId = request.user.nurse.id;
+        
+        if (request.url.includes("/available")) {
+          requests = await NurseServiceService.getAvailableRequests(nurseId, page, limit);
+        } else {
+          requests = await NurseServiceService.getNurseRequests(nurseId, page, limit, status);
+        }
+      } else if (role === "PATIENT") {
+        requests = await NurseServiceService.getPatientRequests(
+          request.user.patient.id,
+          page,
+          limit
+        );
+      }
+      
+      return requests;
+    } catch (error) {
+      reply.code(400).send({ error: error.message });
+    }
+  };
+
+  // Nurse views available service requests
   fastify.get("/available", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     schema: {
       querystring: {
         type: 'object',
+        properties: paginationSchema
+      }
+    },
+    config: cacheConfig,
+    handler: async (request, reply) => getRequestsHandler(request, reply, "NURSE")
+  });
+
+  // Nurse views their service requests
+  fastify.get("/requests", {
+    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    schema: {
+      querystring: {
+        type: 'object',
         properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+          ...paginationSchema,
+          status: { type: 'string', enum: ['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] }
         }
       }
     },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
+    config: cacheConfig,
+    handler: async (request, reply) => getRequestsHandler(request, reply, "NURSE")
+  });
+
+  // Main route for nurse requests (consolidated with /requests)
+  fastify.get("/", {
+    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          ...paginationSchema,
+          status: { type: 'string', enum: ['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] }
+        }
       }
     },
+    config: cacheConfig,
     handler: async (request, reply) => {
       try {
-        const { page = 1, limit = 10 } = request.query;
-        const requests = await NurseServiceService.getAvailableRequests(
-          request.user.nurse.id,
+        const { page = 1, limit = 10, status = null } = request.query;
+        const requests = await NurseServiceService.getRequests(
+          request?.user?.nurse?.id,
           page,
-          limit
+          limit,
+          status
         );
         return requests;
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
-  // Nurse accepts a service request
+  // Patient views their service requests
+  fastify.get("/patient/requests", {
+    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: paginationSchema
+      }
+    },
+    config: cacheConfig,
+    handler: async (request, reply) => getRequestsHandler(request, reply, "PATIENT")
+  });
+
+  // Request management routes
   fastify.put("/accept/:requestId", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     schema: {
@@ -243,9 +339,9 @@ export async function nurseServiceRoutes(fastify) {
         type: "object",
         required: ["requestId"],
         properties: {
-          requestId: { type: "string" },
-        },
-      },
+          requestId: { type: "string" }
+        }
+      }
     },
     handler: async (request, reply) => {
       try {
@@ -257,10 +353,9 @@ export async function nurseServiceRoutes(fastify) {
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
-  // Nurse updates service status
   fastify.put("/status/:requestId", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     schema: {
@@ -268,8 +363,8 @@ export async function nurseServiceRoutes(fastify) {
         type: "object",
         required: ["requestId"],
         properties: {
-          requestId: { type: "string" },
-        },
+          requestId: { type: "string" }
+        }
       },
       body: {
         type: "object",
@@ -277,11 +372,11 @@ export async function nurseServiceRoutes(fastify) {
         properties: {
           status: {
             type: "string",
-            enum: ["IN_PROGRESS", "COMPLETED", "CANCELLED"],
+            enum: ["IN_PROGRESS", "COMPLETED", "CANCELLED"]
           },
-          notes: { type: "string" },
-        },
-      },
+          notes: { type: "string" }
+        }
+      }
     },
     handler: async (request, reply) => {
       try {
@@ -295,10 +390,9 @@ export async function nurseServiceRoutes(fastify) {
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
-  // Patient rates completed service
   fastify.put("/rate", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
@@ -327,89 +421,40 @@ export async function nurseServiceRoutes(fastify) {
     }
   });
 
-  // Patient views their service requests with pagination
-  fastify.get("/patient/requests", {
+  fastify.put("/cancel/:requestId", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     schema: {
-      querystring: {
-        type: 'object',
+      params: {
+        type: "object",
+        required: ["requestId"],
         properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+          requestId: { type: "string" }
         }
-      }
-    },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
       }
     },
     handler: async (request, reply) => {
       try {
-        const { page = 1, limit = 10 } = request.query;
-        const requests = await NurseServiceService.getPatientRequests(
-          request.user.patient.id,
-          page,
-          limit
+        const result = await NurseServiceService.cancelRequest(
+          request.params.requestId,
+          request.user.patient.id
         );
-        return requests;
+        return result;
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
-  // Nurse views their service requests with pagination and status filter
-  fastify.get("/requests", {
-    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
-          status: { type: 'string', enum: ['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] }
-        }
-      }
-    },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
-    handler: async (request, reply) => {
-      try {
-        const { page = 1, limit = 10, status = null } = request.query;
-        const requests = await NurseServiceService.getNurseRequests(
-          request.user.nurse.id,
-          page,
-          limit,
-          status
-        );
-        return requests;
-      } catch (error) {
-        reply.code(400).send({ error: error.message });
-      }
-    },
-  });
-
-  // Nurse views their patients with pagination
+  // Patient and nurse relationship routes
   fastify.get("/patients", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     schema: {
       querystring: {
         type: 'object',
-        properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
-        }
+        properties: paginationSchema
       }
     },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
+    config: cacheConfig,
     handler: async (request, reply) => {
       try {
         const { page = 1, limit = 10 } = request.query;
@@ -422,42 +467,12 @@ export async function nurseServiceRoutes(fastify) {
       } catch (error) {
         reply.code(400).send({ error: error.message });
       }
-    },
+    }
   });
 
-  // Patient cancels their service request
-  fastify.put("/cancel/:requestId", {
-    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
-    schema: {
-      params: {
-        type: "object",
-        required: ["requestId"],
-        properties: {
-          requestId: { type: "string" },
-        },
-      },
-    },
-    handler: async (request, reply) => {
-      try {
-        const result = await NurseServiceService.cancelRequest(
-          request.params.requestId,
-          request.user.patient.id
-        );
-        return result;
-      } catch (error) {
-        reply.code(400).send({ error: error.message });
-      }
-    },
-  });
-
-  // Nurse searches for a patient
   fastify.get("/patient/search", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
+    config: cacheConfig,
     schema: {
       querystring: {
         type: "object",
@@ -467,35 +482,23 @@ export async function nurseServiceRoutes(fastify) {
             description: "Patient name (first or last name)",
             minLength: 0,
             maxLength: 100,
-            pattern: "^[a-zA-Z -]*$",
+            pattern: "^[a-zA-Z -]*$"
           },
-          page: {
-            type: "integer",
-            minimum: 1,
-            default: 1,
-            description: "Page number for pagination",
-          },
-          limit: {
-            type: "integer",
-            minimum: 1,
-            maximum: 100,
-            default: 20,
-            description: "Number of records per page",
-          },
+          ...paginationSchema,
           sortBy: {
             type: "string",
             enum: ["name", "createdAt", "status"],
             default: "name",
-            description: "Field to sort by",
+            description: "Field to sort by"
           },
           sortOrder: {
             type: "string",
             enum: ["asc", "desc"],
             default: "asc",
-            description: "Sort order",
-          },
+            description: "Sort order"
+          }
         },
-        additionalProperties: false,
+        additionalProperties: false
       },
       response: {
         200: {
@@ -516,7 +519,7 @@ export async function nurseServiceRoutes(fastify) {
                   dateOfBirth: {
                     type: "string",
                     format: "date-time",
-                    nullable: true,
+                    nullable: true
                   },
                   bloodType: { type: "string", nullable: true },
                   allergies: { type: "string", nullable: true },
@@ -529,10 +532,10 @@ export async function nurseServiceRoutes(fastify) {
                   preferredDate: {
                     type: "string",
                     format: "date-time",
-                    nullable: true,
-                  },
-                },
-              },
+                    nullable: true
+                  }
+                }
+              }
             },
             pagination: {
               type: "object",
@@ -540,36 +543,13 @@ export async function nurseServiceRoutes(fastify) {
                 total: { type: "integer" },
                 page: { type: "integer" },
                 limit: { type: "integer" },
-                pages: { type: "integer" },
-              },
-            },
-          },
+                pages: { type: "integer" }
+              }
+            }
+          }
         },
-        400: {
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        401: {
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        403: {
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        500: {
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-      },
+        ...errorResponses
+      }
     },
     handler: async (request, reply) => {
       try {
@@ -578,7 +558,7 @@ export async function nurseServiceRoutes(fastify) {
           page = 1,
           limit = 20,
           sortBy = "name",
-          sortOrder = "asc",
+          sortOrder = "asc"
         } = request.query;
         const nurseId = request.user.nurse.id;
 
@@ -600,61 +580,33 @@ export async function nurseServiceRoutes(fastify) {
           reply.code(500).send({ error: "Internal server error" });
         }
       }
-    },
-  });
-
-  // Nurse views their requests with pagination
-  fastify.get("/", {
-    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          page: { type: 'integer', minimum: 1, default: 1 },
-          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
-          status: { type: 'string', enum: ['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] }
-        }
-      }
-    },
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
-    handler: async (request, reply) => {
-      try {
-        const { page = 1, limit = 10, status = null } = request.query;
-        const requests = await NurseServiceService.getRequests(
-          request?.user?.nurse?.id,
-          page,
-          limit,
-          status
-        );
-        return requests;
-      } catch (error) {
-        reply.code(400).send({ error: error.message });
-      }
-    },
+    }
   });
 
   fastify.get("/patient/:patientId", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
-    config: {
-      cache: {
-        expiresIn: 300000 // 5 minutes in milliseconds
-      }
-    },
+    config: cacheConfig,
     handler: async (request) => {
       const requests = await NurseServiceService.nursePatientsbyPatientId(
         request.params.patientId,
         request?.user?.nurse?.id
       );
       return requests;
-    },
+    }
   });
 
-  fastify.delete("/:requestId",
-    async (request, reply) => {
+  fastify.delete("/:requestId", {
+    onRequest: [fastify.authenticate, checkRole(["NURSE"])],
+    schema: {
+      params: {
+        type: "object",
+        required: ["requestId"],
+        properties: {
+          requestId: { type: "string" }
+        }
+      }
+    },
+    handler: async (request, reply) => {
       try {
         const { requestId } = request.params;
         const nurseId = request?.user?.nurse?.id;
@@ -669,5 +621,5 @@ export async function nurseServiceRoutes(fastify) {
         reply.code(400).send({ error: error.message });
       }
     }
-  );
+  });
 }
