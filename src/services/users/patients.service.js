@@ -4,63 +4,7 @@ const prisma = new PrismaClient();
 
 export class PatientService {
   // Get all doctors
-  static async getDoctorsOfPatient(id) {
-    console.log(`Getting doctors for patient ID: ${id}`);
-    
-    const doctorPatientRequests = await prisma.doctorPatientRequest.findMany({
-      where: {
-        patientId: id
-      },
-      include: {
-        doctor: {
-          include: {
-            user: {
-              select: {
-                firstname: true,
-                lastname: true,
-                email: true
-              }
-            }
-          }
-        },
-        patient: {
-          include: {
-            user: {
-              select: {
-                firstname: true,
-                lastname: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    });
-    
-    console.log(`Found ${doctorPatientRequests.length} doctor-patient relationships`);
-    
-    // Map and concatenate data
-    const formattedResults = doctorPatientRequests.map(relation => {
-      console.log(`Processing relation ID: ${relation.id}`);
-      
-      const doctorFullName = `${relation.doctor.user.firstname} ${relation.doctor.user.lastname}`;
-      
-      return {
-        relationId: relation.id,
-        status: relation.status,
-        doctorId: relation.doctorId,
-        patientId: relation.patientId,
-        doctor: {
-          ...relation.doctor,
-          fullName: doctorFullName,
-          user: relation.doctor.user
-        }
-      };
-    });
-    
-    console.log(`Returning ${formattedResults.length} formatted results`);
-    return formattedResults;
-  }
+  
   static async getnurseOfpatient(id) {
     console.log(`Getting doctors for patient ID: ${id}`);
     

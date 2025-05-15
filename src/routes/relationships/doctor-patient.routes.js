@@ -102,13 +102,22 @@ export async function doctorPatientRoutes(fastify) {
   // Get doctor's patients
   fastify.get("/patients", {
   onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
-  
+   schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
   config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
   handler: async (request, reply) => {
+    const { page = 1, limit = 10 } = request.query;
     try {
       if (!request.user.doctor) {
         reply.code(400).send({ error: "User is not a doctor" });
@@ -116,7 +125,9 @@ export async function doctorPatientRoutes(fastify) {
       }
       
       const patients = await DoctorPatientService.getDoctorPatients(
-        request.user.doctor.id
+        request.user.doctor.id,
+         page,
+          limit
       );
       
       return patients;
@@ -169,12 +180,22 @@ export async function doctorPatientRoutes(fastify) {
   // Get patient's doctors
   fastify.get("/doctors", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
+       schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
     config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
     handler: async (request, reply) => {
+      const { page = 1, limit = 10 } = request.query;
       try {
         if (!request.user.patient) {
           reply.code(400).send({ error: "User is not a patient" });
@@ -182,7 +203,9 @@ export async function doctorPatientRoutes(fastify) {
         }
 
         const doctors = await DoctorPatientService.getPatientDoctors(
-          request.user.patient.id
+          request.user.patient.id,
+          page,
+          limit
         );
         return doctors;
       } catch (error) {
@@ -194,12 +217,22 @@ export async function doctorPatientRoutes(fastify) {
   // Get pending requests for doctor
   fastify.get("/requests/pending", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+       schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
     config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
     handler: async (request, reply) => {
+      const { page = 1, limit = 10 } = request.query;
       try {
         if (!request.user.doctor) {
           reply.code(400).send({ error: "User is not a doctor" });
@@ -207,7 +240,9 @@ export async function doctorPatientRoutes(fastify) {
         }
 
         const pendingRequests = await DoctorPatientService.getPendingRequests(
-          request.user.doctor.id
+          request.user.doctor.id,
+          page,
+          limit
         );
         return pendingRequests;
       } catch (error) {
@@ -217,12 +252,22 @@ export async function doctorPatientRoutes(fastify) {
   });
   fastify.get("/requests", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+      schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
     config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
     handler: async (request, reply) => {
+      const { page = 1, limit = 10 } = request.query;
       try {
         if (!request.user.doctor) {
           reply.code(400).send({ error: "User is not a doctor" });
@@ -230,7 +275,9 @@ export async function doctorPatientRoutes(fastify) {
         }
 
         const pendingRequests = await DoctorPatientService.getAllRequests(
-          request.user.doctor.id
+          request.user.doctor.id,
+          page,
+          limit
         );
         return pendingRequests;
       } catch (error) {
@@ -240,19 +287,31 @@ export async function doctorPatientRoutes(fastify) {
   });
   fastify.get("/patients/order", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+       schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
     config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
     handler: async (request, reply) => {
+      const { page = 1, limit = 10 } = request.query;
       try {
         if (!request?.user?.doctor) {
           reply.code(400).send({ error: "User is not a doctor" });
           return;
         }
         const patients = await DoctorPatientService.doctorPatientbyorder(
-          request?.user?.doctor?.id
+          request?.user?.doctor?.id,
+          page,
+          limit
         );
         return patients;
       } catch (error) {
@@ -263,15 +322,27 @@ export async function doctorPatientRoutes(fastify) {
   
   fastify.get("/medical-records", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+       schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
     config: {
     cache: {
       expiresIn: 300000 // 5 minutes in milliseconds
     }
   },
     handler: async (request, reply) => {
+      const { page = 1, limit = 10 } = request.query;
       try {
         const patients = await DoctorPatientService.doctormedicalrecords(
-          request?.user?.doctor?.id
+          request?.user?.doctor?.id,
+          page,
+          limit
         )
         return patients;
       } catch (error) {

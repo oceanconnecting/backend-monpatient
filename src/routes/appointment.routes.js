@@ -229,11 +229,28 @@ export function registerAppointmentRoutes(fastify) {
       }
     });
     fastify.get('/doctor', {
+       schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 }
+        }
+      }
+    },
+      config: {
+    cache: {
+      expiresIn: 300000 // 5 minutes in milliseconds
+    }
+  },
       onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN'])]
+      
     }, async (request, reply) => {
       try {
         const doctorId  = request.user.doctor.id;
-        const appointments = await appointmentService.doctorGetAppointment(doctorId);
+         const { page = 1, limit = 10 } = request.query;
+        const appointments = await AppointmentService.doctorGetAppointment(doctorId, page,
+          limit);
         return reply.send(appointments);
       } catch (error) {
         return reply.code(500).send({ error: error.message });

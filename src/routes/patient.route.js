@@ -2,22 +2,6 @@ import { checkRole } from "../middleware/auth.middleware.js";
 import { PatientService } from "../services/users/patients.service.js";
 
 export async function patientRoutes(fastify) {
-  fastify.get("/doctors", {
-    onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
-    config: {
-    cache: {
-      expiresIn: 300000 // 5 minutes in milliseconds
-    }
-  },
-    handler: async (request, reply) => {
-      try {
-        const doctors = await PatientService.getDoctorsOfPatient(request.user.patient.id);
-        reply.code(200).send(doctors);
-      } catch (error) {
-        reply.code(500).send(error);
-      }
-    },
-  });
   fastify.get("/nurses", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],
     config: {

@@ -1,5 +1,6 @@
 import { AuthService } from "../services/auth/auth.service.js";
 import { PrismaClient } from "@prisma/client";
+
 import sget from "simple-get";
 const prisma = new PrismaClient();
 
@@ -134,6 +135,7 @@ export async function authRoutes(fastify) {
        reply.setCookie("token", token, {
         path: "/",
         httpOnly: true,
+        Domain: "localhost", // Set your cookie domain
         secure: true, // ensure HTTPS in production
         sameSite: "none", // Adjust based on your needs
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days

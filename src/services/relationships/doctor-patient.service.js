@@ -234,8 +234,23 @@ export class DoctorPatientService {
     return updatedRequest
   }
 
-  static async getPatientDoctors(patientId) {
-    return prisma.doctorPatient.findMany({
+  // UPDATED METHOD: Get patient doctors with pagination
+  static async getPatientDoctors(patientId, page = 1, limit = 10) {
+    // Calculate pagination values
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Get total count for pagination
+    const totalCount = await prisma.doctorPatient.count({
+      where: {
+        patientId: patientId,
+        active: true
+      }
+    });
+
+    // Get paginated data
+    const doctorPatients = await prisma.doctorPatient.findMany({
       where: {
         patientId: patientId,
         active: true
@@ -245,41 +260,124 @@ export class DoctorPatientService {
           include: {
             user: {
               select: {
-                firstname:true,
-                lastname:true,
-                telephoneNumber:true,
+                firstname: true,
+                lastname: true,
+                telephoneNumber: true,
                 email: true,
-                createdAt: true
+                createdAt: true,
+                profilePhoto: true
               }
             }
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip,
+      take: limitInt
+    });
+
+    // Format the doctor information
+    const formattedDoctors = doctorPatients.map(dp => ({
+      id: dp.doctor.id,
+      userId: dp.doctor.userId,
+      name: `${dp.doctor.user.firstname} ${dp.doctor.user.lastname}`,
+      email: dp.doctor.user.email,
+      telephoneNumber: dp.doctor.user.telephoneNumber,
+      profilePhoto: dp.doctor.user.profilePhoto,
+      specialization: dp.doctor.specialization,
+      relationshipId: dp.id,
+      startDate: dp.startDate,
+      active: dp.active
+    }));
+
+    return {
+      data: formattedDoctors,
+      pagination: {
+        total: totalCount,
+        page: pageInt,
+        limit: limitInt,
+        pages: Math.ceil(totalCount / limitInt)
       }
-    })
+    };
   }
 
-  static async getDoctorPatients(doctorId) {
-    return prisma.doctorPatient.findMany({
+  // UPDATED METHOD: Get doctor patients with pagination
+  static async getDoctorPatients(doctorId, page = 1, limit = 10) {
+    // Calculate pagination values
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Get total count for pagination
+    const totalCount = await prisma.doctorPatient.count({
       where: {
-        doctorId: doctorId
+        doctorId: doctorId,
+        active: true
+      }
+    });
+
+    // Get paginated data
+    const doctorPatients = await prisma.doctorPatient.findMany({
+      where: {
+        doctorId: doctorId,
+        active: true
       },
       include: {
         patient: {
           include: {
             user: {
               select: {
-                firstname:true,
-                lastname:true,
-                telephoneNumber:true,
+                firstname: true,
+                lastname: true,
+                telephoneNumber: true,
                 email: true,
-                createdAt: true
+                createdAt: true,
+                profilePhoto: true,
+                dateOfBirth: true,
+                gender: true
               }
             }
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip,
+      take: limitInt
+    });
+
+    // Format the patient information
+    const formattedPatients = doctorPatients.map(dp => ({
+      id: dp.patient.id,
+      userId: dp.patient.userId,
+      name: `${dp.patient.user.firstname} ${dp.patient.user.lastname}`,
+      email: dp.patient.user.email,
+      telephoneNumber: dp.patient.user.telephoneNumber,
+      profilePhoto: dp.patient.user.profilePhoto,
+      dateOfBirth: dp.patient.user.dateOfBirth,
+      gender: dp.patient.user.gender,
+      bloodType: dp.patient.bloodType,
+      allergies: dp.patient.allergies,
+      chronicDiseases: dp.patient.chronicDiseases,
+      relationshipId: dp.id,
+      startDate: dp.startDate,
+      active: dp.active
+    }));
+
+    return {
+      data: formattedPatients,
+      pagination: {
+        total: totalCount,
+        page: pageInt,
+        limit: limitInt,
+        pages: Math.ceil(totalCount / limitInt)
       }
-    })
+    };
   }
+
   static async getDoctorPatientById(doctorId, patientId) {
     const result = await prisma.doctorPatient.findFirst({
       where: {
@@ -296,7 +394,7 @@ export class DoctorPatientService {
                 telephoneNumber: true,
                 email: true,
                 createdAt: true,
-                 lat: true,
+                lat: true,
                 long: true,
                 address: true
               }
@@ -309,7 +407,7 @@ export class DoctorPatientService {
               select: {
                 firstname: true,
                 lastname: true,
-                 lat: true,
+                lat: true,
                 long: true,
                 address: true
               }
@@ -366,24 +464,31 @@ export class DoctorPatientService {
         
         // Store the formatted prescription strings
         result.doctor.prescriptionSummaries = formattedPrescriptions.join(' | ');
-        
-        // Count active prescriptions if needed
-        // Assuming you have an endDate field (add it to the select above if needed)
-        // const now = new Date();
-        // result.doctor.activePrescriptionCount = result.doctor.prescriptions.filter(
-        //   p => !p.endDate || new Date(p.endDate) > now
-        // ).length;
       } else {
         result.doctor.prescriptionSummaries = "";
-        // result.doctor.activePrescriptionCount = 0;
       }
     }
     
     return result;
   }
 
-  static async getPendingRequests(doctorId) {
-    return prisma.doctorPatientRequest.findMany({
+  // UPDATED METHOD: Get pending requests with pagination
+  static async getPendingRequests(doctorId, page = 1, limit = 10) {
+    // Calculate pagination values
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Get total count for pagination
+    const totalCount = await prisma.doctorPatientRequest.count({
+      where: {
+        doctorId: doctorId,
+        status: 'PENDING'
+      }
+    });
+
+    // Get paginated data
+    const requests = await prisma.doctorPatientRequest.findMany({
       where: {
         doctorId: doctorId,
         status: 'PENDING'
@@ -393,7 +498,12 @@ export class DoctorPatientService {
           include: {
             user: {
               select: {
-                email: true
+                firstname: true,
+                lastname: true,
+                email: true,
+                profilePhoto: true,
+                gender: true,
+                dateOfBirth: true
               }
             },
             medicalRecord: true
@@ -402,22 +512,72 @@ export class DoctorPatientService {
       },
       orderBy: {
         createdAt: 'desc'
-      }
-    })
-  }
-  static async getAllRequests(doctorId) {
-    return prisma.doctorPatientRequest.findMany({
-      where: {
-        doctorId: doctorId
       },
+      skip,
+      take: limitInt
+    });
+
+    // Format requests
+    const formattedRequests = requests.map(request => ({
+      id: request.id,
+      patientId: request.patientId,
+      doctorId: request.doctorId,
+      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+      email: request.patient.user.email,
+      profilePhoto: request.patient.user.profilePhoto,
+      gender: request.patient.user.gender,
+      dateOfBirth: request.patient.user.dateOfBirth,
+      status: request.status,
+      message: request.message,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt
+    }));
+
+    return {
+      data: formattedRequests,
+      pagination: {
+        total: totalCount,
+        page: pageInt,
+        limit: limitInt,
+        pages: Math.ceil(totalCount / limitInt)
+      }
+    };
+  }
+
+  // UPDATED METHOD: Get all requests with pagination
+  static async getAllRequests(doctorId, page = 1, limit = 10, status = null) {
+    // Calculate pagination values
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Build where clause
+    const whereClause = {
+      doctorId: doctorId
+    };
+
+    // Add status filter if provided
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.doctorPatientRequest.count({
+      where: whereClause
+    });
+
+    // Get paginated data
+    const requests = await prisma.doctorPatientRequest.findMany({
+      where: whereClause,
       include: {
         patient: {
           include: {
             user: {
               select: {
-                email: true,
                 firstname: true,
-                lastname: true
+                lastname: true,
+                email: true,
+                profilePhoto: true
               }
             },
             medicalRecord: true
@@ -426,8 +586,34 @@ export class DoctorPatientService {
       },
       orderBy: {
         createdAt: 'desc'
+      },
+      skip,
+      take: limitInt
+    });
+
+    // Format requests
+    const formattedRequests = requests.map(request => ({
+      id: request.id,
+      patientId: request.patientId,
+      doctorId: request.doctorId,
+      name: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+      email: request.patient.user.email,
+      profilePhoto: request.patient.user.profilePhoto,
+      status: request.status,
+      message: request.message,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt
+    }));
+
+    return {
+      data: formattedRequests,
+      pagination: {
+        total: totalCount,
+        page: pageInt,
+        limit: limitInt,
+        pages: Math.ceil(totalCount / limitInt)
       }
-    })
+    };
   }
 
   static async endDoctorPatientRelationship(patientId, doctorId) {
@@ -444,38 +630,90 @@ export class DoctorPatientService {
       }
     })
   }
-  static async doctorPatientbyorder(doctorId){
-    const doctor =await prisma.doctorPatient.findMany({
+
+  // UPDATED METHOD: Get doctor patients by order with pagination  
+  static async doctorPatientbyorder(doctorId, page = 1, limit = 10) {
+    // Calculate pagination values
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    // Get total count for pagination
+    const totalCount = await prisma.doctorPatient.count({
+      where: {
+        doctorId: doctorId,
+        active: true
+      }
+    });
+
+    // Get paginated data
+    const doctorPatients = await prisma.doctorPatient.findMany({
       where: {
         doctorId: doctorId,
         active: true
       },
-      orderBy:{createdAt:"asc"},
+      orderBy: {
+        createdAt: "asc"
+      },
       include: {
         patient: {
           include: {
             user: {
               select: {
-                firstname:true,
-                lastname:true,
+                firstname: true,
+                lastname: true,
                 email: true,
+                profilePhoto: true
               }
-              
-            },
-          },
-          
-        },
+            }
+          }
+        }
       },
-    }
-    )
-    return doctor
+      skip,
+      take: limitInt
+    });
+
+    // Format doctor patients
+    const formattedDoctorPatients = doctorPatients.map(dp => ({
+      id: dp.id,
+      patientId: dp.patientId,
+      doctorId: dp.doctorId,
+      name: `${dp.patient.user.firstname} ${dp.patient.user.lastname}`,
+      email: dp.patient.user.email,
+      profilePhoto: dp.patient.user.profilePhoto,
+      startDate: dp.startDate,
+      createdAt: dp.createdAt,
+      active: dp.active
+    }));
+
+    return {
+      data: formattedDoctorPatients,
+      pagination: {
+        total: totalCount,
+        page: pageInt,
+        limit: limitInt,
+        pages: Math.ceil(totalCount / limitInt)
+      }
+    };
   }
-  static async doctormedicalrecords(doctorId){
+
+  // UPDATED METHOD: Get doctor medical records with pagination
+  static async doctormedicalrecords(doctorId, page = 1, limit = 10) {
     try {
+      // Calculate pagination values
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+      const skip = (pageInt - 1) * limitInt;
+
+      // Get total count for pagination
+      const totalCount = await prisma.medicalRecord.count({
+        where: { doctorId }
+      });
+
+      // Get paginated data
       const medicalRecords = await prisma.medicalRecord.findMany({
         where: { doctorId },
-       
-        orderBy:{ recordDate: 'desc' },
+        orderBy: { recordDate: 'desc' },
         include: {
           patient: {
             include: {
@@ -484,16 +722,270 @@ export class DoctorPatientService {
                   firstname: true,
                   lastname: true,
                   email: true,
+                  profilePhoto: true
+                }
+              }
+            }
+          }
+        },
+        skip,
+        take: limitInt
+      });
+
+      // Format medical records
+      const formattedRecords = medicalRecords.map(record => ({
+        id: record.id,
+        patientId: record.patientId,
+        doctorId: record.doctorId,
+        patientName: `${record.patient.user.firstname} ${record.patient.user.lastname}`,
+        email: record.patient.user.email,
+        profilePhoto: record.patient.user.profilePhoto,
+        diagnosis: record.diagnosis,
+        treatment: record.treatment,
+        recordDate: record.recordDate,
+        notes: record.notes,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt
+      }));
+
+      return {
+        data: formattedRecords,
+        pagination: {
+          total: totalCount,
+          page: pageInt,
+          limit: limitInt,
+          pages: Math.ceil(totalCount / limitInt)
+        }
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
+    }
+  }
+
+  // NEW METHOD: Get doctor dashboard stats
+  static async getDoctorDashboardStats(doctorId) {
+    try {
+      // Get total patients count (patients with active relationship with this doctor)
+      const totalPatientsCount = await prisma.patient.count({
+        where: {
+          doctorPatients: {
+            some: {
+              doctorId: doctorId,
+              active: true
+            }
+          }
+        }
+      });
+
+      // Get pending requests count
+      const pendingRequestsCount = await prisma.doctorPatientRequest.count({
+        where: {
+          doctorId: doctorId,
+          status: 'PENDING'
+        }
+      });
+
+      // Get total medical records created by this doctor
+      const medicalRecordsCount = await prisma.medicalRecord.count({
+        where: {
+          doctorId: doctorId
+        }
+      });
+
+      // Get most recent patient
+      const mostRecentPatient = await prisma.doctorPatient.findFirst({
+        where: {
+          doctorId: doctorId,
+          active: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                  profilePhoto: true
                 }
               }
             }
           }
         }
       });
-      return medicalRecords;
+
+      // Format most recent patient data
+      const formattedRecentPatient = mostRecentPatient ? {
+        id: mostRecentPatient.patient.id,
+        name: `${mostRecentPatient.patient.user.firstname} ${mostRecentPatient.patient.user.lastname}`,
+        email: mostRecentPatient.patient.user.email,
+        profilePhoto: mostRecentPatient.patient.user.profilePhoto,
+        startDate: mostRecentPatient.startDate
+      } : null;
+
+      // Get recent requests (last 5)
+      const recentRequests = await prisma.doctorPatientRequest.findMany({
+        where: {
+          doctorId: doctorId
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 5,
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Format recent requests
+      const formattedRecentRequests = recentRequests.map(request => ({
+        id: request.id,
+        patientId: request.patientId,
+        patientName: `${request.patient.user.firstname} ${request.patient.user.lastname}`,
+        status: request.status,
+        createdAt: request.createdAt
+      }));
+
+      return {
+        totalPatients: totalPatientsCount,
+        pendingRequests: pendingRequestsCount,
+        medicalRecordsCount: medicalRecordsCount,
+        mostRecentPatient: formattedRecentPatient,
+        recentRequests: formattedRecentRequests
+      };
     } catch (error) {
-      throw new Error(`Failed to fetch doctor's medical records: ${error.message}`);
+      console.error('Error fetching doctor dashboard stats:', error);
+      throw error;
     }
   }
 
+  // NEW METHOD: Search doctor patients
+  static async searchPatients(doctorId, name = '', page = 1, limit = 10, sortBy = 'name', sortOrder = 'asc') {
+    // Validate inputs
+    if (!doctorId) {
+      throw new Error('Doctor ID is required');
+    }
+
+    // Convert page and limit to integers
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const skip = (pageInt - 1) * limitInt;
+
+    try {
+      // Build the where clause for the query
+      const whereClause = {
+        doctorId: doctorId,
+        active: true,
+      };
+
+      // Add name search condition if provided
+      if (name && name.trim() !== '') {
+        whereClause.patient = {
+          user: {
+            OR: [
+              { firstname: { contains: name, mode: 'insensitive' } },
+              { lastname: { contains: name, mode: 'insensitive' } },
+              // Handle multi-word search
+              ...name.split(' ').filter(part => part.trim() !== '').map(part => ({
+                OR: [
+                  { firstname: { contains: part, mode: 'insensitive' } },
+                  { lastname: { contains: part, mode: 'insensitive' } }
+                ]
+              }))
+            ]
+          }
+        };
+      }
+
+      // Determine the orderBy configuration
+      const orderBy = {};
+      if (sortBy === 'name') {
+        orderBy.patient = {
+          user: {
+            lastname: sortOrder
+          }
+        };
+      } else if (sortBy === 'createdAt') {
+        orderBy.createdAt = sortOrder;
+      } else if (sortBy === 'startDate') {
+        orderBy.startDate = sortOrder;
+      }
+
+      // Count total records for pagination
+      const totalCount = await prisma.doctorPatient.count({
+        where: whereClause
+      });
+
+      // Execute query with pagination
+      const doctorPatients = await prisma.doctorPatient.findMany({
+        where: whereClause,
+        include: {
+          patient: {
+            include: {
+              user: {
+                select: {
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                  telephoneNumber: true,
+                  gender: true,
+                  profilePhoto: true,
+                  dateOfBirth: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: orderBy || { createdAt: 'desc' },
+        skip: skip,
+        take: limitInt
+      });
+
+      // Format the response data
+      const patients = doctorPatients.map((dp) => ({
+        id: dp.patient.id,
+        userId: dp.patient.userId,
+        name: `${dp.patient.user.firstname} ${dp.patient.user.lastname}`,
+        email: dp.patient.user.email,
+        gender: dp.patient.user.gender,
+        profilePhoto: dp.patient.user.profilePhoto,
+        telephoneNumber: dp.patient.user.telephoneNumber,
+        dateOfBirth: dp.patient.user.dateOfBirth,
+        bloodType: dp.patient.bloodType,
+        allergies: dp.patient.allergies,
+        chronicDiseases: dp.patient.chronicDiseases,
+        role: 'PATIENT',
+        relationshipId: dp.id,
+        startDate: dp.startDate,
+        active: dp.active,
+        createdAt: dp.createdAt
+      }));
+
+      // Return data with pagination info
+      return {
+        data: patients,
+        pagination: {
+          total: totalCount,
+          page: pageInt,
+          limit: limitInt,
+          pages: Math.ceil(totalCount / limitInt)
+        }
+      };
+    } catch (error) {
+      console.error('Search patients error:', error);
+      throw error;
+    }
+  }
 }

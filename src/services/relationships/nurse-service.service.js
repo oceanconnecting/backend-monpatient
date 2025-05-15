@@ -1060,7 +1060,4 @@ static async getNurseDashboardStats(nurseId) {
       throw error;
     }
   }
-  
-
- 
 }

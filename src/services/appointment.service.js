@@ -128,34 +128,68 @@ export class AppointmentService {
     }
   }
   // doctorGetAppointment
- async doctorGetAppointment(doctorId) {
-  try {
-    const appointment = await prisma.appointment.findMany({
-      where: {
-        doctorId: doctorId,
-      },
-      include: {
-        
-        patient: {
-          include: {
-            user: {
-              select:{
-                firstname: true,
-                lastname: true,
-                email: true,
-              }
-            },
+static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
+  // Calculate pagination values
+  const pageInt = parseInt(page);
+  const limitInt = parseInt(limit);
+  const skip = (pageInt - 1) * limitInt;
+
+  // Get total count for pagination
+  const totalCount = await prisma.appointment.count({
+    where: {
+      doctorId: doctorId,
+    }
+  });
+
+  // Get paginated data
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      doctorId: doctorId,
+    },
+    include: {
+      patient: {
+        include: {
+          user: {
+            select: {
+              firstname: true,
+              lastname: true,
+              email: true,
+            }
           },
         },
-        medicalRecord:true
-      }
-    });
-    return appointment;
-  } catch (error) {
-    console.error(`Error getting doctor appointment with ID ${doctorId}:`, error);
-    throw new Error("Failed to get doctor appointment");
-  }
- }
+      },
+      medicalRecord: true
+    },
+    orderBy: {
+      date: 'desc'
+    },
+    skip,
+    take: limitInt
+  });
+
+  // Format the appointment information
+  const formattedAppointments = appointments.map(appointment => ({
+    id: appointment.id,
+    patientId: appointment.patientId,
+    patientName: `${appointment.patient.user.firstname} ${appointment.patient.user.lastname}`,
+    patientEmail: appointment.patient.user.email,
+    appointmentDate: appointment.appointmentDate,
+    status: appointment.status,
+    notes: appointment.notes,
+    medicalRecordId: appointment.medicalRecordId,
+    medicalRecord: appointment.medicalRecord
+  }));
+
+  return {
+    data: formattedAppointments,
+    pagination: {
+      total: totalCount,
+      page: pageInt,
+      limit: limitInt,
+      pages: Math.ceil(totalCount / limitInt)
+    }
+  };
+}
   /**
    * Delete an appointment permanently
    */
