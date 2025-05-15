@@ -243,7 +243,7 @@ static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
   /**
    * Get upcoming appointments that need reminders
    */
-  async getUpcomingAppointmentsNeedingReminders(hoursAhead = 24) {
+  async getUpcomingAppointmentsNeedingReminders(hoursAhead = 24) {    
     try {
       const now = new Date();
       const futureDate = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);

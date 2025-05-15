@@ -579,57 +579,64 @@ static async getNurseDashboardStats(nurseId) {
 
   // Rest of original methods remain unchanged
   // patient create service request
-  static async createServiceRequest(patientId, requestData, reply) {
-    try {
-      // First check if both patient and nurse exist
-      const patient = await prisma.patient.findUnique({
-        where: { id: patientId }
+ static async createServiceRequest(patientId, requestData, reply) {
+  try {
+    // First check if both patient and nurse exist
+    const nurse = await prisma.nurse.findUnique({
+      where: { id: requestData.nurseId }
+    });
+    
+    if (!nurse) {
+      return reply.status(404).send({
+        error: 'Not Found',
+        message: 'Nurse not found'
       });
-      
-      if (!patient) {
-        return reply.status(404).send({
-          error: 'Not Found',
-          message: 'Patient not found'
-        });
-      }
-      
-      const nurse = await prisma.nurse.findUnique({
-        where: { id: requestData.nurseId }
-      });
-      
-      if (!nurse) {
-        return reply.status(404).send({
-          error: 'Not Found',
-          message: 'Nurse not found'
-        });
-      }  
-      return await prisma.nurseServiceRequest.create({
-        data: {
-          patientId,
-          nurseId: requestData.nurseId,
-          serviceType: requestData.serviceType,
-          description: requestData.description,
-          preferredDate: new Date(requestData.preferredDate),
-          urgency: requestData.urgency,
-        
-        },
-        include: {
-          patient: true,
-          nurse: true
-        }
-      });
-    } catch (error) {
-      // Add more specific error handling
-      if (error.code === 'P2003' && error.meta?.field_name?.includes('nurseId')) {
-        return reply.status(400).send({
-          error: 'Invalid Reference',
-          message: 'The specified nurse does not exist'
-        });
-      }
-      console.error(error);
-      throw error;
     }
+    
+    // Check if there's already an active request (REQUESTED or ACCEPTED)
+    const existingRequest = await prisma.nurseServiceRequest.findFirst({
+      where: {
+        patientId,
+        status: {
+          in: ['REQUESTED', 'ACCEPTED']
+        }
+      }
+    });
+    
+    if (existingRequest) {
+      return reply.status(400).send({
+        error: 'Duplicate Request',
+        message: 'Patient already has an active service request'
+      });
+    }
+    
+    return await prisma.nurseServiceRequest.create({
+      data: {
+        patientId,
+        nurseId: requestData.nurseId,
+        serviceType: requestData.serviceType,
+        description: requestData.description,
+        preferredDate: new Date(requestData.preferredDate),
+        urgency: requestData.urgency,
+        status: 'REQUESTED' // Make sure status is set explicitly
+      },
+      include: {
+        patient: true,
+        nurse: true
+      }
+    });
+  } catch (error) {
+    // Add more specific error handling
+    if (error.code === 'P2003' && error.meta?.field_name?.includes('nurseId')) {
+      return reply.status(400).send({
+        error: 'Invalid Reference',
+        message: 'The specified nurse does not exist'
+      });
+    }
+    console.error(error);
+    throw error;
   }
+}
 
   // nurse acceptRequest
   static async acceptRequest(requestId, nurseId) {
