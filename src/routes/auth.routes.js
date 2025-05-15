@@ -135,9 +135,9 @@ export async function authRoutes(fastify) {
        reply.setCookie("token", token, {
         path: "/",
         httpOnly: true,
-        Domain: "localhost", // Set your cookie domain
-        secure: true, // ensure HTTPS in production
-        sameSite: "none", // Adjust based on your needs
+      // Set your cookie domain
+        secure: false, // ensure HTTPS in production
+        SameSite: "none", // Adjust based on your needs
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       });
         return { user, token };
