@@ -9,7 +9,6 @@ export class PatientProfileService extends BaseProfileService {
       where: { userId },
       select: {
         emergencyContactPhone: true,
-        preferredPharmacy:true,
         allergies: true,
         insuranceInfo:{
           select:{
