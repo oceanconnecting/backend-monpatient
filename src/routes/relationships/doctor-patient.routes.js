@@ -46,7 +46,20 @@ export async function doctorPatientRoutes(fastify) {
       }
     };
   };
-
+  fastify.get('/dashboard-stats', {
+    onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],
+    config: cacheConfig,
+    handler: async (request, reply) => {
+      try {
+        const stats = await DoctorPatientService.getDoctorDashboardStats(
+          request.user.doctor.id
+        );
+        return stats;
+      } catch (error) {
+        reply.code(400).send({ error: error.message });
+      }
+    }
+  });
   // Send request to doctor
   fastify.post("/request", {
     onRequest: [fastify.authenticate, checkRole(["PATIENT"])],

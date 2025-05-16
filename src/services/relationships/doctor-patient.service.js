@@ -4,6 +4,7 @@ const prisma = new PrismaClient()
 
 export class DoctorPatientService {
   
+  
   static async sendRequest(patientId, doctorId, message) {
     // Check if request already exists
     const existingRequest = await prisma.doctorPatientRequest.findUnique({
@@ -768,7 +769,7 @@ export class DoctorPatientService {
       // Get total patients count (patients with active relationship with this doctor)
       const totalPatientsCount = await prisma.patient.count({
         where: {
-          doctorPatients: {
+          doctors: {
             some: {
               doctorId: doctorId,
               active: true

@@ -469,7 +469,7 @@ export async function nurseServiceRoutes(fastify) {
       }
     }
   });
-
+  
   fastify.get("/patient/search", {
     onRequest: [fastify.authenticate, checkRole(["NURSE"])],
     config: cacheConfig,
