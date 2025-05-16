@@ -37,7 +37,7 @@ await fastify.register(fastifyCors, {
   // WebSocket support
   await fastify.register(websocket);
 await fastify.register(fastifyCookie, {
-  secret: process.env.COOKIE_SECRET, // Use a secure secret for signing cookies
+  secret: "dstcygvhubjkn243567", // Use a secure secret for signing cookies
   parseOptions: {}, // options for parsing cookies
 });
   // Rate limiting
