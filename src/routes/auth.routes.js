@@ -5,6 +5,7 @@ import sget from "simple-get";
 const prisma = new PrismaClient();
 
 export async function authRoutes(fastify) {
+
   fastify.post("/register", {
     schema: {
       body: {
@@ -75,6 +76,7 @@ export async function authRoutes(fastify) {
       }
     },
   });
+
   fastify.post("/login", {
     schema: {
       body: {

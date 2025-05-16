@@ -81,7 +81,6 @@ export async function doctorPatientRoutes(fastify) {
       );
     }),
   });
-
   // Accept request
   fastify.post("/requests/:requestId/accept", {
     onRequest: [fastify.authenticate, checkRole(["DOCTOR"])],

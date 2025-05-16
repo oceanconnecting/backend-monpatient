@@ -51,7 +51,7 @@ export class DoctorPatientService {
 
     return request
   }
-
+  
   static async handleRequest(requestId, doctorId, status) {
     const request = await prisma.doctorPatientRequest.findFirst({
       where: {
@@ -119,7 +119,7 @@ export class DoctorPatientService {
 
     return updatedRequest
   }
-
+  // UPDATED METHOD: Accept request
   static async acceptRequest(requestId, doctorId) {
     try {
       console.log('Accepting request:', { requestId, doctorId })
@@ -178,7 +178,7 @@ export class DoctorPatientService {
       throw error
     }
   }
-
+  // UPDATED METHOD: Reject request
   static async rejectRequest(requestId, doctorId, reason = '') {
     const request = await prisma.doctorPatientRequest.findUnique({
       where: { id: requestId },
@@ -234,7 +234,6 @@ export class DoctorPatientService {
 
     return updatedRequest
   }
-
   // UPDATED METHOD: Get patient doctors with pagination
   static async getPatientDoctors(patientId, page = 1, limit = 10) {
     // Calculate pagination values

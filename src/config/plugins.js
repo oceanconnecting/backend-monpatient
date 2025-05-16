@@ -42,12 +42,13 @@ await fastify.register(fastifyCookie, {
 });
   // Rate limiting
   await fastify.register(fastifyRateLimit, {
-    max: process.env.RATE_LIMIT_MAX || 100,
-    timeWindow: process.env.RATE_LIMIT_WINDOW || "1 minute",
+    global: true,
+      max: 100,
+  timeWindow: '1 minute'
   });
 
   // Security headers
-  await fastify.register(fastifyHelmet);
+  await fastify.register(fastifyHelmet,{ global: true });
 
   // OAuth integration
   await fastify.register(googleOAuth2);

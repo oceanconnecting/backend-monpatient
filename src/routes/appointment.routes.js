@@ -200,7 +200,7 @@ export function registerAppointmentRoutes(fastify) {
   
     // Mark reminder as sent
     fastify.patch('/:id/mark-reminder-sent', {
-      onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN', 'SYSTEM'])]
+      onRequest: [fastify.authenticate, checkRole(['DOCTOR', 'ADMIN'])]
     }, async (request, reply) => {
       try {
         const { id } = request.params;
