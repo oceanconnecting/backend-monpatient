@@ -10,15 +10,15 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=${PORT:-3000}
-      - DATABASE_URL=${DATABASE_URL:-postgres://neondb_owner:npg_WMdS1bA9mQrD@ep-holy-pine-a6p8ulz2-pooler.us-west-2.aws.neon.tech/neondb?sslmode=require}
+      - DATABASE_URL=${DATABASE_URL}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
-      - SMTP_USER=${SMTP_USER:-team@oceanconnecting.dev}
+      - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - CLOUD_NAME=${CLOUD_NAME}
-      - API_KEY=${API_KEY:-813952658855993}
+      - API_KEY=${API_KEY}
       - SECRET=${SECRET:-41BF}
       - COOKIES_SECRET=${COOKIES_SECRET}
     # If you need to connect this to a database, uncomment and configure:

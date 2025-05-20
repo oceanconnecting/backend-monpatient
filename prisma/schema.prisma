@@ -175,9 +175,6 @@ model Doctor {
   appointments     Appointment[] 
 }
 
-
-
-
 model Schedule {
   id          String       @id @default(cuid())
   doctor      Doctor?      @relation(fields: [doctorId], references: [id])
