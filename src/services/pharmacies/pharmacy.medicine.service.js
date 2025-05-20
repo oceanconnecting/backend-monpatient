@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const PharmacyMedicinesService = {
-  async getPharmacyMedicines(id, { page = 1, limit = 50, sortBy = 'name', sortOrder = 'asc' } = {}) {
+  async getPharmacyMedicines(id, { page = 1, limit = 10, sortBy = 'name', sortOrder = 'asc' } = {}) {
     // Validate sort parameters
     const validSortFields = ['name', 'price', 'category', 'manufacturer', 'createdAt'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';

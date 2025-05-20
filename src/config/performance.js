@@ -17,7 +17,7 @@ export async function configurePerformanceOptimizations(fastify) {
   // Add caching to improve response times and reduce server load
   await fastify.register(fastifyCaching, {
     privacy: 'public',
-    expiresIn: 300, // Cache responses for 5 minutes by default
+    expiresIn: 3000, // Cache responses for 5 minutes by default
     cache: {
       // Optional: configure a custom cache store (default is in-memory)
       size: 1000, // Maximum number of items in cache

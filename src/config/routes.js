@@ -18,9 +18,9 @@ import { pharmacyMedicinesRoutes } from "../routes/pharmacy/pharmacy.medicine.ro
 import pharmacyPerscriptionRoutes from "../routes/pharmacy/pharmacy.prescription.route.js";
 import pharmacyOrdersRoutes from "../routes/pharmacy/Order.Pharmacy.Route.js";
 import { registerAppointmentRoutes } from "../routes/appointment.routes.js";
+
 export async function configureRoutes(fastify) {
   const apiPrefix = "/api";
-  
   // Group routes by domain for better organization
   const routeGroups = {
     auth: [

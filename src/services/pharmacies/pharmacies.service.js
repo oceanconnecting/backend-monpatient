@@ -144,6 +144,8 @@ export class PharmacyService {
 
     }
     static async getAllorders(){
-      return prisma.order.findMany()
+      return prisma.order.findMany(
+        
+      )
     }
 }

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-
+import { createNotification } from '../middleware/notification.middleware.js';
+import { read } from 'fs';
 const prisma = new PrismaClient();
 
 export class PrescriptionService {
@@ -57,7 +58,26 @@ export class PrescriptionService {
       throw new Error(`Failed to fetch prescriptions: ${error.message}`);
     }
   }
-
+  static async doctorgethisprescription(doctorId){
+    const prescription=await prisma.prescription.findMany(
+       {where:{doctorId},
+       include: {
+        patient: { include: { user: {
+          select:{firstname:true,lastname:true,email:true}
+        } } },
+        doctor: { include: { user: {select:{firstname:true,lastname:true,email:true}} } },
+        pharmacy: { include: { user: {select:{firstname:true,lastname:true,email:true}} } },
+      },
+   
+    },
+       
+    )
+     if(!prescription){
+      console.log('error')
+      throw new Error("prescription not found")
+    }
+    return prescription
+  }
   static async getPrescriptionById(id) {
     if (!id) {
       throw new Error('Invalid prescription ID');
@@ -66,9 +86,11 @@ export class PrescriptionService {
     const prescription = await prisma.prescription.findUnique({
       where: { id },
       include: {
-        patient: { include: { user: true } },
-        doctor: { include: { user: true } },
-        pharmacy: { include: { user: true } },
+        patient: { include: { user: {
+          select:{firstname:true,lastname:true,email:true}
+        } } },
+        doctor: { include: { user: {select:{firstname:true,lastname:true,email:true}} } },
+        pharmacy: { include: { user: {select:{firstname:true,lastname:true,email:true}} } },
       },
     });
 
@@ -79,42 +101,102 @@ export class PrescriptionService {
     return prescription;
   }
 
-  static async createPrescription(doctorId, data) {
-    if (!data.patientId || !data.details) {
-      throw new Error('Missing required fields (patientId, doctorId, details)');
+static async createPrescription(doctorId, data, fastify) {
+
+  if (!data.patientId || !data.details) {
+    throw new Error('Missing required fields (patientId, doctorId, details)');
+  }
+  
+  // Validate prescription items
+  if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+    throw new Error('Prescription must include at least one item');
+  }
+  
+  const doctorPatientRelation = await prisma.doctorPatient.findUnique({
+    where: {
+      patientId_doctorId: {
+        patientId: data.patientId,
+        doctorId: doctorId
+      }
     }
-    
-    // Validate prescription items
-    if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
-      throw new Error('Prescription must include at least one item');
-    }
-    const doctorPatientRelation = await prisma.doctorPatient.findUnique({
-      where: {
-        patientId_doctorId: {
-          patientId: data.patientId,
-          doctorId: doctorId
+  });
+  
+  if (!doctorPatientRelation?.active) {
+    console.log('Doctor-Patient relationship not active');
+    throw new Error('No active relationship exists between this doctor and patient');
+  }
+  
+  // Create the prescription with items stored in the Json field
+  const prescription = await prisma.prescription.create({
+    data: {
+      details: data.details,
+      approved: data.approved ?? false,
+      patient: { connect: { id: data.patientId } },
+      doctor: { connect: { id: doctorId } },
+      pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
+      items: data.items,
+    },
+    include: {
+      doctor: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstname: true,
+              lastname: true
+            }
+          }
+        }
+      },
+      patient: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstname: true,
+              lastname: true
+            }
+          }
+        }
+      },
+      pharmacy: {
+        include: {
+          user: {
+            select: {
+              id: true
+            }
+          }
         }
       }
-    });
-    
-    if (!doctorPatientRelation?.active) {
-      console.log('Doctor-Patient relationship not active');
-      throw new Error('No active relationship exists between this doctor and patient');
     }
-    // Create the prescription with items stored in the Json field
-    const prescription = await prisma.prescription.create({
-      data: {
-        details: data.details,
-        approved: data.approved ?? false,
-        patient: { connect: { id: data.patientId } },
-        doctor: { connect: { id: doctorId } },
-        pharmacy: data.pharmacyId ? { connect: { id: data.pharmacyId } } : undefined,
-        items: data.items, // Store the entire items array directly in the Json field
-      }
-    });
+  });
+  
+  const medicationList = data.items
+    .map(item => item.medication)
+    .filter(Boolean)
+    .join(', ');
     
-    return prescription;
+  // Create notification
+  let notification = null;
+  try {
+    notification = await createNotification({
+      title: 'New Prescription Created',
+      message: `Dr. ${prescription.doctor.user.firstname} has prescribed ${medicationList || 'medication'}`,
+      type: "prescription",
+      metadata: {
+        prescriptionId: prescription.id,
+        patientName: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
+        doctorName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
+        medicationList: medicationList,
+        timestamp: new Date().toISOString()
+      }
+    }, prescription.patient.user.id, { fastify });
+  } catch (error) {
+    console.error('Error creating notification:', error);
   }
+
+  return { prescription, notification };
+}
 
   static async updatePrescription(id, data) {
     if (!id) {

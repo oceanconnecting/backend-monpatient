@@ -7,13 +7,12 @@ import {
 } from '../../middleware/notification.middleware.js'
 import { checkRole } from '../../middleware/auth.middleware.js'
 
+
 export async function notificationRoutes(fastify) {
   const clients = new Map();
   fastify.get('/ws', { websocket: true }, (connection, req) => {
-    // Authenticate the WebSocket connection
     if (!req.user?.id) {
-      // Properly close the connection if not authenticated
-      connection.socket?.close(1008, 'Unauthorized');
+      connection?.close(1008, 'Unauthorized');
       return;
     }
 
@@ -22,18 +21,69 @@ export async function notificationRoutes(fastify) {
     // Add new client to the map
     clients.set(userId, connection.socket);
 
+    // Send welcome message
+    connection.send(JSON.stringify({
+      type: 'WS_CONNECTED',
+      message: 'WebSocket connection established'
+    }));
+
+    // Handle incoming messages (if needed)
+    connection.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log(`Received data from ${userId}`, data);
+        // Handle different message types if needed
+        switch (data.type){
+          case 'PING':
+            connection.send(JSON.stringify({type:'PONG'}))
+            break
+          default:
+          console.log(`Unhadler message type ${data.type}`)
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    });
+connection.on('error',(error)=>{
+  console.error(`Websocket error for user : ${userId}`,error)
+})
     // Remove client when they disconnect
-    connection.socket.on('close', () => {
+    connection.on('close', () => {
       clients.delete(userId);
     });
   });
 
-  function broadcastNotification(userId, notification) {
-    const client = clients.get(userId);
-    if (client && client.readyState === client.OPEN) {
-      client.send(JSON.stringify(notification));
+  // Enhanced broadcast function
+  function sendToUser(userId, message) {
+    const connection=clients.get(userId);
+    if(userId){
+      connection.send(typeof message === 'string'? message : JSON.stringify(message));
+      return true
     }
+    return false
   }
+
+  // Make the send function available to other parts of the app
+ 
+
+  function broadcastNotification(message) {
+    const serializedMessage= typeof message === 'string' ? message : JSON.stringify(message);
+    let succesCount=0
+    clients.forEach((connection,userId)=>{
+      try{
+       connection.send(serializedMessage)
+       succesCount++;
+      }catch(error){
+       console.error(`error to userId ${userId}`,error)
+      }
+    })
+    return succesCount
+  }
+  fastify.decorate('websocket',{
+    clients,
+    sendToUser,
+    broadcastNotification
+  })
   //Get all notifications
   fastify.get('/',  {
     onRequest: [fastify.authenticate],

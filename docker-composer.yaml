@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=${DATABASE_URL:-postgres://neondb_owner:npg_WMdS1bA9mQrD@ep-holy-pine-a6p8ulz2-pooler.us-west-2.aws.neon.tech/neondb?sslmode=require}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - SMTP_USER=${SMTP_USER:-team@oceanconnecting.dev}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - API_KEY=${API_KEY:-813952658855993}
+      - SECRET=${SECRET:-41BF}
+      - COOKIES_SECRET=${COOKIES_SECRET}
+    # If you need to connect this to a database, uncomment and configure:
+    # depends_on:
+    #   - db
+  
+  # If you need a database service:
+  # db:
+  #   image: postgres:14
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=monopation
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:

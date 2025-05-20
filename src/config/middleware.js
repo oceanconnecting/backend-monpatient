@@ -7,5 +7,5 @@ export async function configureMiddleware(fastify) {
   fastify.decorate("authenticate", createAuthMiddleware(fastify));
   
   // Add notification middleware to all requests
-  fastify.addHook("onRequest", createNotificationMiddleware(fastify));
+  // fastify.addHook("onRequest", createNotificationMiddleware(fastify));
 }

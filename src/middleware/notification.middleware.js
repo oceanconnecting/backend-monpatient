@@ -281,37 +281,40 @@ export async function getAllNotifications(userId, userRole, options = {}) {
  * @returns {Promise<Object>} Created notification
  */
 export async function createNotification(data, userId, options = {}) {
-  const sendWebsocket = options.sendWebsocket ?? true
-  const fastify = options.fastify ?? null
-  
-  if (!data.title || !data.message || !data.type) {
-    throw new Error('Missing required notification fields')
+  const sendWebsocket = options.sendWebsocket ?? true;
+  const fastify = options.fastify ?? null;
+
+  if (!data.type) {
+    throw new Error('Missing required notification fields');
   }
-  
+
   try {
-    // Add timestamp if not present
-    if (!data.metadata) data.metadata = {}
-    if (!data.metadata.timestamp) data.metadata.timestamp = new Date().toISOString()
-    
+    if (!data.metadata) data.metadata = {};
+    if (!data.metadata.timestamp) data.metadata.timestamp = new Date().toISOString();
+
     const notification = await prisma.notification.create({
       data: {
         ...data,
         userId,
         read: false
       }
-    })
-    
-    // Emit through websocket if requested
-    if (sendWebsocket && fastify?.io) {
-      fastify.io.to(`user:${userId}`).emit('notification', notification)
+    });
+
+    if (sendWebsocket && fastify?.wsSend) {
+      fastify.wsSend(userId, {
+        type: 'NOTIFICATION',
+        data: notification,
+        timestamp: data.metadata.timestamp
+      });
     }
-    
-    return notification
+
+    return notification;
   } catch (error) {
-    console.error('Error creating notification:', error)
-    throw error
+    console.error('Error creating notification:', error);
+    throw error;
   }
 }
+
 
 /**
  * Mark a notification as read

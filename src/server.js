@@ -18,7 +18,7 @@ import { configureSecurityFeatures } from "./config/security.js";
 import { configurePerformanceOptimizations } from "./config/performance.js";
 import cachingRouteConfigPlugin from "./config/cachingRouteConfigPlugin.js";
 // Database connection function
-async function connectToDatabase() {
+async function connectToDatabase() { 
   try {
     // Test the connection by executing a simple query
     await prisma.$connect();
