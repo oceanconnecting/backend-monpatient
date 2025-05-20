@@ -210,6 +210,34 @@ export const PharmacyMedicinesService = {
         pages: Math.ceil(totalResults / limit)
       }
     };
-  }
+  },
   
+  async getPharmacyDashboardStats(pharmacyId){
+     try{
+     const medicines=await prisma.medicine.count({
+      where:{
+        pharmacyId
+      }
+     })
+     const prescriptions=await prisma.prescription.count({
+      where:{
+        pharmacyId
+      }
+     })
+     const orders=await prisma.order.count({
+      where:{
+        pharmacyId
+      }
+     })
+     return{
+      medicines,
+      prescriptions,
+      orders
+     }
+     }
+     
+     catch(err){
+  console.log(`error:${err}`)
+     }
+  }
 };

@@ -124,7 +124,6 @@ model Nurse {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String         @unique
   nurseVisits   NurseVisit[]
- 
   serviceRequests NurseServiceRequest[] @relation("NurseServiceRequests")
   nurseChats ChatRoomPatientNurse[] @relation("nurseChats")
   ChatRoomDoctorNursePatient  ChatRoomDoctorNursePatient[]

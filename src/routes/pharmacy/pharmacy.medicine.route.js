@@ -285,4 +285,20 @@ export async function pharmacyMedicinesRoutes(fastify) {
       }
     }
   });
+  fastify.get('/dashboard-state',
+    {
+       onRequest: [fastify.authenticate, checkRole('PHARMACY')],
+       handler:async(request,reply)=>{
+        try{
+       if(!request.user?.pharmacy?.id){
+         return reply.status(400).send({erro:"id not found"})
+       }
+       const pharmacy= await PharmacyMedicinesService.getPharmacyDashboardStats(request.user.pharmacy.id)
+       reply.send(pharmacy)
+        }catch(err){
+        console.log("error",err)
+        }
+       }
+    }
+  )
 }
