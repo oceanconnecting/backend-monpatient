@@ -173,10 +173,8 @@ static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
     patientId: appointment.patientId,
     patientName: `${appointment.patient.user.firstname} ${appointment.patient.user.lastname}`,
     patientEmail: appointment.patient.user.email,
-    appointmentDate: appointment.appointmentDate,
-    status: appointment.status,
-    notes: appointment.notes,
-    medicalRecordId: appointment.medicalRecordId,
+    appointmentDate: appointment.date,
+    type: appointment.appointmentType,
     medicalRecord: appointment.medicalRecord
   }));
 
