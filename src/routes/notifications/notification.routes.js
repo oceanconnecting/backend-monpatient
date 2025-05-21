@@ -8,7 +8,7 @@ import {
 import { checkRole } from '../../middleware/auth.middleware.js'
 
 export async function notificationRoutes(fastify) {
-  const connectedUsers = new Map();
+   const connectedUsers = new Map();
 
   // Helper methods for WebSocket connections
   const wsHelpers = {
@@ -16,143 +16,133 @@ export async function notificationRoutes(fastify) {
     connectedUsers,
     
     // Send JSON data to WebSocket connection
-    sendJson(connection, data) {
-      if (connection && connection.socket && connection.socket.readyState === 1) { // 1 = OPEN
-        connection.socket.send(JSON.stringify(data));
+    sendJson(ws, data) {
+      if (ws && ws.readyState === 1) { // 1 = OPEN
+        ws.send(JSON.stringify(data));
         return true;
       }
       return false;
     },
     
     // Send error message to client
-    handleError(connection, message) {
-      if (connection && connection.socket) {
-        connection.socket.send(JSON.stringify({ type: "error", message }));
+    handleError(ws, message) {
+      if (ws && ws.readyState === 1) {
+        this.sendJson(ws, { type: "error", message });
       }
     },
     
     // Handle incoming WebSocket messages
-    async handleMessage(connection, data) {
+    async handleMessage(ws, userId, data) {
       try {
-        console.log(`Received data from ${connection.user?.id}`, data);
+        console.log(`Received data from ${userId}`, data);
         
-        // Handle different message types
         switch (data.type) {
           case 'PING':
-            this.sendJson(connection, { type: 'PONG' });
+            this.sendJson(ws, { type: 'PONG' });
             break;
           default:
             console.log(`Unhandled message type ${data.type}`);
         }
       } catch (error) {
         console.error('Error handling message:', error);
-        this.handleError(connection, "Failed to process message");
+        this.handleError(ws, "Failed to process message");
       }
     },
     
-    // Handle new WebSocket connections with token authentication
- async handleConnection(connection, req) {
-  try {
-    // Ensure we have a valid socket connection
-    if (!connection.socket) {
-      console.error('No WebSocket connection established');
-      return;
-    }
-
-    // Extract token from query parameter
-    const token = req.query.token;
-    if (!token) {
-      connection.socket.send(JSON.stringify({ 
-        type: "error", 
-        message: "No token provided" 
-      }));
-      connection.socket.close(1008, 'Unauthorized');
-      return;
-    }
-    
-    // Verify JWT token
-    const decoded = this.fastify.jwt.verify(token);
-    const userId = decoded.id;
-    
-    console.log("New client connected:", decoded.email, decoded.role);
-    
-    // Store user info with the connection
-    connection.user = decoded;
-    this.connectedUsers.set(userId, connection);
-    
-    // Send welcome message
-    this.sendJson(connection, { 
-      type: "connected", 
-      userId,
-      message: 'WebSocket connection established' 
-    });
-    
-    // Handle incoming messages
-    connection.socket.on("message", async (message) => {
+    // Handle new WebSocket connections
+    async handleConnection(ws, req) {
       try {
-        const data = JSON.parse(message.toString());
-        await this.handleMessage(connection, data);
+        // Extract token from query parameter
+        const token = req.query.token;
+        if (!token) {
+          this.handleError(ws, "No token provided");
+          ws.close(1008, 'Unauthorized');
+          return;
+        }
+        
+        // Verify JWT token
+        const decoded = this.fastify.jwt.verify(token);
+        const userId = decoded.id;
+        
+        console.log("New client connected:", decoded.email, decoded.role);
+        
+        // Store the WebSocket connection
+        this.connectedUsers.set(userId, ws);
+        
+        // Send welcome message
+        this.sendJson(ws, { 
+          type: "connected", 
+          userId,
+          message: 'WebSocket connection established' 
+        });
+        
+        // Setup message handler
+        ws.on('message', (message) => {
+          try {
+            const data = JSON.parse(message.toString());
+            this.handleMessage(ws, userId, data);
+          } catch (error) {
+            console.error("Error handling message:", error);
+            this.handleError(ws, "Failed to process message");
+          }
+        });
+        
+        // Setup error handler
+        ws.on('error', (error) => {
+          console.error(`WebSocket error for user: ${userId}`, error);
+          this.connectedUsers.delete(userId);
+        });
+        
+        // Setup close handler
+        ws.on('close', () => {
+          console.log("Client disconnected:", decoded.email);
+          this.connectedUsers.delete(userId);
+        });
       } catch (error) {
-        console.error("Error handling message:", error);
-        this.handleError(connection, "Failed to process message");
+        console.error("Authentication error:", error);
+        if (ws && ws.readyState === 1) {
+          this.handleError(ws, "Authentication failed");
+          ws.close(1008, 'Authentication failed');
+        }
       }
-    });
-    
-    // Handle connection errors
-    connection.socket.on("error", (error) => {
-      console.error(`WebSocket error for user: ${userId}`, error);
-    });
-    
-    // Handle disconnection
-    connection.socket.on("close", () => {
-      console.log("Client disconnected:", decoded.email);
-      this.connectedUsers.delete(userId);
-    });
-  } catch (error) {
-    console.error("Authentication error:", error);
-    // Only try to send error if we have a valid socket
-    if (connection.socket && connection.socket.readyState === 1) {
-      connection.socket.send(JSON.stringify({ 
-        type: "error", 
-        message: "Authentication failed" 
-      }));
-      connection.socket.close(1008, 'Authentication failed');
     }
-  }
-}
   };
 
-  // WebSocket endpoint
-  fastify.get('/ws', { websocket: true }, (connection, req) => {
+  // WebSocket endpoint - IMPORTANT: Use the correct connection handler signature
+  fastify.get('/ws', { websocket: true }, (connection /* SocketStream */, req /* FastifyRequest */) => {
+    // The connection object is the WebSocket stream
     wsHelpers.handleConnection(connection, req);
   });
 
   // Send to specific user
-function sendToUser(userId, message) {
-  const connection = connectedUsers.get(userId);
-  if (connection && connection.socket) {
-    try {
-      connection.socket.send(typeof message === 'string' ? message : JSON.stringify(message));
-      return true;
-    } catch (error) {
-      console.error(`Error sending to userId ${userId}`, error);
+  function sendToUser(userId, message) {
+    const ws = connectedUsers.get(userId);
+    if (ws && ws.readyState === 1) {
+      try {
+        ws.send(typeof message === 'string' ? message : JSON.stringify(message));
+        return true;
+      } catch (error) {
+        console.error(`Error sending to userId ${userId}`, error);
+        connectedUsers.delete(userId);
+      }
     }
+    return false;
   }
-  return false;
-}
+
   // Broadcast to all connected users
   function broadcastNotification(message) {
     const serializedMessage = typeof message === 'string' ? message : JSON.stringify(message);
     let successCount = 0;
     
-    connectedUsers.forEach((connection, userId) => {
+    connectedUsers.forEach((ws, userId) => {
       try {
-        if (connection && connection.socket && connection.socket.readyState === 1) { // 1 = OPEN
-          connection.socket.send(serializedMessage);
+        if (ws && ws.readyState === 1) {
+          ws.send(serializedMessage);
           successCount++;
         }
       } catch (error) {
         console.error(`Error sending to userId ${userId}`, error);
+        connectedUsers.delete(userId);
       }
     });
     
