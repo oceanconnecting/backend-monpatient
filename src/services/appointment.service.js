@@ -128,7 +128,7 @@ export class AppointmentService {
     }
   }
   // doctorGetAppointment
-static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
+  static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
   // Calculate pagination values
   const pageInt = parseInt(page);
   const limitInt = parseInt(limit);
@@ -187,7 +187,7 @@ static async doctorGetAppointment(doctorId, page = 1, limit = 10) {
       pages: Math.ceil(totalCount / limitInt)
     }
   };
-}
+  }
   /**
    * Delete an appointment permanently
    */
