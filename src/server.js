@@ -63,7 +63,7 @@ async function buildApp() {
   await configureSecurityFeatures(fastify);
   await configurePlugins(fastify);
   await configureMiddleware(fastify);
-  await configureWebsockets(fastify, connectedClients);
+  await configureWebsockets(fastify);
   await configureRoutes(fastify);
   await configureErrorHandlers(fastify);
   await fastify.register(cachingRouteConfigPlugin);
