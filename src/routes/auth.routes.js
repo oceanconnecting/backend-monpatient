@@ -138,8 +138,8 @@ export async function authRoutes(fastify) {
         path: "/",
         httpOnly: true,
       // Set your cookie domain
-        secure: true, // ensure HTTPS in production
-       sameSite: "None", // Adjust based on your needs
+        secure: false, // ensure HTTPS in production
+       sameSite:'lax', // Adjust based on your needs
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         partitioned: true  
       });

@@ -12,11 +12,11 @@ export async function configurePlugins(fastify) {
 await fastify.register(fastifyCors, {
   origin: ["http://localhost:5173"], // Replace with your actual frontend domains
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie"], // Added Cookie header
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   credentials: true,
-  exposedHeaders: ["Authorization", "Set-Cookie"], // Added Set-Cookie header
+  exposedHeaders: ["Set-Cookie"], // Remove Authorization from here
   preflightContinue: false,
-  optionsSuccessStatus: 204,
+  optionsSuccessStatus: 200 // Add this for older browsers
 });
   // File upload handling
   await fastify.register(multipart, {
