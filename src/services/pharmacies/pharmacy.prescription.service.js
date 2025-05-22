@@ -2,11 +2,14 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 
-export async function getPrescriptionsByPharmacy(pharmacyId) {
+export async function getPrescriptionsByPharmacy(pharmacyId,page=1,limite=10) {
   if (!pharmacyId) {
     throw new Error('Pharmacy ID is required');
   }
   
+  const pageInt=parseInt(page)
+  const pageLimit=parseInt(limite)
+  const skip=(pageInt - 1) * pageLimit
   const prescriptions = await prisma.prescription.findMany({
     where: {
       pharmacyId: pharmacyId,
@@ -53,28 +56,37 @@ export async function getPrescriptionsByPharmacy(pharmacyId) {
     }
   }
 
-    }
+    },
+  skip,
+  take:pageLimit
   });
-  
+  const totalCount= await prisma.prescription.count({
+    where:{pharmacyId:pharmacyId}
+  })
+ const transformedPrescriptions = prescriptions.map(prescription => ({
+    id: prescription.id,
+    patientFullName: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
+    pharmacyFullName: `${prescription.pharmacy.user.firstname} ${prescription.pharmacy.user.lastname}`,
+    doctorFullName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
+    items: prescription.items,
+    orders: prescription.orders,
+  }));
+
   // Map over prescriptions to add concatenated name fields
-  const enhancedPrescriptions = prescriptions.map(prescription => {
+ const totalPages = Math.ceil(totalCount / pageLimit);
+  const hasNextPage = pageInt < totalPages;
+  const hasPreviousPage = pageInt > 1;
     return {
-      id: prescription.id,
-      patient: {
-        fullName: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
-      },
-      pharmacy: {
-        fullName: `${prescription.pharmacy.user.firstname} ${prescription.pharmacy.user.lastname}`,
-      },
-      doctor: {
-        fullName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
-     
-      },
-      items: prescription.items ,
-      order:prescription.orders
+      data: transformedPrescriptions,
+    pagination: {
+      currentPage: pageInt,
+      totalPages,
+      totalCount,
+      pageSize: pageLimit,
+      hasNextPage,
+      hasPreviousPage
       
-    };
-  });
+    }
   
-  return enhancedPrescriptions;
+}
 }
