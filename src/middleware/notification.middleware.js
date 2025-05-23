@@ -6,135 +6,150 @@ const prisma = new PrismaClient({
 })
 
 
-export function createNotificationMiddleware(fastify, options = {}) {
-  const debug = options.debug ?? (process.env.NODE_ENV === 'development')
-  const logPerformance = options.logPerformance ?? true
-  const excludePaths = options.excludePaths ?? ['/health','/api/auth/me']
-  const batchInterval = options.batchInterval ?? 1000 // ms to batch notifications
+// export function createNotificationMiddleware(fastify, options = {}) {
+//   const debug = options.debug ?? (process.env.NODE_ENV === 'development');
+//   const logPerformance = options.logPerformance ?? true;
+//   const excludePaths = options.excludePaths ?? ['/health', '/api/auth/me'];
+//   const batchInterval = options.batchInterval ?? 1000; // ms to batch notifications
+//   const sendWebsocket = options.sendWebsocket ?? true;
 
-  // Storage for notification batch processing
-  const notificationQueue = new Map()
-  let batchTimeoutId = null
+//   // Storage for notification batch processing
+//   const notificationQueue = new Map();
+//   let batchTimeoutId = null;
 
-  // Process notifications in batch
-  const processBatch = async () => {
-    if (notificationQueue.size === 0) return
+//   // Process notifications in batch
+//   const processBatch = async () => {
+//     if (notificationQueue.size === 0) return;
 
-    const batch = Array.from(notificationQueue.values())
-    notificationQueue.clear()
+//     const batch = Array.from(notificationQueue.values());
+//     notificationQueue.clear();
     
-    try {
-      await prisma.$transaction(
-        batch.map(item => 
-          prisma.notification.create({ data: item })
-        )
-      )
+//     try {
+//       // Create notifications in a transaction
+//       const createdNotifications = await prisma.$transaction(
+//         batch.map(item => 
+//           prisma.notification.create({ data: item })
+//         )
+//       );
       
-      if (debug) {
-        fastify.log.info(`Processed batch of ${batch.length} notifications`)
-      }
+//       if (debug) {
+//         fastify.log.info(`Processed batch of ${batch.length} notifications`);
+//       }
       
-      // Emit notifications through websocket
-      batch.forEach(notification => {
-        if (fastify.io) {
-          fastify.io.to(`user:${notification.userId}`).emit('notification', notification)
-        }
-      })
-    } catch (error) {
-      fastify.log.error('Failed to process notification batch:', error)
-    }
-  }
+//       // Emit notifications through websocket
+//       createdNotifications.forEach(notification => {
+//         if (sendWebsocket && fastify.websocket) {
+//           const wsMessage = {
+//             type: 'NEW_NOTIFICATION',
+//             notification: notification
+//           };
 
-  // Schedule batch processing
-  const scheduleBatch = () => {
-    if (batchTimeoutId) clearTimeout(batchTimeoutId)
-    batchTimeoutId = setTimeout(processBatch, batchInterval)
-  }
+//           // Use the existing sendToUser implementation
+//           const sendSuccess = fastify?.websocket?.sendToUser(notification.userId, wsMessage);
+          
+//           if (debug) {
+//             if (sendSuccess) {
+//               fastify.log.info(`WebSocket notification sent to user ${notification.userId}`);
+//             } else {
+//               fastify.log.warn(`No active WebSocket connection for user ${notification.userId}`);
+//             }
+//           }
+//         }
+//       });
+//     } catch (error) {
+//       fastify.log.error('Failed to process notification batch:', error);
+//     }
+//   };
 
-  // Return the actual middleware function
-  return async function notificationHandler(request, reply) {
-    // Skip excluded paths
-    if (excludePaths.some(path => request.url.includes(path))) {
-      if (debug) fastify.log.debug(`Skipping notification for excluded path: ${request.url}`)
-      return
-    }
+//   // Schedule batch processing
+//   const scheduleBatch = () => {
+//     if (batchTimeoutId) clearTimeout(batchTimeoutId);
+//     batchTimeoutId = setTimeout(processBatch, batchInterval);
+//   };
 
-    // Start performance monitoring
-    const startTime = Date.now()
-    request.startTime = startTime
+//   // Return the actual middleware function
+//   return async function notificationHandler(request, reply) {
+//     // Skip excluded paths
+//     if (excludePaths.some(path => request.url.includes(path))) {
+//       if (debug) fastify.log.debug(`Skipping notification for excluded path: ${request.url}`);
+//       return;
+//     }
+
+//     // Start performance monitoring
+//     const startTime = Date.now();
+//     request.startTime = startTime;
     
-    if (debug) {
-      fastify.log.debug({
-        msg: 'Request started',
-        method: request.method,
-        url: request.url,
-        userId: request.user ? request.user.id : 'unauthenticated'
-      })
-    }
+//     if (debug) {
+//       fastify.log.debug({
+//         msg: 'Request started',
+//         method: request.method,
+//         url: request.url,
+//         userId: request.user ? request.user.id : 'unauthenticated'
+//       });
+//     }
 
-    // Execute route handler
-    reply.then(async () => {
-      try {
-        const endTime = Date.now()
-        const duration = endTime - startTime
+//     // Hook into response completion
+//     reply.then(async () => {
+//       try {
+//         const endTime = Date.now();
+//         const duration = endTime - startTime;
         
-        if (logPerformance && duration > 500) {
-          fastify.log.warn({
-            msg: 'Slow request detected',
-            method: request.method,
-            url: request.url,
-            duration: `${duration}ms`
-          })
-        }
+//         if (logPerformance && duration > 500) {
+//           fastify.log.warn({
+//             msg: 'Slow request detected',
+//             method: request.method,
+//             url: request.url,
+//             duration: `${duration}ms`
+//           });
+//         }
         
-        if (debug) {
-          fastify.log.debug({
-            msg: 'Request completed',
-            method: request.method,
-            url: request.url,
-            statusCode: reply.statusCode,
-            duration: `${duration}ms`
-          })
-        }
+//         if (debug) {
+//           fastify.log.debug({
+//             msg: 'Request completed',
+//             method: request.method,
+//             url: request.url,
+//             statusCode: reply.statusCode,
+//             duration: `${duration}ms`
+//           });
+//         }
 
-        // Skip notification creation if no authenticated user
-        if (!request.user) {
-          if (debug) fastify.log.debug('Skipping notification: No authenticated user')
-          return
-        }
+//         // Skip notification creation if no authenticated user
+//         if (!request.user) {
+//           if (debug) fastify.log.debug('Skipping notification: No authenticated user');
+//           return;
+//         }
 
-        // Create notification data
-        const notificationData = {
-          userId: request.user.id,
-          type: 'REQUEST',
-          title: `${request.method} ${request.url}`,
-          message: `Request to ${request.url} completed with status ${reply.statusCode}`,
-          read: false,
-          metadata: {
-            method: request.method,
-            url: request.url,
-            statusCode: reply.statusCode,
-            duration,
-            timestamp: new Date().toISOString()
-          }
-        }
+//         // Create notification data
+//         const notificationData = {
+//           userId: request.user.id,
+//           type: 'REQUEST',
+//           title: `${request.method} ${request.url}`,
+//           message: `Request to ${request.url} completed with status ${reply.statusCode}`,
+//           read: false,
+//           metadata: {
+//             method: request.method,
+//             url: request.url,
+//             statusCode: reply.statusCode,
+//             duration,
+//             timestamp: new Date().toISOString()
+//           }
+//         };
 
-        // Add to queue for batch processing
-        const queueKey = `${request.user.id}-${Date.now()}`
-        notificationQueue.set(queueKey, notificationData)
-        scheduleBatch()
+//         // Add to queue for batch processing
+//         const queueKey = `${request.user.id}-${Date.now()}`;
+//         notificationQueue.set(queueKey, notificationData);
+//         scheduleBatch();
         
-      } catch (error) {
-        fastify.log.error({
-          msg: 'Failed to create notification',
-          error: error.message,
-          stack: debug ? error.stack : undefined
-        })
-      }
-    })
-  }
-}
-
+//       } catch (error) {
+//         fastify.log.error({
+//           msg: 'Failed to create notification',
+//           error: error.message,
+//           stack: debug ? error.stack : undefined
+//         });
+//       }
+//     });
+//   };
+// }
 /**
  * Get unread notifications for a user
  * @param {string} userId - User ID
@@ -289,9 +304,29 @@ export async function createNotification(data, userId, options = {}) {
   }
 
   try {
+    // Prepare metadata
     if (!data.metadata) data.metadata = {};
-    if (!data.metadata.timestamp) data.metadata.timestamp = new Date().toISOString();
+    if (!data.metadata.timestamp) {
+      data.metadata.timestamp = new Date().toISOString();
+    }
 
+    // 1. FIRST try to send WebSocket (if enabled)
+    if (sendWebsocket && fastify?.websocket?.sendToUser) {
+      const testMessage = {
+        type: 'NOTIFICATION_TEST',
+        test: true,
+        timestamp: data.metadata.timestamp
+      };
+
+      // Verify WebSocket connection exists and is working
+      const testSuccess = fastify.websocket.sendToUser(userId, testMessage);
+      
+      if (!testSuccess) {
+        throw new Error('WebSocket delivery failed - no active connection');
+      }
+    }
+
+    // 2. ONLY create in DB if WebSocket test passed (or WS is disabled)
     const notification = await prisma.notification.create({
       data: {
         ...data,
@@ -300,18 +335,26 @@ export async function createNotification(data, userId, options = {}) {
       }
     });
 
-    if (sendWebsocket && fastify?.wsSend) {
-      fastify.wsSend(userId, {
+    // 3. Send actual notification (if test passed)
+    if (sendWebsocket && fastify?.websocket?.sendToUser) {
+      const realMessage = {
         type: 'NOTIFICATION',
         data: notification,
         timestamp: data.metadata.timestamp
-      });
+      };
+      
+      fastify.websocket.sendToUser(userId, realMessage);
     }
 
     return notification;
+
   } catch (error) {
-    console.error('Error creating notification:', error);
-    throw error;
+    console.error('Notification creation failed:', {
+      error: error.message,
+      userId,
+      notificationType: data.type
+    });
+    throw error; // Re-throw to let caller handle
   }
 }
 

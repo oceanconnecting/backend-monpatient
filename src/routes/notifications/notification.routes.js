@@ -8,154 +8,6 @@ import {
 import { checkRole } from '../../middleware/auth.middleware.js'
 
 export async function notificationRoutes(fastify) {
-   const connectedUsers = new Map();
-
-  // Helper methods for WebSocket connections
-  const wsHelpers = {
-    fastify,
-    connectedUsers,
-    
-    // Send JSON data to WebSocket connection
-    sendJson(ws, data) {
-      if (ws && ws.readyState === 1) { // 1 = OPEN
-        ws.send(JSON.stringify(data));
-        return true;
-      }
-      return false;
-    },
-    
-    // Send error message to client
-    handleError(ws, message) {
-      if (ws && ws.readyState === 1) {
-        this.sendJson(ws, { type: "error", message });
-      }
-    },
-    
-    // Handle incoming WebSocket messages
-    async handleMessage(ws, userId, data) {
-      try {
-        console.log(`Received data from ${userId}`, data);
-        
-        switch (data.type) {
-          case 'PING':
-            this.sendJson(ws, { type: 'PONG' });
-            break;
-          default:
-            console.log(`Unhandled message type ${data.type}`);
-        }
-      } catch (error) {
-        console.error('Error handling message:', error);
-        this.handleError(ws, "Failed to process message");
-      }
-    },
-    
-    // Handle new WebSocket connections
-    async handleConnection(ws, req) {
-      try {
-        // Extract token from query parameter
-        const token = req.query.token;
-        if (!token) {
-          this.handleError(ws, "No token provided");
-          ws.close(1008, 'Unauthorized');
-          return;
-        }
-        
-        // Verify JWT token
-        const decoded = this.fastify.jwt.verify(token);
-        const userId = decoded.id;
-        
-        console.log("New client connected:", decoded.email, decoded.role);
-        
-        // Store the WebSocket connection
-        this.connectedUsers.set(userId, ws);
-        
-        // Send welcome message
-        this.sendJson(ws, { 
-          type: "connected", 
-          userId,
-          message: 'WebSocket connection established' 
-        });
-        
-        // Setup message handler
-        ws.on('message', (message) => {
-          try {
-            const data = JSON.parse(message.toString());
-            this.handleMessage(ws, userId, data);
-          } catch (error) {
-            console.error("Error handling message:", error);
-            this.handleError(ws, "Failed to process message");
-          }
-        });
-        
-        // Setup error handler
-        ws.on('error', (error) => {
-          console.error(`WebSocket error for user: ${userId}`, error);
-          this.connectedUsers.delete(userId);
-        });
-        
-        // Setup close handler
-        ws.on('close', () => {
-          console.log("Client disconnected:", decoded.email);
-          this.connectedUsers.delete(userId);
-        });
-      } catch (error) {
-        console.error("Authentication error:", error);
-        if (ws && ws.readyState === 1) {
-          this.handleError(ws, "Authentication failed");
-          ws.close(1008, 'Authentication failed');
-        }
-      }
-    }
-  };
-
-  // WebSocket endpoint - IMPORTANT: Use the correct connection handler signature
-  fastify.get('/ws', { websocket: true }, (connection /* SocketStream */, req /* FastifyRequest */) => {
-    // The connection object is the WebSocket stream
-    wsHelpers.handleConnection(connection, req);
-  });
-
-  // Send to specific user
-  function sendToUser(userId, message) {
-    const ws = connectedUsers.get(userId);
-    if (ws && ws.readyState === 1) {
-      try {
-        ws.send(typeof message === 'string' ? message : JSON.stringify(message));
-        return true;
-      } catch (error) {
-        console.error(`Error sending to userId ${userId}`, error);
-        connectedUsers.delete(userId);
-      }
-    }
-    return false;
-  }
-
-  // Broadcast to all connected users
-  function broadcastNotification(message) {
-    const serializedMessage = typeof message === 'string' ? message : JSON.stringify(message);
-    let successCount = 0;
-    
-    connectedUsers.forEach((ws, userId) => {
-      try {
-        if (ws && ws.readyState === 1) {
-          ws.send(serializedMessage);
-          successCount++;
-        }
-      } catch (error) {
-        console.error(`Error sending to userId ${userId}`, error);
-        connectedUsers.delete(userId);
-      }
-    });
-    
-    return successCount;
-  }
-
-  // Make WebSocket functions available to other parts of the app
-  fastify.decorate('websocket', {
-    connectedUsers,
-    sendToUser,
-    broadcastNotification
-  });
-
   // Get all notifications
   fastify.get('/', {
     onRequest: [fastify.authenticate],
@@ -206,7 +58,7 @@ export async function notificationRoutes(fastify) {
         );
         
         // Notify user via WebSocket
-        sendToUser(request.user.id, {
+        fastify.websocket.sendToUser(request.user.id, {
           type: 'NOTIFICATION_READ',
           notificationId: id,
           userId: request.user.id
@@ -234,8 +86,8 @@ export async function notificationRoutes(fastify) {
         const notification = await createNotification(request.body, request.user.id);
         
         // Notify recipient via WebSocket
-        if (request.body.recipientId) {
-          sendToUser(request.body.recipientId, {
+        if (request.body.userId) {
+          fastify.websocket.sendToUser(request.body.userId, {
             type: 'NEW_NOTIFICATION',
             notification
           });
@@ -270,6 +122,24 @@ export async function notificationRoutes(fastify) {
           reply.code(500).send({ error: error.message });
         }
       }
+    }
+  });
+
+  fastify.post('/test-ws', {
+    handler: async (request, reply) => {
+      const testUserId = 'cma6nr3ef0014fged9j09kpyv'; // Use your actual user ID
+      const testMsg = {
+        type: 'TEST_NOTIFICATION',
+        message: 'WebSocket test at ' + new Date().toISOString()
+      };
+
+      const success = fastify.websocket.sendToUser(testUserId, testMsg);
+      
+      return {
+        success,
+        message: success ? 'Sent successfully' : 'Failed to send',
+        connections: Array.from(fastify.websocket.connectedUsers.keys())
+      };
     }
   });
 }

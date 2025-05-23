@@ -101,17 +101,18 @@ export class PrescriptionService {
     return prescription;
   }
 
+// In your prescription.service.js
 static async createPrescription(doctorId, data, fastify) {
-
   if (!data.patientId || !data.details) {
     throw new Error('Missing required fields (patientId, doctorId, details)');
   }
-  
+
   // Validate prescription items
   if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
     throw new Error('Prescription must include at least one item');
   }
-  
+
+  // Check doctor-patient relationship
   const doctorPatientRelation = await prisma.doctorPatient.findUnique({
     where: {
       patientId_doctorId: {
@@ -120,13 +121,12 @@ static async createPrescription(doctorId, data, fastify) {
       }
     }
   });
-  
+
   if (!doctorPatientRelation?.active) {
-    console.log('Doctor-Patient relationship not active');
     throw new Error('No active relationship exists between this doctor and patient');
   }
-  
-  // Create the prescription with items stored in the Json field
+
+  // Create the prescription
   const prescription = await prisma.prescription.create({
     data: {
       details: data.details,
@@ -152,50 +152,41 @@ static async createPrescription(doctorId, data, fastify) {
         include: {
           user: {
             select: {
-              id: true,
+              id: true,  // This is the user ID we need for notification
               firstname: true,
               lastname: true
             }
           }
         }
       },
-      pharmacy: {
-        include: {
-          user: {
-            select: {
-              id: true
-            }
-          }
-        }
-      }
+      pharmacy: true
     }
   });
-  
-  const medicationList = data.items
-    .map(item => item.medication)
-    .filter(Boolean)
-    .join(', ');
-    
-  // Create notification
-  let notification = null;
-  try {
-    notification = await createNotification({
-      title: 'New Prescription Created',
-      message: `Dr. ${prescription.doctor.user.firstname} has prescribed ${medicationList || 'medication'}`,
-      type: "prescription",
-      metadata: {
-        prescriptionId: prescription.id,
-        patientName: `${prescription.patient.user.firstname} ${prescription.patient.user.lastname}`,
-        doctorName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
-        medicationList: medicationList,
-        timestamp: new Date().toISOString()
-      }
-    }, prescription.patient.user.id, { fastify });
-  } catch (error) {
-    console.error('Error creating notification:', error);
+
+  // Send notification to patient's user account
+  if (prescription.patient.user?.id) {
+    try {
+      await createNotification(
+        {
+          type: 'NEW_PRESCRIPTION',
+          title: 'New Prescription Created',
+          message: `Dr. ${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname} has created a new prescription for you`,
+          metadata: {
+            prescriptionId: prescription.id,
+            doctorName: `${prescription.doctor.user.firstname} ${prescription.doctor.user.lastname}`,
+            timestamp: new Date().toISOString()
+          }
+        },
+        prescription.patient.user.id,  // Send to patient's user account
+        { fastify }
+      );
+    } catch (notificationError) {
+      console.error('Failed to send prescription notification:', notificationError);
+      // Don't fail the prescription creation if notification fails
+    }
   }
 
-  return { prescription, notification };
+  return { prescription };
 }
 
   static async updatePrescription(id, data) {

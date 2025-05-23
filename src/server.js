@@ -13,7 +13,8 @@ import { configurePlugins } from "./config/plugins.js";
 import { configureMiddleware } from "./config/middleware.js";
 import { configureRoutes } from "./config/routes.js";
 import { configureErrorHandlers } from "./config/errorHandlers.js";
-import { configureWebsockets } from "./config/websockets.js";
+
+import { websocketPlugin } from "./config/websockets.js";
 import { configureSecurityFeatures } from "./config/security.js";
 import { configurePerformanceOptimizations } from "./config/performance.js";
 import cachingRouteConfigPlugin from "./config/cachingRouteConfigPlugin.js";
@@ -63,7 +64,7 @@ async function buildApp() {
   await configureSecurityFeatures(fastify);
   await configurePlugins(fastify);
   await configureMiddleware(fastify);
-  await configureWebsockets(fastify);
+ await websocketPlugin(fastify);
   await configureRoutes(fastify);
   await configureErrorHandlers(fastify);
   await fastify.register(cachingRouteConfigPlugin);
